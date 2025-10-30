@@ -39,7 +39,9 @@ import {
     Cpu
 } from "lucide-react";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/equipment";
+// ✅ Correct - pointing to your deployed backend
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.vercel.app'
+const response = await fetch(`${API_BASE}/api/equipment`)
 
 // --- Utility Functions ---
 const getStatusBadgeColor = (status) => {
