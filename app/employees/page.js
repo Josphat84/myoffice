@@ -47,7 +47,7 @@ import {
     ChevronLeft
 } from "lucide-react";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/employees";
+const API_BASE_URL = "/api/employees";
 
 // --- Utility Functions ---
 const getClassBadgeColor = (employeeClass) => {
