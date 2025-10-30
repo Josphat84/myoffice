@@ -40,8 +40,8 @@ import {
 } from "lucide-react";
 
 // ✅ Correct - using the environment variable name
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com'
-const response = await fetch(`${API_BASE}/api/equipment`);
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com';
+const API_BASE_URL = `${API_BASE}/api/equipment`; // ✅ Define the complete API URL
 
 // --- Utility Functions ---
 const getStatusBadgeColor = (status) => {

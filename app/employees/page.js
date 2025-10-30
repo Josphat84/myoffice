@@ -49,7 +49,6 @@ import {
 
 // ✅ Correct - using the environment variable name
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com'
-const response = await fetch(`${API_BASE}/api/employees`)
 
 // --- Utility Functions ---
 const getClassBadgeColor = (employeeClass) => {
@@ -871,7 +870,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete }) => {
                 {/* Quick Stats */}
                 <div className="flex gap-2 mt-2">
                     <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                        ID: {employee.employee_id}
+                        ID: {employee.id}
                     </Badge>
                     {qualCount > 0 && (
                         <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700">
@@ -1098,7 +1097,8 @@ const useEmployeeManagement = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await fetch(API_BASE_URL, { signal });
+            // ✅ FIXED: Use API_BASE with the correct endpoint
+            const res = await fetch(`${API_BASE}/api/employees`, { signal });
             if (!res.ok) {
                 const errorBody = await res.json().catch(() => ({}));
                 const message = errorBody.detail || `HTTP error! Status: ${res.status}`;
@@ -1151,12 +1151,12 @@ const useEmployeeManagement = () => {
         }
     };
 
-    const handleAddEmployee = (employee) => mutateEmployee(API_BASE_URL, "POST", employee);
-    const handleUpdateEmployee = (employee) => mutateEmployee(`${API_BASE_URL}/${employee.employee_id}`, "PUT", employee);
+    const handleAddEmployee = (employee) => mutateEmployee(`${API_BASE}/api/employees`, "POST", employee);
+    const handleUpdateEmployee = (employee) => mutateEmployee(`${API_BASE}/api/employees/${employee.id}`, "PUT", employee);
     
     const handleDeleteEmployee = async (employeeId, fullName) => {
         if (window.confirm(`Confirm deletion: Are you sure you want to permanently remove ${fullName}'s record?`)) {
-            return mutateEmployee(`${API_BASE_URL}/${employeeId}`, "DELETE");
+            return mutateEmployee(`${API_BASE}/api/employees/${employeeId}`, "DELETE");
         }
         return { success: false, message: "Deletion cancelled." };
     };
@@ -1335,7 +1335,7 @@ export default function Employees() {
     
     const handleEmployeeDeletion = async (emp) => {
         const fullName = `${emp.first_name} ${emp.last_name}`;
-        const result = await handleDeleteEmployee(emp.employee_id, fullName);
+        const result = await handleDeleteEmployee(emp.id, fullName);
         if (!result.success && result.message) {
              setError(result.message);
         }
@@ -1433,7 +1433,7 @@ export default function Employees() {
                                 <SelectTrigger className="w-[120px] bg-white"><SelectValue placeholder="Sort By" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="first_name">Name</SelectItem>
-                                    <SelectItem value="employee_id">ID</SelectItem>
+                                    <SelectItem value="id">ID</SelectItem>
                                     <SelectItem value="designation">Role</SelectItem>
                                 </SelectContent>
                             </Select>
