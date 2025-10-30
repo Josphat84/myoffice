@@ -39,9 +39,9 @@ import {
     Cpu
 } from "lucide-react";
 
-// ✅ Correct - pointing to your deployed backend
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.vercel.app'
-const response = await fetch(`${API_BASE}/api/equipment`)
+// ✅ Correct - using the environment variable name
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com'
+const response = await fetch(`${API_BASE}/api/equipment`);
 
 // --- Utility Functions ---
 const getStatusBadgeColor = (status) => {

@@ -47,8 +47,8 @@ import {
     ChevronLeft
 } from "lucide-react";
 
-// ✅ Correct - pointing to your deployed backend
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.vercel.app'
+// ✅ Correct - using the environment variable name
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com'
 const response = await fetch(`${API_BASE}/api/employees`)
 
 // --- Utility Functions ---
