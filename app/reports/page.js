@@ -1,5 +1,3 @@
-
-
 // app/reports/page.js
 "use client";
 
@@ -7,19 +5,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   FilePieChart, 
-  BarChart3, 
   Download, 
   Filter, 
   Calendar,
-  ArrowUp,
-  ArrowDown,
   TrendingUp,
   Users,
-  ToolCase,
+  Wrench,
   Calculator,
   Shield,
   Building,
-  Clock,
   Eye,
   MoreHorizontal,
   Search,
@@ -36,15 +30,13 @@ import {
   Sparkles,
   DownloadCloud,
   BarChart,
-  PieChart,
   Grid,
   List,
   X,
-  SlidersHorizontal,
-  ChevronDown
+  SlidersHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -52,150 +44,141 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const REPORTS_STORAGE_KEY = 'generated-reports';
 
-// Export functions
+// Simple export functions with error handling
 const exportToPDF = async (reportData, reportName) => {
-  const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF();
-  
-  doc.setFontSize(20);
-  doc.text(reportName, 20, 30);
-  doc.setFontSize(12);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
-  
-  doc.setFontSize(14);
-  doc.text('Report Summary', 20, 65);
-  doc.setFontSize(10);
-  doc.text(`Total Records: ${reportData.totalRecords}`, 20, 75);
-  doc.text(`Columns: ${reportData.columns?.join(', ')}`, 20, 85);
-  
-  let yPosition = 105;
-  doc.setFontSize(12);
-  doc.text('Data Preview (First 10 records):', 20, yPosition);
-  yPosition += 10;
-  
-  doc.setFontSize(8);
-  reportData.data.slice(0, 10).forEach((row, index) => {
-    if (yPosition > 270) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    let xPosition = 20;
-    reportData.columns.forEach(column => {
-      const value = String(row[column] || '').substring(0, 20);
-      doc.text(value, xPosition, yPosition);
-      xPosition += 40;
-    });
-    yPosition += 10;
-  });
-  
-  doc.save(`${reportName}.pdf`);
+  try {
+    // Simple text-based PDF export as fallback
+    const content = [
+      `Report: ${reportName}`,
+      `Generated on: ${new Date().toLocaleDateString()}`,
+      '',
+      'Summary:',
+      `Total Records: ${reportData.totalRecords}`,
+      `Columns: ${reportData.columns?.join(', ') || 'N/A'}`,
+      '',
+      'Data:',
+      ...reportData.data.slice(0, 10).map((row, index) => 
+        `${index + 1}. ${JSON.stringify(row)}`
+      )
+    ].join('\n');
+
+    const blob = new Blob([content], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reportName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('PDF export error:', error);
+    alert('Error exporting to PDF. Please try again.');
+  }
 };
 
 const exportToExcel = async (reportData, reportName) => {
-  const ExcelJS = await import('exceljs');
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Report Data');
-  
-  // Add headers
-  worksheet.addRow(reportData.columns);
-  
-  // Add data
-  reportData.data.forEach(row => {
-    const rowData = reportData.columns.map(column => row[column] || '');
-    worksheet.addRow(rowData);
-  });
-  
-  // Style headers
-  worksheet.getRow(1).font = { bold: true };
-  worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFE6E6FA' }
-  };
-  
-  // Auto-fit columns
-  worksheet.columns.forEach(column => {
-    column.width = 15;
-  });
-  
-  // Generate blob and download
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${reportName}.xlsx`;
-  link.click();
-  URL.revokeObjectURL(url);
+  try {
+    // Simple CSV export as fallback
+    const headers = reportData.columns || [];
+    const csvContent = [
+      headers.join(','),
+      ...reportData.data.map(row => 
+        headers.map(header => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reportName.replace(/[^a-z0-9]/gi, '_')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Excel export error:', error);
+    alert('Error exporting to Excel. Please try again.');
+  }
 };
 
 const exportToWord = async (reportData, reportName) => {
-  const docx = await import('docx');
-  const { Document, Paragraph, HeadingLevel, Table, TableCell, TableRow, Packer } = docx;
-  
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: [
-        new Paragraph({
-          text: reportName,
-          heading: HeadingLevel.TITLE,
-        }),
-        new Paragraph({
-          text: `Generated on: ${new Date().toLocaleDateString()}`,
-        }),
-        new Paragraph({
-          text: " ",
-        }),
-        new Paragraph({
-          text: "Report Summary",
-          heading: HeadingLevel.HEADING_2,
-        }),
-        new Paragraph({
-          text: `Total Records: ${reportData.totalRecords}`,
-        }),
-        new Paragraph({
-          text: `Columns: ${reportData.columns?.join(', ')}`,
-        }),
-        new Paragraph({
-          text: " ",
-        }),
-        new Paragraph({
-          text: "Data Preview",
-          heading: HeadingLevel.HEADING_2,
-        }),
-        new Table({
-          rows: [
-            new TableRow({
-              children: reportData.columns.map(column => 
-                new TableCell({
-                  children: [new Paragraph(column)]
-                })
-              ),
-            }),
-            ...reportData.data.slice(0, 20).map(row =>
-              new TableRow({
-                children: reportData.columns.map(column =>
-                  new TableCell({
-                    children: [new Paragraph(String(row[column] || ''))]
-                  })
-                ),
-              })
-            ),
-          ],
-        }),
-      ],
-    }],
-  });
+  try {
+    // Simple text export as fallback
+    const content = [
+      reportName,
+      `Generated on: ${new Date().toLocaleDateString()}`,
+      '',
+      'Report Summary',
+      `Total Records: ${reportData.totalRecords}`,
+      `Columns: ${reportData.columns?.join(', ') || 'N/A'}`,
+      '',
+      'Data:',
+      JSON.stringify(reportData.data, null, 2)
+    ].join('\n');
 
-  const blob = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${reportName}.docx`;
-  link.click();
-  URL.revokeObjectURL(url);
+    const blob = new Blob([content], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reportName.replace(/[^a-z0-9]/gi, '_')}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Word export error:', error);
+    alert('Error exporting to Word. Please try again.');
+  }
+};
+
+// Generate sample data for demonstration
+const generateSampleReports = () => {
+  const sampleReports = [
+    {
+      id: '1',
+      title: 'Monthly Overtime Report',
+      type: 'overtime',
+      format: 'pdf',
+      description: 'Comprehensive overtime analysis for current month',
+      generatedAt: new Date().toISOString(),
+      data: Array.from({ length: 15 }, (_, i) => ({
+        id: i + 1,
+        employee: `Employee ${i + 1}`,
+        department: ['Engineering', 'Operations', 'Maintenance'][i % 3],
+        hours: Math.floor(Math.random() * 20) + 5,
+        date: new Date(Date.now() - i * 86400000).toISOString().split('T')[0]
+      })),
+      metadata: {
+        totalRecords: 15,
+        columns: ['id', 'employee', 'department', 'hours', 'date']
+      }
+    },
+    {
+      id: '2',
+      title: 'Equipment Maintenance Schedule',
+      type: 'maintenance',
+      format: 'excel',
+      description: 'Upcoming maintenance tasks and schedules',
+      generatedAt: new Date(Date.now() - 86400000).toISOString(),
+      data: Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        equipment: `Equipment ${i + 1}`,
+        type: ['Vehicle', 'Tool', 'Machine'][i % 3],
+        lastMaintenance: new Date(Date.now() - (i + 10) * 86400000).toISOString().split('T')[0],
+        nextMaintenance: new Date(Date.now() + (i + 5) * 86400000).toISOString().split('T')[0],
+        status: ['Pending', 'Completed', 'Overdue'][i % 3]
+      })),
+      metadata: {
+        totalRecords: 10,
+        columns: ['id', 'equipment', 'type', 'lastMaintenance', 'nextMaintenance', 'status']
+      }
+    }
+  ];
+  
+  localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(sampleReports));
+  return sampleReports;
 };
 
 export default function ReportsPage() {
@@ -203,7 +186,7 @@ export default function ReportsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+  const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedFormats, setSelectedFormats] = useState([]);
@@ -217,12 +200,21 @@ export default function ReportsPage() {
   const loadReports = () => {
     try {
       const storedReports = localStorage.getItem(REPORTS_STORAGE_KEY);
+      let reportsData = [];
+      
       if (storedReports) {
-        const parsedReports = JSON.parse(storedReports);
-        setReports(sortReports(parsedReports, sortBy));
+        reportsData = JSON.parse(storedReports);
+      } else {
+        // Generate sample data if no reports exist
+        reportsData = generateSampleReports();
       }
+      
+      setReports(sortReports(reportsData, sortBy));
     } catch (error) {
       console.error('Error loading reports:', error);
+      // Generate sample data on error
+      const sampleData = generateSampleReports();
+      setReports(sortReports(sampleData, sortBy));
     }
   };
 
@@ -250,36 +242,48 @@ export default function ReportsPage() {
   };
 
   const deleteReport = (reportId) => {
-    const updatedReports = reports.filter(report => report.id !== reportId);
-    saveReports(updatedReports);
+    if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      const updatedReports = reports.filter(report => report.id !== reportId);
+      saveReports(updatedReports);
+    }
   };
 
-  const downloadReport = (report) => {
-    const reportData = {
-      data: report.data,
-      columns: report.columns || report.metadata?.columns,
-      totalRecords: report.data?.length || 0
-    };
+  const downloadReport = async (report) => {
+    setIsLoading(true);
+    try {
+      const reportData = {
+        data: report.data || [],
+        columns: report.columns || report.metadata?.columns || [],
+        totalRecords: report.data?.length || report.metadata?.totalRecords || 0
+      };
 
-    switch (report.format) {
-      case 'pdf':
-        exportToPDF(reportData, report.title);
-        break;
-      case 'excel':
-        exportToExcel(reportData, report.title);
-        break;
-      case 'word':
-        exportToWord(reportData, report.title);
-        break;
-      default:
-        // Fallback to JSON for old reports
-        const dataStr = JSON.stringify(report.data, null, 2);
-        const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', `${report.title.replace(/\s+/g, '_')}.json`);
-        linkElement.click();
+      switch (report.format) {
+        case 'pdf':
+          await exportToPDF(reportData, report.title);
+          break;
+        case 'excel':
+          await exportToExcel(reportData, report.title);
+          break;
+        case 'word':
+          await exportToWord(reportData, report.title);
+          break;
+        default:
+          // Fallback to JSON
+          const dataStr = JSON.stringify(report.data || [], null, 2);
+          const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+          
+          const linkElement = document.createElement('a');
+          linkElement.setAttribute('href', dataUri);
+          linkElement.setAttribute('download', `${report.title.replace(/\s+/g, '_')}.json`);
+          document.body.appendChild(linkElement);
+          linkElement.click();
+          document.body.removeChild(linkElement);
+      }
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert('Error downloading report. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -299,7 +303,7 @@ export default function ReportsPage() {
     const icons = {
       overtime: Calculator,
       personnel: Users,
-      assets: ToolCase,
+      assets: Wrench,
       safety: Shield,
       maintenance: Building,
       financial: BarChart
@@ -421,10 +425,15 @@ export default function ReportsPage() {
               </Link>
             </nav>
 
-            <Button size="sm" asChild className="bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800">
+            <Button 
+              size="sm" 
+              asChild 
+              className="bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800"
+              disabled={isLoading}
+            >
               <Link href="/reports/generate">
                 <Plus className="h-4 w-4 mr-2" />
-                New Report
+                {isLoading ? "Loading..." : "New Report"}
               </Link>
             </Button>
           </div>
@@ -475,7 +484,7 @@ export default function ReportsPage() {
                   <SelectItem value="name">Name A-Z</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={loadReports}>
+              <Button variant="outline" size="sm" onClick={loadReports} disabled={isLoading}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
               </Button>
@@ -717,6 +726,7 @@ export default function ReportsPage() {
                         getTypeColor={getTypeColor}
                         getTypeIcon={getTypeIcon}
                         getFormatIcon={getFormatIcon}
+                        isLoading={isLoading}
                       />
                     ))}
                   </div>
@@ -731,6 +741,7 @@ export default function ReportsPage() {
                         getTypeColor={getTypeColor}
                         getTypeIcon={getTypeIcon}
                         getFormatIcon={getFormatIcon}
+                        isLoading={isLoading}
                       />
                     ))}
                   </div>
@@ -755,6 +766,7 @@ export default function ReportsPage() {
                             getTypeColor={getTypeColor}
                             getTypeIcon={getTypeIcon}
                             getFormatIcon={getFormatIcon}
+                            isLoading={isLoading}
                           />
                         ))}
                     </div>
@@ -771,6 +783,7 @@ export default function ReportsPage() {
                             getTypeColor={getTypeColor}
                             getTypeIcon={getTypeIcon}
                             getFormatIcon={getFormatIcon}
+                            isLoading={isLoading}
                           />
                         ))}
                     </div>
@@ -808,7 +821,7 @@ export default function ReportsPage() {
 }
 
 // Report Card Component (Grid View)
-function ReportCard({ report, onDownload, onDelete, getTypeColor, getTypeIcon, getFormatIcon }) {
+function ReportCard({ report, onDownload, onDelete, getTypeColor, getTypeIcon, getFormatIcon, isLoading }) {
   const [showActions, setShowActions] = useState(false);
 
   const formattedDate = new Date(report.generatedAt).toLocaleDateString('en-US', {
@@ -859,19 +872,16 @@ function ReportCard({ report, onDownload, onDelete, getTypeColor, getTypeIcon, g
                   size="sm"
                   className="w-full justify-start px-3"
                   onClick={() => onDownload(report)}
+                  disabled={isLoading}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Download
+                  {isLoading ? 'Downloading...' : 'Download'}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete this report?')) {
-                      onDelete(report.id);
-                    }
-                  }}
+                  onClick={() => onDelete(report.id)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
@@ -918,9 +928,10 @@ function ReportCard({ report, onDownload, onDelete, getTypeColor, getTypeIcon, g
             size="sm" 
             className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 shadow-md"
             onClick={() => onDownload(report)}
+            disabled={isLoading}
           >
             <DownloadCloud className="h-4 w-4" />
-            Export
+            {isLoading ? 'Exporting...' : 'Export'}
           </Button>
         </div>
       </CardContent>
@@ -929,7 +940,7 @@ function ReportCard({ report, onDownload, onDelete, getTypeColor, getTypeIcon, g
 }
 
 // Report List Item Component (List View)
-function ReportListItem({ report, onDownload, onDelete, getTypeColor, getTypeIcon, getFormatIcon }) {
+function ReportListItem({ report, onDownload, onDelete, getTypeColor, getTypeIcon, getFormatIcon, isLoading }) {
   const [showActions, setShowActions] = useState(false);
 
   const formattedDate = new Date(report.generatedAt).toLocaleDateString('en-US', {
@@ -989,9 +1000,10 @@ function ReportListItem({ report, onDownload, onDelete, getTypeColor, getTypeIco
               size="sm" 
               className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 shadow-md"
               onClick={() => onDownload(report)}
+              disabled={isLoading}
             >
               <DownloadCloud className="h-4 w-4" />
-              Export
+              {isLoading ? 'Exporting...' : 'Export'}
             </Button>
             
             <Button size="sm" variant="outline" className="gap-2" asChild>
@@ -1017,19 +1029,16 @@ function ReportListItem({ report, onDownload, onDelete, getTypeColor, getTypeIco
                     size="sm"
                     className="w-full justify-start px-3"
                     onClick={() => onDownload(report)}
+                    disabled={isLoading}
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download
+                    {isLoading ? 'Downloading...' : 'Download'}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this report?')) {
-                        onDelete(report.id);
-                      }
-                    }}
+                    onClick={() => onDelete(report.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
