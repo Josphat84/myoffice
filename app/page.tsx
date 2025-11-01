@@ -42,6 +42,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// Define types for our data structures
+type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple';
+
+interface StatItem {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<any>;
+  color: string;
+  subtitle?: string;
+}
+
+interface ModuleItem {
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+  color: ColorType;
+  checks: string[];
+  link?: string;
+  stats: string;
+  buttonText: string;
+}
+
 async function getSystemStats() {
   try {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com';
@@ -180,28 +202,6 @@ function MobileNav() {
   );
 }
 
-// Define types for our data structures
-type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple';
-
-interface StatItem {
-  label: string;
-  value: string | number;
-  icon: React.ComponentType<any>;
-  color: string;
-  subtitle?: string;
-}
-
-interface ModuleItem {
-  icon: React.ComponentType<any>;
-  title: string;
-  description: string;
-  color: ColorType;
-  checks: string[];
-  link?: string;
-  stats: string;
-  buttonText: string;
-}
-
 export default async function Home() {
   const stats = await getSystemStats();
 
@@ -277,6 +277,7 @@ export default async function Home() {
       description: "Rich, interactive dashboards for real-time data monitoring of production, safety, and asset health.", 
       color: "indigo", 
       checks: ["Custom Dashboards", "KPI Tracking"],
+      stats: "Live Data",
       buttonText: "View Dashboards"
     }, 
     { 
@@ -285,6 +286,7 @@ export default async function Home() {
       description: "Proactive scheduling and tracking of mandatory preventative maintenance tasks and asset inspections.", 
       color: "blue", 
       checks: ["PM Planner", "Task Assignment"],
+      stats: `${stats.scheduledMaintenance} Scheduled`,
       buttonText: "Schedule Maintenance"
     }, 
     { 
@@ -293,6 +295,7 @@ export default async function Home() {
       description: "Log and monitor utility and machine meter readings to optimize resource consumption and maintenance scheduling.", 
       color: "cyan", 
       checks: ["Usage History", "Alert Setup"],
+      stats: "Daily Updates",
       buttonText: "Record Readings"
     }, 
     { 
@@ -301,6 +304,7 @@ export default async function Home() {
       description: "Real-time visibility into machine status, utilization rates, and scheduled downtimes for maintenance.", 
       color: "cyan", 
       checks: ["Utilization Rate", "Downtime Schedule"],
+      stats: `${stats.operationalEquipment}/${stats.equipmentCount} Available`,
       buttonText: "Check Availability"
     }, 
     { 
@@ -309,6 +313,7 @@ export default async function Home() {
       description: "Manage tool checkout, stock levels, calibration schedules, and replacement costs for engineering equipment.", 
       color: "amber", 
       checks: ["Stock Control", "Calibration Alerts"],
+      stats: "500+ Tools",
       buttonText: "Manage Tools"
     }, 
     { 
@@ -317,6 +322,7 @@ export default async function Home() {
       description: "Digital PTW system for high-risk work: review, approval, tracking, and close-out of required permits.", 
       color: "cyan", 
       checks: ["Digital Sign-off", "Conflict Check"],
+      stats: "Active Permits",
       buttonText: "Manage Permits"
     },
     
@@ -327,6 +333,7 @@ export default async function Home() {
       description: "Track incidents, manage inspections, report non-conformities, and handle environmental compliance documents.", 
       color: "blue", 
       checks: ["Incident Reporting", "Inspection Forms"],
+      stats: `${stats.safetyIncidents} Incidents`,
       buttonText: "Manage Safety"
     },
     { 
@@ -335,6 +342,7 @@ export default async function Home() {
       description: "Manage shift schedules, allocate standby teams, and ensure coverage for critical operational periods.", 
       color: "amber", 
       checks: ["Shift Rotation", "Contact Lists"],
+      stats: "24/7 Coverage",
       buttonText: "Manage Roster"
     }, 
     { 
@@ -343,6 +351,7 @@ export default async function Home() {
       description: "Track mandatory employee certifications, expiry dates, and required refresher courses for compliance.", 
       color: "purple", 
       checks: ["Expiry Alerts", "Compliance Reports"],
+      stats: "Certification Tracking",
       buttonText: "Manage Training"
     }, 
     { 
@@ -351,6 +360,7 @@ export default async function Home() {
       description: "Securely store all company policies, compliance documents, and operational manuals in one accessible location.", 
       color: "indigo", 
       checks: ["Secure Storage", "Version Control"],
+      stats: `${stats.monthlyReports} Documents`,
       buttonText: "Access Documents"
     }, 
     { 
@@ -359,6 +369,7 @@ export default async function Home() {
       description: "Track issue dates, replacement schedules, and mandatory training for all Personal Protective Equipment.", 
       color: "purple", 
       checks: ["Issue Tracking", "Training Logs"],
+      stats: "Safety Compliance",
       buttonText: "Manage PPE"
     }, 
     { 
@@ -367,6 +378,7 @@ export default async function Home() {
       description: "Manage employee vacation, sick leave, and holidays with integrated approval and balance tracking.", 
       color: "green", 
       checks: ["Balance View", "Request Approval"],
+      stats: "Leave Management",
       buttonText: "Track Leave"
     },
     { 
@@ -375,6 +387,7 @@ export default async function Home() {
       description: "Generate comprehensive reports, export data, and analyze trends across all operational modules.", 
       color: "indigo", 
       checks: ["Custom Reports", "Data Export"],
+      stats: `${stats.monthlyReports} Reports`,
       buttonText: "Generate Reports"
     },
     { 
@@ -383,6 +396,7 @@ export default async function Home() {
       description: "Assign and track tasks, monitor progress, and manage team workloads with priority-based job allocation system.", 
       color: "blue", 
       checks: ["Task Assignment", "Progress Tracking", "Priority Management"],
+      stats: `${stats.openWorkOrders} Active Jobs`,
       buttonText: "Allocate Jobs"
     },
     { 
@@ -391,32 +405,33 @@ export default async function Home() {
       description: "Share important announcements, company updates, and critical information with all team members in real-time.", 
       color: "green", 
       checks: ["Announcements", "Priority Alerts", "Archive Management"],
+      stats: "Real-time Updates",
       buttonText: "View Notices"
     },
   ];
 
   // Utility function to get the correct button style based on feature color
   const getButtonStyle = (color: ColorType) => {
-      const colorMap: Record<ColorType, string> = {
-          indigo: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30",
-          cyan: "bg-cyan-600 hover:bg-cyan-700 shadow-cyan-500/30",
-          green: "bg-green-600 hover:bg-green-700 shadow-green-500/30",
-          amber: "bg-amber-600 hover:bg-amber-700 shadow-amber-500/30",
-          blue: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30", 
-          purple: "bg-purple-600 hover:bg-purple-700 shadow-purple-500/30",
-      };
-      return `${colorMap[color] || colorMap.indigo} text-white`; 
+    const colorMap: Record<ColorType, string> = {
+      indigo: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30",
+      cyan: "bg-cyan-600 hover:bg-cyan-700 shadow-cyan-500/30",
+      green: "bg-green-600 hover:bg-green-700 shadow-green-500/30",
+      amber: "bg-amber-600 hover:bg-amber-700 shadow-amber-500/30",
+      blue: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30", 
+      purple: "bg-purple-600 hover:bg-purple-700 shadow-purple-500/30",
+    };
+    return `${colorMap[color] || colorMap.indigo} text-white`; 
   }
 
   // Utility function for icon box background color
   const getIconBgStyle = (color: ColorType) => {
     const bgMap: Record<ColorType, string> = {
-        indigo: "bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400",
-        cyan: "bg-cyan-50 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400",
-        green: "bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400",
-        amber: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400",
-        blue: "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400", 
-        purple: "bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400",
+      indigo: "bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400",
+      cyan: "bg-cyan-50 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400",
+      green: "bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400",
+      amber: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400",
+      blue: "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400", 
+      purple: "bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400",
     };
     return bgMap[color] || bgMap.indigo;
   }
@@ -424,12 +439,12 @@ export default async function Home() {
   // Utility function for check mark color
   const getCheckColor = (color: ColorType) => {
     const checkMap: Record<ColorType, string> = {
-        indigo: "text-indigo-500",
-        cyan: "text-cyan-500",
-        green: "text-green-500",
-        amber: "text-amber-500",
-        blue: "text-blue-500",
-        purple: "text-purple-500",
+      indigo: "text-indigo-500",
+      cyan: "text-cyan-500",
+      green: "text-green-500",
+      amber: "text-amber-500",
+      blue: "text-blue-500",
+      purple: "text-purple-500",
     };
     return checkMap[color] || checkMap.indigo;
   }
