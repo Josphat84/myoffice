@@ -46,7 +46,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 // Define types for our data structures
-type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange';
+type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange' | 'pink';
 
 interface StatItem {
   label: string;
@@ -162,82 +162,81 @@ async function getSystemStats() {
     }
 
     // Fetch maintenance stats
+    const maintenanceResponse = await fetch(`${API_BASE}/api/maintenance/stats/summary`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
     let maintenanceStats = {
-      openRequests: 0,
-      inProgress: 0,
+      open: 0,
+      in_progress: 0,
       critical: 0,
       completed: 0
     };
 
-    try {
-      const maintenanceData = localStorage.getItem('maintenance-requests');
-      if (maintenanceData) {
-        const requests = JSON.parse(maintenanceData);
-        maintenanceStats = {
-          openRequests: requests.filter((r: any) => r.status === 'open').length,
-          inProgress: requests.filter((r: any) => r.status === 'in-progress').length,
-          critical: requests.filter((r: any) => r.priority === 'critical').length,
-          completed: requests.filter((r: any) => r.status === 'completed').length
-        };
-      }
-    } catch (error) {
-      console.log('No maintenance data found');
+    if (maintenanceResponse.ok) {
+      const maintenanceData = await maintenanceResponse.json();
+      maintenanceStats = {
+        open: maintenanceData.open || 0,
+        in_progress: maintenanceData.in_progress || 0,
+        critical: maintenanceData.critical || 0,
+        completed: maintenanceData.completed || 0
+      };
     }
 
     // Fetch leave stats
+    const leaveResponse = await fetch(`${API_BASE}/api/leave/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
     let leaveStats = {
-      pending: 0,
-      approved: 0,
-      upcoming: 0,
-      total: 0
+      pendingRequests: 0,
+      approvedRequests: 0,
+      currentMonthRequests: 0,
+      totalRequests: 0
     };
 
-    try {
-      const leaveData = localStorage.getItem('leave-requests');
-      if (leaveData) {
-        const requests = JSON.parse(leaveData);
-        leaveStats = {
-          pending: requests.filter((r: any) => r.status === 'pending').length,
-          approved: requests.filter((r: any) => r.status === 'approved').length,
-          upcoming: requests.filter((r: any) => {
-            const startDate = new Date(r.startDate);
-            const now = new Date();
-            const thirtyDaysFromNow = new Date(now.setDate(now.getDate() + 30));
-            return startDate > now && startDate <= thirtyDaysFromNow && r.status === 'approved';
-          }).length,
-          total: requests.length
-        };
-      }
-    } catch (error) {
-      console.log('No leave data found');
+    if (leaveResponse.ok) {
+      const leaveData = await leaveResponse.json();
+      leaveStats = {
+        pendingRequests: leaveData.pendingRequests || 0,
+        approvedRequests: leaveData.approvedRequests || 0,
+        currentMonthRequests: leaveData.currentMonthRequests || 0,
+        totalRequests: leaveData.totalRequests || 0
+      };
     }
 
     // Fetch PPE stats
+    const ppeResponse = await fetch(`${API_BASE}/api/ppe/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
     let ppeStats = {
-      active: 0,
-      expired: 0,
-      expiringSoon: 0,
-      total: 0
+      assignedItems: 0,
+      expiredItems: 0,
+      dueForInspection: 0,
+      totalIssues: 0
     };
 
-    try {
-      const ppeData = localStorage.getItem('ppe-allocations');
-      if (ppeData) {
-        const allocations = JSON.parse(ppeData);
-        ppeStats = {
-          active: allocations.filter((a: any) => a.status === 'active').length,
-          expired: allocations.filter((a: any) => a.status === 'expired').length,
-          expiringSoon: allocations.filter((a: any) => {
-            const expiryDate = new Date(a.expiryDate);
-            const now = new Date();
-            const thirtyDaysFromNow = new Date(now.setDate(now.getDate() + 30));
-            return expiryDate <= thirtyDaysFromNow && expiryDate > now && a.status === 'active';
-          }).length,
-          total: allocations.length
-        };
-      }
-    } catch (error) {
-      console.log('No PPE data found');
+    if (ppeResponse.ok) {
+      const ppeData = await ppeResponse.json();
+      ppeStats = {
+        assignedItems: ppeData.assignedItems || 0,
+        expiredItems: ppeData.expiredItems || 0,
+        dueForInspection: ppeData.dueForInspection || 0,
+        totalIssues: ppeData.totalIssues || 0
+      };
     }
 
     // Fetch other system stats
@@ -279,15 +278,15 @@ async function getSystemStats() {
       activeStandbyRosters: standbyStats.active,
       scheduledStandbyRosters: standbyStats.scheduled,
       // New modules stats
-      maintenanceOpenRequests: maintenanceStats.openRequests,
-      maintenanceInProgress: maintenanceStats.inProgress,
+      maintenanceOpenRequests: maintenanceStats.open,
+      maintenanceInProgress: maintenanceStats.in_progress,
       maintenanceCritical: maintenanceStats.critical,
-      leavePending: leaveStats.pending,
-      leaveApproved: leaveStats.approved,
-      leaveUpcoming: leaveStats.upcoming,
-      ppeActive: ppeStats.active,
-      ppeExpired: ppeStats.expired,
-      ppeExpiringSoon: ppeStats.expiringSoon
+      leavePending: leaveStats.pendingRequests,
+      leaveApproved: leaveStats.approvedRequests,
+      leaveUpcoming: leaveStats.currentMonthRequests,
+      ppeActive: ppeStats.assignedItems,
+      ppeExpired: ppeStats.expiredItems,
+      ppeExpiringSoon: ppeStats.dueForInspection
     };
 
   } catch (error) {
@@ -489,6 +488,7 @@ export default async function Home() {
       description: "Rich, interactive dashboards for real-time data monitoring of production, safety, and asset health.", 
       color: "indigo", 
       checks: ["Custom Dashboards", "KPI Tracking"],
+      link: "/reports",
       stats: "Live Data",
       buttonText: "View Dashboards"
     }, 
@@ -498,6 +498,7 @@ export default async function Home() {
       description: "Proactive scheduling and tracking of mandatory preventative maintenance tasks and asset inspections.", 
       color: "blue", 
       checks: ["PM Planner", "Task Assignment"],
+      link: "/maintenance",
       stats: `${stats.scheduledMaintenance} Scheduled`,
       buttonText: "Schedule Maintenance"
     }, 
@@ -507,6 +508,7 @@ export default async function Home() {
       description: "Log and monitor utility and machine meter readings to optimize resource consumption and maintenance scheduling.", 
       color: "cyan", 
       checks: ["Usage History", "Alert Setup"],
+      link: "/equipment",
       stats: "Daily Updates",
       buttonText: "Record Readings"
     }, 
@@ -516,6 +518,7 @@ export default async function Home() {
       description: "Real-time visibility into machine status, utilization rates, and scheduled downtimes for maintenance.", 
       color: "cyan", 
       checks: ["Utilization Rate", "Downtime Schedule"],
+      link: "/equipment",
       stats: `${stats.operationalEquipment}/${stats.equipmentCount} Available`,
       buttonText: "Check Availability"
     }, 
@@ -525,6 +528,7 @@ export default async function Home() {
       description: "Manage tool checkout, stock levels, calibration schedules, and replacement costs for engineering equipment.", 
       color: "amber", 
       checks: ["Stock Control", "Calibration Alerts"],
+      link: "/inventory",
       stats: "500+ Tools",
       buttonText: "Manage Tools"
     }, 
@@ -534,6 +538,7 @@ export default async function Home() {
       description: "Digital PTW system for high-risk work: review, approval, tracking, and close-out of required permits.", 
       color: "cyan", 
       checks: ["Digital Sign-off", "Conflict Check"],
+      link: "/reports",
       stats: "Active Permits",
       buttonText: "Manage Permits"
     },
@@ -545,6 +550,7 @@ export default async function Home() {
       description: "Track incidents, manage inspections, report non-conformities, and handle environmental compliance documents.", 
       color: "blue", 
       checks: ["Incident Reporting", "Inspection Forms"],
+      link: "/ppe",
       stats: `${stats.safetyIncidents} Incidents`,
       buttonText: "Manage Safety"
     },
@@ -554,6 +560,7 @@ export default async function Home() {
       description: "Track mandatory employee certifications, expiry dates, and required refresher courses for compliance.", 
       color: "purple", 
       checks: ["Expiry Alerts", "Compliance Reports"],
+      link: "/employees",
       stats: "Certification Tracking",
       buttonText: "Manage Training"
     }, 
@@ -563,6 +570,7 @@ export default async function Home() {
       description: "Securely store all company policies, compliance documents, and operational manuals in one accessible location.", 
       color: "indigo", 
       checks: ["Secure Storage", "Version Control"],
+      link: "/reports",
       stats: `${stats.monthlyReports} Documents`,
       buttonText: "Access Documents"
     }, 
@@ -572,6 +580,7 @@ export default async function Home() {
       description: "Track issue dates, replacement schedules, and mandatory training for all Personal Protective Equipment.", 
       color: "purple", 
       checks: ["Issue Tracking", "Training Logs"],
+      link: "/ppe",
       stats: "Safety Compliance",
       buttonText: "Manage PPE"
     }, 
@@ -581,6 +590,7 @@ export default async function Home() {
       description: "Manage employee vacation, sick leave, and holidays with integrated approval and balance tracking.", 
       color: "green", 
       checks: ["Balance View", "Request Approval"],
+      link: "/leave",
       stats: "Leave Management",
       buttonText: "Track Leave"
     },
@@ -600,6 +610,7 @@ export default async function Home() {
       description: "Assign and track tasks, monitor progress, and manage team workloads with priority-based job allocation system.", 
       color: "blue", 
       checks: ["Task Assignment", "Progress Tracking", "Priority Management"],
+      link: "/maintenance",
       stats: `${stats.openWorkOrders} Active Jobs`,
       buttonText: "Allocate Jobs"
     },
@@ -609,6 +620,7 @@ export default async function Home() {
       description: "Share important announcements, company updates, and critical information with all team members in real-time.", 
       color: "green", 
       checks: ["Announcements", "Priority Alerts", "Archive Management"],
+      link: "/reports",
       stats: "Real-time Updates",
       buttonText: "View Notices"
     },
@@ -837,13 +849,13 @@ export default async function Home() {
                 >
                   <CardContent className="p-6 bg-card rounded-lg h-full flex flex-col">
                     <div className="flex items-start gap-4 mb-4">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-${module.color}-600 to-${module.color}-700 shadow-xl text-white flex-shrink-0`}>
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-full ${getIconBgStyle(module.color)} shadow-xl flex-shrink-0`}>
                         <module.icon className="h-6 w-6" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-bold text-foreground">{module.title}</h3>
-                          <Badge className={`bg-${module.color}-500 hover:bg-${module.color}-600 text-white shadow-md text-xs`}>
+                          <Badge className={`${getButtonStyle(module.color)} text-xs`}>
                             {module.stats}
                           </Badge>
                         </div>
@@ -856,7 +868,7 @@ export default async function Home() {
                     <div className="space-y-2 text-xs text-foreground/80 mb-4 flex-grow">
                       {module.checks.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-2">
-                          <CheckCircle className={`h-3 w-3 text-${module.color}-500`} />
+                          <CheckCircle className={`h-3 w-3 ${getCheckColor(module.color)}`} />
                           <span>{item}</span>
                         </div>
                       ))}
