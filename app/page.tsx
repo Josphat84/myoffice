@@ -180,11 +180,33 @@ function MobileNav() {
   );
 }
 
+// Define types for our data structures
+type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple';
+
+interface StatItem {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<any>;
+  color: string;
+  subtitle?: string;
+}
+
+interface ModuleItem {
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+  color: ColorType;
+  checks: string[];
+  link?: string;
+  stats: string;
+  buttonText: string;
+}
+
 export default async function Home() {
   const stats = await getSystemStats();
 
   // Stats items with actual overtime data
-  const statItems = [
+  const statItems: StatItem[] = [
     {
       label: "Total Personnel",
       value: stats.employeeCount,
@@ -213,7 +235,7 @@ export default async function Home() {
   ];
 
   // Core Management Modules - Only Overtime, Personnel, and Assets
-  const coreModules = [
+  const coreModules: ModuleItem[] = [
     { 
       icon: Users, 
       title: "Personnel", 
@@ -247,7 +269,7 @@ export default async function Home() {
   ];
 
   // Engineering & Operational Support Modules
-  const operationalModules = [
+  const operationalModules: ModuleItem[] = [
     // Engineering Modules
     { 
       icon: BarChart3, 
@@ -374,8 +396,8 @@ export default async function Home() {
   ];
 
   // Utility function to get the correct button style based on feature color
-  const getButtonStyle = (color) => {
-      const colorMap = {
+  const getButtonStyle = (color: ColorType) => {
+      const colorMap: Record<ColorType, string> = {
           indigo: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30",
           cyan: "bg-cyan-600 hover:bg-cyan-700 shadow-cyan-500/30",
           green: "bg-green-600 hover:bg-green-700 shadow-green-500/30",
@@ -387,8 +409,8 @@ export default async function Home() {
   }
 
   // Utility function for icon box background color
-  const getIconBgStyle = (color) => {
-    const bgMap = {
+  const getIconBgStyle = (color: ColorType) => {
+    const bgMap: Record<ColorType, string> = {
         indigo: "bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400",
         cyan: "bg-cyan-50 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400",
         green: "bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400",
@@ -400,8 +422,8 @@ export default async function Home() {
   }
   
   // Utility function for check mark color
-  const getCheckColor = (color) => {
-    const checkMap = {
+  const getCheckColor = (color: ColorType) => {
+    const checkMap: Record<ColorType, string> = {
         indigo: "text-indigo-500",
         cyan: "text-cyan-500",
         green: "text-green-500",
@@ -607,8 +629,8 @@ export default async function Home() {
                       ))}
                     </div>
 
-                    <Button size="sm" className={`w-full gap-2 bg-${module.color}-600 hover:bg-${module.color}-700 text-white`} asChild>
-                      <Link href={module.link}>
+                    <Button size="sm" className={`w-full gap-2 ${getButtonStyle(module.color)}`} asChild>
+                      <Link href={module.link || "#"}>
                         {module.buttonText}
                         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                       </Link>
