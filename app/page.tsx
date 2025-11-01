@@ -36,14 +36,17 @@ import {
   Calculator,
   FilePieChart,
   Briefcase,
-  MessageSquare
+  MessageSquare,
+  Package, // Added for Inventory
+  ClipboardCheck, // Added for Maintenance
+  CalendarDays // Added for Leave
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 // Define types for our data structures
-type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple';
+type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange';
 
 interface StatItem {
   label: string;
@@ -118,6 +121,125 @@ async function getSystemStats() {
       equipmentCount = equipment.length;
     }
 
+    // Fetch inventory stats
+    const inventoryResponse = await fetch(`${API_BASE}/api/inventory/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
+    let inventoryStats = {
+      totalItems: 0,
+      lowStock: 0,
+      outOfStock: 0,
+      totalValue: 0
+    };
+
+    if (inventoryResponse.ok) {
+      inventoryStats = await inventoryResponse.json();
+    }
+
+    // Fetch standby stats
+    const standbyResponse = await fetch(`${API_BASE}/api/standby/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
+    let standbyStats = {
+      total: 0,
+      active: 0,
+      scheduled: 0,
+      completed: 0
+    };
+
+    if (standbyResponse.ok) {
+      standbyStats = await standbyResponse.json();
+    }
+
+    // Fetch maintenance stats
+    let maintenanceStats = {
+      openRequests: 0,
+      inProgress: 0,
+      critical: 0,
+      completed: 0
+    };
+
+    try {
+      const maintenanceData = localStorage.getItem('maintenance-requests');
+      if (maintenanceData) {
+        const requests = JSON.parse(maintenanceData);
+        maintenanceStats = {
+          openRequests: requests.filter((r: any) => r.status === 'open').length,
+          inProgress: requests.filter((r: any) => r.status === 'in-progress').length,
+          critical: requests.filter((r: any) => r.priority === 'critical').length,
+          completed: requests.filter((r: any) => r.status === 'completed').length
+        };
+      }
+    } catch (error) {
+      console.log('No maintenance data found');
+    }
+
+    // Fetch leave stats
+    let leaveStats = {
+      pending: 0,
+      approved: 0,
+      upcoming: 0,
+      total: 0
+    };
+
+    try {
+      const leaveData = localStorage.getItem('leave-requests');
+      if (leaveData) {
+        const requests = JSON.parse(leaveData);
+        leaveStats = {
+          pending: requests.filter((r: any) => r.status === 'pending').length,
+          approved: requests.filter((r: any) => r.status === 'approved').length,
+          upcoming: requests.filter((r: any) => {
+            const startDate = new Date(r.startDate);
+            const now = new Date();
+            const thirtyDaysFromNow = new Date(now.setDate(now.getDate() + 30));
+            return startDate > now && startDate <= thirtyDaysFromNow && r.status === 'approved';
+          }).length,
+          total: requests.length
+        };
+      }
+    } catch (error) {
+      console.log('No leave data found');
+    }
+
+    // Fetch PPE stats
+    let ppeStats = {
+      active: 0,
+      expired: 0,
+      expiringSoon: 0,
+      total: 0
+    };
+
+    try {
+      const ppeData = localStorage.getItem('ppe-allocations');
+      if (ppeData) {
+        const allocations = JSON.parse(ppeData);
+        ppeStats = {
+          active: allocations.filter((a: any) => a.status === 'active').length,
+          expired: allocations.filter((a: any) => a.status === 'expired').length,
+          expiringSoon: allocations.filter((a: any) => {
+            const expiryDate = new Date(a.expiryDate);
+            const now = new Date();
+            const thirtyDaysFromNow = new Date(now.setDate(now.getDate() + 30));
+            return expiryDate <= thirtyDaysFromNow && expiryDate > now && a.status === 'active';
+          }).length,
+          total: allocations.length
+        };
+      }
+    } catch (error) {
+      console.log('No PPE data found');
+    }
+
     // Fetch other system stats
     const systemResponse = await fetch(`${API_BASE}/api/system/stats`, {
       method: 'GET',
@@ -148,7 +270,24 @@ async function getSystemStats() {
       pendingOvertime: overtimeStats.pendingOvertime,
       approvedOvertime: overtimeStats.approvedOvertime,
       totalOvertimeHours: overtimeStats.totalOvertimeHours,
-      monthlyOvertime: overtimeStats.monthlyOvertime
+      monthlyOvertime: overtimeStats.monthlyOvertime,
+      totalInventoryItems: inventoryStats.totalItems,
+      lowStockItems: inventoryStats.lowStock,
+      outOfStockItems: inventoryStats.outOfStock,
+      inventoryValue: inventoryStats.totalValue,
+      totalStandbyRosters: standbyStats.total,
+      activeStandbyRosters: standbyStats.active,
+      scheduledStandbyRosters: standbyStats.scheduled,
+      // New modules stats
+      maintenanceOpenRequests: maintenanceStats.openRequests,
+      maintenanceInProgress: maintenanceStats.inProgress,
+      maintenanceCritical: maintenanceStats.critical,
+      leavePending: leaveStats.pending,
+      leaveApproved: leaveStats.approved,
+      leaveUpcoming: leaveStats.upcoming,
+      ppeActive: ppeStats.active,
+      ppeExpired: ppeStats.expired,
+      ppeExpiringSoon: ppeStats.expiringSoon
     };
 
   } catch (error) {
@@ -168,6 +307,23 @@ async function getSystemStats() {
       totalOvertimeHours: 245,
       monthlyOvertime: 89,
       monthlyReports: 23,
+      totalInventoryItems: 156,
+      lowStockItems: 12,
+      outOfStockItems: 3,
+      inventoryValue: 28500,
+      totalStandbyRosters: 8,
+      activeStandbyRosters: 3,
+      scheduledStandbyRosters: 5,
+      // New modules fallback data
+      maintenanceOpenRequests: 8,
+      maintenanceInProgress: 12,
+      maintenanceCritical: 3,
+      leavePending: 5,
+      leaveApproved: 15,
+      leaveUpcoming: 7,
+      ppeActive: 45,
+      ppeExpired: 8,
+      ppeExpiringSoon: 12
     };
   }
 }
@@ -186,7 +342,11 @@ function MobileNav() {
           <li><Link href="/equipment" className="hover:text-primary">Assets</Link></li>
           <li><Link href="/overtime" className="hover:text-primary">Overtime</Link></li>
           <li><Link href="/reports" className="hover:text-primary">Reports</Link></li>
-          <li><Link href="#operational-modules" className="hover:text-primary">Modules</Link></li>
+          <li><Link href="/inventory" className="hover:text-primary">Inventory</Link></li>
+          <li><Link href="/standby" className="hover:text-primary">Standby</Link></li>
+          <li><Link href="/maintenance" className="hover:text-primary">Maintenance</Link></li>
+          <li><Link href="/leave" className="hover:text-primary">Leave</Link></li>
+          <li><Link href="/ppe" className="hover:text-primary">PPE</Link></li>
           <li className="border-t border-border my-2"></li>
           <li><Link href="/login" className="flex items-center gap-2 hover:text-primary">
             <LogIn className="h-4 w-4" />
@@ -205,7 +365,7 @@ function MobileNav() {
 export default async function Home() {
   const stats = await getSystemStats();
 
-  // Stats items with actual overtime data
+  // Stats items with actual data including new modules
   const statItems: StatItem[] = [
     {
       label: "Total Personnel",
@@ -220,21 +380,22 @@ export default async function Home() {
       color: "text-cyan-600 dark:text-cyan-400",
     },
     {
-      label: "Operational Rate",
-      value: `${stats.operationalRate}%`,
-      icon: TrendingUp,
-      color: "text-green-600 dark:text-green-400",
+      label: "Open Maintenance",
+      value: stats.maintenanceOpenRequests,
+      icon: ClipboardCheck,
+      color: "text-orange-600 dark:text-orange-400",
+      subtitle: `${stats.maintenanceCritical} critical`
     },
     {
-      label: "Pending Overtime",
-      value: stats.pendingOvertime,
-      icon: Calculator,
-      color: "text-amber-600 dark:text-amber-400",
-      subtitle: `${stats.approvedOvertime} approved this month`
+      label: "Pending Leave",
+      value: stats.leavePending,
+      icon: CalendarDays,
+      color: "text-pink-600 dark:text-pink-400",
+      subtitle: `${stats.leaveUpcoming} upcoming`
     },
   ];
 
-  // Core Management Modules - Only Overtime, Personnel, and Assets
+  // Core Management Modules - Now including Maintenance, Leave, and PPE
   const coreModules: ModuleItem[] = [
     { 
       icon: Users, 
@@ -257,6 +418,26 @@ export default async function Home() {
       buttonText: "Manage Assets"
     },
     { 
+      icon: Package, 
+      title: "Inventory", 
+      description: "Track stock levels, manage supplies, and monitor inventory value with automated reordering.", 
+      color: "green", 
+      checks: ["Stock Tracking", "Supplier Management", "Reorder Alerts", "Cost Analysis"],
+      link: "/inventory",
+      stats: `${stats.totalInventoryItems} Items`,
+      buttonText: "Manage Inventory"
+    },
+    { 
+      icon: Clock, 
+      title: "Standby Roster", 
+      description: "Manage on-call schedules, emergency response teams, and shift coverage across departments.", 
+      color: "orange", 
+      checks: ["Shift Management", "Emergency Response", "Contact Coordination", "Coverage Planning"],
+      link: "/standby",
+      stats: `${stats.activeStandbyRosters} Active`,
+      buttonText: "Manage Standby"
+    },
+    { 
       icon: Calculator, 
       title: "Overtime", 
       description: "Track, approve, and manage employee overtime requests with automated calculations and compliance tracking.", 
@@ -265,6 +446,37 @@ export default async function Home() {
       link: "/overtime",
       stats: `${stats.pendingOvertime} Pending`,
       buttonText: "Manage Overtime"
+    },
+    // New modules added to core management
+    { 
+      icon: ClipboardCheck, 
+      title: "Maintenance", 
+      description: "Track work orders, assign technicians, and monitor maintenance activities across all equipment.", 
+      color: "orange", 
+      checks: ["Work Order Tracking", "Technician Assignment", "Preventive Maintenance", "Cost Tracking"],
+      link: "/maintenance",
+      stats: `${stats.maintenanceOpenRequests} Open`,
+      buttonText: "Manage Maintenance"
+    },
+    { 
+      icon: CalendarDays, 
+      title: "Leave Management", 
+      description: "Track employee time off, approve requests, and manage leave balances across the organization.", 
+      color: "pink", 
+      checks: ["Request Approval", "Balance Tracking", "Calendar View", "Compliance"],
+      link: "/leave",
+      stats: `${stats.leavePending} Pending`,
+      buttonText: "Manage Leave"
+    },
+    { 
+      icon: Shield, 
+      title: "PPE Management", 
+      description: "Track protective equipment allocations, monitor expiry dates, and manage safety gear assignments.", 
+      color: "blue", 
+      checks: ["Allocation Tracking", "Expiry Monitoring", "Condition Assessment", "Safety Compliance"],
+      link: "/ppe",
+      stats: `${stats.ppeActive} Active`,
+      buttonText: "Manage PPE"
     }
   ];
 
@@ -337,15 +549,6 @@ export default async function Home() {
       buttonText: "Manage Safety"
     },
     { 
-      icon: Clock, 
-      title: "Duty & Standby Roster", 
-      description: "Manage shift schedules, allocate standby teams, and ensure coverage for critical operational periods.", 
-      color: "amber", 
-      checks: ["Shift Rotation", "Contact Lists"],
-      stats: "24/7 Coverage",
-      buttonText: "Manage Roster"
-    }, 
-    { 
       icon: Award, 
       title: "Training & Certification", 
       description: "Track mandatory employee certifications, expiry dates, and required refresher courses for compliance.", 
@@ -387,6 +590,7 @@ export default async function Home() {
       description: "Generate comprehensive reports, export data, and analyze trends across all operational modules.", 
       color: "indigo", 
       checks: ["Custom Reports", "Data Export"],
+      link: "/reports",
       stats: `${stats.monthlyReports} Reports`,
       buttonText: "Generate Reports"
     },
@@ -419,6 +623,8 @@ export default async function Home() {
       amber: "bg-amber-600 hover:bg-amber-700 shadow-amber-500/30",
       blue: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30", 
       purple: "bg-purple-600 hover:bg-purple-700 shadow-purple-500/30",
+      orange: "bg-orange-600 hover:bg-orange-700 shadow-orange-500/30",
+      pink: "bg-pink-600 hover:bg-pink-700 shadow-pink-500/30",
     };
     return `${colorMap[color] || colorMap.indigo} text-white`; 
   }
@@ -432,6 +638,8 @@ export default async function Home() {
       amber: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400",
       blue: "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400", 
       purple: "bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400",
+      orange: "bg-orange-50 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400",
+      pink: "bg-pink-50 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400",
     };
     return bgMap[color] || bgMap.indigo;
   }
@@ -445,6 +653,8 @@ export default async function Home() {
       amber: "text-amber-500",
       blue: "text-blue-500",
       purple: "text-purple-500",
+      orange: "text-orange-500",
+      pink: "text-pink-500",
     };
     return checkMap[color] || checkMap.indigo;
   }
@@ -452,7 +662,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       
-      {/* Header with Overtime navigation */}
+      {/* Header with new module navigation */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md shadow-sm">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex h-16 items-center justify-between">
@@ -467,8 +677,8 @@ export default async function Home() {
               </div>
             </div>
             
-            {/* Desktop Navigation with Overtime */}
-            <nav className="hidden md:flex items-center gap-7">
+            {/* Desktop Navigation with new modules */}
+            <nav className="hidden md:flex items-center gap-6">
               <Link href="/" className="text-sm font-semibold text-primary transition-colors hover:text-primary/80">
                 Home
               </Link>
@@ -484,8 +694,21 @@ export default async function Home() {
               <Link href="/reports" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                 Reports
               </Link>
-              <Link href="#operational-modules" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Modules
+              <Link href="/inventory" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Inventory
+              </Link>
+              <Link href="/standby" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Standby
+              </Link>
+              {/* New Module Links */}
+              <Link href="/maintenance" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Maintenance
+              </Link>
+              <Link href="/leave" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Leave
+              </Link>
+              <Link href="/ppe" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                PPE
               </Link>
             </nav>
 
@@ -552,9 +775,9 @@ export default async function Home() {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="h-10 sm:h-12 px-6 sm:px-8 gap-2 text-white border-white/50 hover:bg-white/10 hover:text-white" asChild>
-                  <Link href="/overtime">
-                    <Calculator className="h-5 w-5" />
-                    Track Overtime
+                  <Link href="/maintenance">
+                    <ClipboardCheck className="h-5 w-5" />
+                    Manage Maintenance
                   </Link>
                 </Button>
               </div>
@@ -562,7 +785,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Stats Overview with Overtime */}
+        {/* Stats Overview with new modules */}
         <section className="py-10 md:py-12 bg-background border-b border-border"> 
           <div className="container mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto"> 
@@ -581,12 +804,7 @@ export default async function Home() {
                     <div className="text-2xl font-extrabold text-foreground"> 
                       {item.value}
                     </div>
-                    {item.label === "Operational Rate" && (
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {stats.operationalEquipment} assets operational
-                      </p>
-                    )}
-                    {item.label === "Pending Overtime" && item.subtitle && (
+                    {item.subtitle && (
                       <p className="text-[10px] text-muted-foreground mt-1">
                         {item.subtitle}
                       </p>
@@ -598,7 +816,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Core Management Modules - Only Overtime, Personnel, and Assets */}
+        {/* Core Management Modules - Now with 8 modules including new ones */}
         <section className="py-16 md:py-28 bg-muted/50">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center mb-12 sm:mb-16">
@@ -606,11 +824,11 @@ export default async function Home() {
                 Core Management Modules
               </h2>
               <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Essential tools for managing your workforce, assets, and overtime operations.
+                Essential tools for managing your workforce, assets, inventory, standby, overtime, maintenance, leave, and PPE operations.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
               {coreModules.map((module, index) => (
                 <Card 
                   key={index}
@@ -735,9 +953,9 @@ export default async function Home() {
                       </Link>
                     </Button>
                     <Button size="lg" variant="outline" className="h-10 sm:h-12 px-6 sm:px-8 gap-2 text-foreground border-border hover:bg-accent hover:text-primary" asChild>
-                      <Link href="/reports">
-                        <FilePieChart className="h-5 w-5" />
-                        View Sample Reports
+                      <Link href="/maintenance">
+                        <ClipboardCheck className="h-5 w-5" />
+                        Manage Maintenance
                       </Link>
                     </Button>
                   </div>
@@ -787,6 +1005,11 @@ export default async function Home() {
                 <li><Link href="/equipment" className="hover:text-white transition-colors">Assets</Link></li>
                 <li><Link href="/overtime" className="hover:text-white transition-colors">Overtime</Link></li>
                 <li><Link href="/reports" className="hover:text-white transition-colors">Reports</Link></li>
+                <li><Link href="/inventory" className="hover:text-white transition-colors">Inventory</Link></li>
+                <li><Link href="/standby" className="hover:text-white transition-colors">Standby</Link></li>
+                <li><Link href="/maintenance" className="hover:text-white transition-colors">Maintenance</Link></li>
+                <li><Link href="/leave" className="hover:text-white transition-colors">Leave</Link></li>
+                <li><Link href="/ppe" className="hover:text-white transition-colors">PPE</Link></li>
               </ul>
             </div>
 
@@ -794,16 +1017,16 @@ export default async function Home() {
               <h4 className="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-400">System Status</h4>
               <div className="space-y-3 text-sm text-slate-400">
                 <div className="flex justify-between">
-                  <span>Pending Overtime:</span>
-                  <span className="text-white font-medium">{stats.pendingOvertime}</span>
+                  <span>Open Maintenance:</span>
+                  <span className="text-orange-500 font-medium">{stats.maintenanceOpenRequests}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Approved Overtime:</span>
-                  <span className="text-white font-medium">{stats.approvedOvertime}</span>
+                  <span>Pending Leave:</span>
+                  <span className="text-pink-500 font-medium">{stats.leavePending}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Total Hours:</span>
-                  <span className="text-white font-medium">{stats.totalOvertimeHours}h</span>
+                  <span>Active PPE:</span>
+                  <span className="text-blue-500 font-medium">{stats.ppeActive}</span>
                 </div>
                 <div className="flex justify-between mt-2 pt-2 border-t border-slate-800">
                   <span className="font-semibold text-white">Overall:</span>
