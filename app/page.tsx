@@ -239,6 +239,44 @@ async function getSystemStats() {
       };
     }
 
+    // Fetch documents stats
+    const documentsResponse = await fetch(`${API_BASE}/api/documents/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
+    let documentsStats = {
+      totalDocuments: 0,
+      recentUploads: 0,
+      categories: 0
+    };
+
+    if (documentsResponse.ok) {
+      documentsStats = await documentsResponse.json();
+    }
+
+    // Fetch notice board stats
+    const noticesResponse = await fetch(`${API_BASE}/api/notices/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
+    let noticesStats = {
+      activeNotices: 0,
+      totalNotices: 0,
+      urgentNotices: 0
+    };
+
+    if (noticesResponse.ok) {
+      noticesStats = await noticesResponse.json();
+    }
+
     // Fetch other system stats
     const systemResponse = await fetch(`${API_BASE}/api/system/stats`, {
       method: 'GET',
@@ -286,7 +324,12 @@ async function getSystemStats() {
       leaveUpcoming: leaveStats.currentMonthRequests,
       ppeActive: ppeStats.assignedItems,
       ppeExpired: ppeStats.expiredItems,
-      ppeExpiringSoon: ppeStats.dueForInspection
+      ppeExpiringSoon: ppeStats.dueForInspection,
+      // Documents and Notices stats
+      totalDocuments: documentsStats.totalDocuments,
+      recentDocuments: documentsStats.recentUploads,
+      activeNotices: noticesStats.activeNotices,
+      urgentNotices: noticesStats.urgentNotices
     };
 
   } catch (error) {
@@ -322,7 +365,12 @@ async function getSystemStats() {
       leaveUpcoming: 7,
       ppeActive: 45,
       ppeExpired: 8,
-      ppeExpiringSoon: 12
+      ppeExpiringSoon: 12,
+      // Documents and Notices fallback data
+      totalDocuments: 156,
+      recentDocuments: 12,
+      activeNotices: 8,
+      urgentNotices: 3
     };
   }
 }
@@ -346,6 +394,8 @@ function MobileNav() {
           <li><Link href="/maintenance" className="hover:text-primary">Maintenance</Link></li>
           <li><Link href="/leave" className="hover:text-primary">Leave</Link></li>
           <li><Link href="/ppe" className="hover:text-primary">PPE</Link></li>
+          <li><Link href="/documents" className="hover:text-primary">Documents</Link></li>
+          <li><Link href="/noticeboard" className="hover:text-primary">Notice Board</Link></li>
           <li className="border-t border-border my-2"></li>
           <li><Link href="/login" className="flex items-center gap-2 hover:text-primary">
             <LogIn className="h-4 w-4" />
@@ -488,7 +538,7 @@ export default async function Home() {
       description: "Rich, interactive dashboards for real-time data monitoring of production, safety, and asset health.", 
       color: "indigo", 
       checks: ["Custom Dashboards", "KPI Tracking"],
-      link: "/reports",
+      link: "/visualization",
       stats: "Live Data",
       buttonText: "View Dashboards"
     }, 
@@ -560,7 +610,7 @@ export default async function Home() {
       description: "Track mandatory employee certifications, expiry dates, and required refresher courses for compliance.", 
       color: "purple", 
       checks: ["Expiry Alerts", "Compliance Reports"],
-      link: "/employees",
+      link: "/training",
       stats: "Certification Tracking",
       buttonText: "Manage Training"
     }, 
@@ -570,8 +620,8 @@ export default async function Home() {
       description: "Securely store all company policies, compliance documents, and operational manuals in one accessible location.", 
       color: "indigo", 
       checks: ["Secure Storage", "Version Control"],
-      link: "/reports",
-      stats: `${stats.monthlyReports} Documents`,
+      link: "/documents",
+      stats: `${stats.totalDocuments} Documents`,
       buttonText: "Access Documents"
     }, 
     { 
@@ -620,8 +670,8 @@ export default async function Home() {
       description: "Share important announcements, company updates, and critical information with all team members in real-time.", 
       color: "green", 
       checks: ["Announcements", "Priority Alerts", "Archive Management"],
-      link: "/reports",
-      stats: "Real-time Updates",
+      link: "/noticeboard",
+      stats: `${stats.activeNotices} Active`,
       buttonText: "View Notices"
     },
   ];
@@ -721,6 +771,12 @@ export default async function Home() {
               </Link>
               <Link href="/ppe" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                 PPE
+              </Link>
+              <Link href="/documents" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Documents
+              </Link>
+              <Link href="/noticeboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Notice Board
               </Link>
             </nav>
 
@@ -1022,6 +1078,8 @@ export default async function Home() {
                 <li><Link href="/maintenance" className="hover:text-white transition-colors">Maintenance</Link></li>
                 <li><Link href="/leave" className="hover:text-white transition-colors">Leave</Link></li>
                 <li><Link href="/ppe" className="hover:text-white transition-colors">PPE</Link></li>
+                <li><Link href="/documents" className="hover:text-white transition-colors">Documents</Link></li>
+                <li><Link href="/noticeboard" className="hover:text-white transition-colors">Notice Board</Link></li>
               </ul>
             </div>
 
@@ -1039,6 +1097,10 @@ export default async function Home() {
                 <div className="flex justify-between">
                   <span>Active PPE:</span>
                   <span className="text-blue-500 font-medium">{stats.ppeActive}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Active Notices:</span>
+                  <span className="text-green-500 font-medium">{stats.activeNotices}</span>
                 </div>
                 <div className="flex justify-between mt-2 pt-2 border-t border-slate-800">
                   <span className="font-semibold text-white">Overall:</span>
