@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Activity, TrendingUp, TrendingDown, Clock, Settings, Zap, 
-    Shield, MapPin, Loader2, Target, Users, Factory, Layers
+    Shield, MapPin, Loader2, Target, Users, Factory, Layers, AlertTriangle, X // Added AlertTriangle and X for HealthIndicator
 } from 'lucide-react';
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -48,7 +48,8 @@ const KPICard = ({ name, value, unit, trend, target }) => {
                             <trendIcon className="h-4 w-4" />
                         </span>
                     </span>
-                </div>
+                </span> {/* <-- THIS WAS THE MISSING CLOSING SPAN TAG */}
+            </div>
         </Card>
     );
 };
@@ -57,16 +58,16 @@ const KPICard = ({ name, value, unit, trend, target }) => {
 const HealthIndicator = ({ asset, score, status, runtime }) => {
     let color = 'bg-green-500';
     let ring = 'ring-green-300';
-    let icon = Zap;
+    // let icon = Zap; // Zap is only used visually, not rendered
 
     if (status === 'Warning') {
         color = 'bg-yellow-500';
         ring = 'ring-yellow-300';
-        icon = AlertTriangle;
+        // icon = AlertTriangle;
     } else if (status === 'Critical') {
         color = 'bg-red-500';
         ring = 'ring-red-300';
-        icon = X;
+        // icon = X;
     }
 
     return (
