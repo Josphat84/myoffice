@@ -1,5 +1,6 @@
 // OperationalViz.jsx - Rich, Interactive Operational Dashboard
 
+'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Activity, TrendingUp, TrendingDown, Clock, Settings, Zap, 
