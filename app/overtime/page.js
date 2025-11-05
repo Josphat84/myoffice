@@ -114,16 +114,27 @@ const ClientOnly = ({ children, fallback = null }) => {
 const makeApiRequest = async (endpoint, options = {}) => {
     const url = `${API_BASE}${endpoint}`;
     
+    // Default headers
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers,
+    };
+
+    // Prepare request config
     const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
+        method: options.method || 'GET',
+        headers,
         ...options,
     };
 
+    // Add body for non-GET requests
+    if (config.method !== 'GET' && options.body) {
+        config.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+    }
+
     try {
-        console.log(`Making API request to: ${url}`);
+        console.log(`Making API request to: ${url}`, { method: config.method });
         const response = await fetch(url, config);
         
         // If response is not ok, handle error without using Error constructor
@@ -152,7 +163,6 @@ const makeApiRequest = async (endpoint, options = {}) => {
                 name: 'APIError'
             };
             
-            // Use a simple throw with string or object
             throw errorObj;
         }
 
@@ -173,7 +183,6 @@ const makeApiRequest = async (endpoint, options = {}) => {
         
     } catch (error) {
         console.error(`API request to ${endpoint} failed:`, error);
-        // Re-throw the error as is
         throw error;
     }
 };
@@ -247,12 +256,20 @@ const useOvertimeManagement = () => {
     const mutateOvertime = async (method, endpoint, data = null) => {
         setError(null);
         try {
-            const options = { method };
+            const options = { 
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            
             if (data && method !== 'GET') {
                 options.body = JSON.stringify(data);
             }
             
+            console.log(`Making ${method} request to ${endpoint} with data:`, data);
             const result = await makeApiRequest(endpoint, options);
+            
             // Refresh the data after successful mutation
             await fetchOvertimeRequests();
             return { success: true, data: result };
