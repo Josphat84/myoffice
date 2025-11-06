@@ -72,7 +72,7 @@ async function getSystemStats() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com';
     
     // Fetch actual overtime data
-    const overtimeResponse = await fetch(`${API_BASE}/api/overtime/stats`, {
+    const overtimeResponse = await fetch(`${API_BASE}/api/overtime`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
