@@ -1,1259 +1,1257 @@
-// app/ppe/page.js
-"use client";
+//PPE Management Page
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { 
-  Shield,
-  Users,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Eye,
+  Shield, 
+  Search, 
+  Plus, 
+  Calendar, 
+  Clock, 
+  AlertTriangle, 
+  CheckCircle, 
+  User,
   Edit,
   Trash2,
-  RefreshCw,
-  Home,
-  ArrowLeft,
-  SlidersHorizontal,
   X,
-  Grid,
-  List,
-  User,
-  FileText,
-  TrendingUp,
-  AlertTriangle,
+  Download,
+  Bell,
+  History,
   Package,
-  Truck,
-  Archive,
-  RotateCcw,
-  Scissors,
-  Calendar // Added missing import
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  Users,
+  TrendingUp,
+  Eye,
+  ShoppingCart,
+  FileText,
+  Printer,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Award,
+  ChevronDown,
+  Filter,
+  ChevronRight
+} from 'lucide-react';
+import { format, addMonths, addDays, isBefore, isAfter, differenceInDays } from 'date-fns';
 
-const PPE_STORAGE_KEY = 'ppe-allocations';
-const PPE_ITEMS_KEY = 'ppe-items';
+// Custom Select Component (self-contained)
+const CustomSelect = ({ value, onChange, options, placeholder, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find(opt => opt.value === value);
 
-export default function PPEPage() {
-  const [allocations, setAllocations] = useState([]);
-  const [ppeItems, setPpeItems] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("grid");
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState([]);
-  const [selectedTypes, setSelectedTypes] = useState([]);
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full px-3 py-2 text-left bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+          disabled ? 'bg-slate-100 cursor-not-allowed' : 'cursor-pointer hover:border-slate-400'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <span className={selectedOption ? 'text-slate-900' : 'text-slate-500'}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        </div>
+      </button>
+      
+      {isOpen && !disabled && (
+        <>
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute z-20 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
-  // PPE categories and statuses
-  const ppeCategories = ['safety-helmet', 'safety-glasses', 'high-visibility', 'protective-footwear', 'gloves', 'ear-protection', 'respiratory', 'full-body'];
-  const allocationStatuses = ['active', 'expired', 'pending-return', 'damaged', 'lost'];
+// PPE Item Categories and Types
+const PPE_CATEGORIES = {
+  head: {
+    name: 'Head Protection',
+    icon: '🪖',
+    items: ['Hard Hat', 'Bump Cap', 'Welding Helmet'],
+    lifespan: 24
+  },
+  eye: {
+    name: 'Eye & Face Protection',
+    icon: '🥽',
+    items: ['Safety Glasses', 'Goggles', 'Face Shield', 'Welding Goggles'],
+    lifespan: 12
+  },
+  hearing: {
+    name: 'Hearing Protection',
+    icon: '🎧',
+    items: ['Ear Plugs', 'Ear Muffs', 'Canal Caps'],
+    lifespan: 6
+  },
+  respiratory: {
+    name: 'Respiratory Protection',
+    icon: '😷',
+    items: ['Dust Mask', 'Respirator', 'Gas Mask', 'N95 Mask'],
+    lifespan: 6
+  },
+  hand: {
+    name: 'Hand Protection',
+    icon: '🧤',
+    items: ['Leather Gloves', 'Cut-Resistant Gloves', 'Chemical Gloves', 'Welding Gloves'],
+    lifespan: 3
+  },
+  foot: {
+    name: 'Foot Protection',
+    icon: '🥾',
+    items: ['Safety Boots', 'Steel Toe Boots', 'Chemical Boots', 'Electrical Hazard Boots'],
+    lifespan: 12
+  },
+  body: {
+    name: 'Body Protection',
+    icon: '🦺',
+    items: ['Hi-Vis Vest', 'Coveralls', 'Apron', 'Lab Coat', 'Welding Jacket'],
+    lifespan: 12
+  },
+  fall: {
+    name: 'Fall Protection',
+    icon: '🪢',
+    items: ['Safety Harness', 'Lanyard', 'Anchor Point', 'Lifeline'],
+    lifespan: 12
+  }
+};
 
-  useEffect(() => {
-    loadPPEData();
-  }, []);
-
-  const loadPPEData = async () => {
-    try {
-      // Load employees from API
-      const employeesResponse = await fetch('/api/employees');
-      if (employeesResponse.ok) {
-        const employeesData = await employeesResponse.json();
-        setEmployees(employeesData);
-      }
-
-      // Load PPE items and allocations from localStorage
-      const storedItems = localStorage.getItem(PPE_ITEMS_KEY);
-      const storedAllocations = localStorage.getItem(PPE_STORAGE_KEY);
-
-      if (storedItems) {
-        setPpeItems(JSON.parse(storedItems));
-      } else {
-        const sampleItems = generateSamplePPEItems();
-        setPpeItems(sampleItems);
-        savePPEItems(sampleItems);
-      }
-
-      if (storedAllocations) {
-        setAllocations(JSON.parse(storedAllocations));
-      } else {
-        const sampleAllocations = await generateSampleAllocations();
-        setAllocations(sampleAllocations);
-        saveAllocations(sampleAllocations);
-      }
-    } catch (error) {
-      console.error('Error loading PPE data:', error);
-    }
-  };
-
-  const generateSamplePPEItems = () => {
-    return [
+// Sample Employee Data
+const SAMPLE_EMPLOYEES = [
+  {
+    id: 'EMP001',
+    name: 'John Smith',
+    department: 'Maintenance',
+    position: 'Maintenance Technician',
+    email: 'john.smith@company.com',
+    phone: '+1-555-0101',
+    hireDate: '2022-01-15',
+    photo: '👷',
+    ppeHistory: [
       {
-        id: 'ppe-001',
-        itemCode: 'SH-001',
-        itemName: 'Hard Hat - Standard',
-        category: 'safety-helmet',
-        size: 'Universal',
-        color: 'Yellow',
-        material: 'HDPE',
-        safetyStandard: 'ANSI Z89.1',
-        unitCost: 25.99,
-        reorderLevel: 10,
-        currentStock: 45,
-        isActive: true
+        id: 'PPE001',
+        category: 'head',
+        item: 'Hard Hat',
+        size: 'L',
+        issuedDate: '2024-01-15',
+        expiryDate: '2026-01-15',
+        quantity: 1,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Standard yellow hard hat'
       },
       {
-        id: 'ppe-002',
-        itemCode: 'SG-001',
-        itemName: 'Safety Glasses - Clear',
-        category: 'safety-glasses',
-        size: 'Universal',
-        color: 'Clear',
-        material: 'Polycarbonate',
-        safetyStandard: 'ANSI Z87.1',
-        unitCost: 8.50,
-        reorderLevel: 25,
-        currentStock: 32,
-        isActive: true
-      },
-      {
-        id: 'ppe-003',
-        itemCode: 'HV-001',
-        itemName: 'High-Vis Vest - Class 2',
-        category: 'high-visibility',
-        size: 'XL',
-        color: 'Orange',
-        material: 'Polyester Mesh',
-        safetyStandard: 'ANSI/ISEA 107',
-        unitCost: 12.75,
-        reorderLevel: 15,
-        currentStock: 8,
-        isActive: true
-      },
-      {
-        id: 'ppe-004',
-        itemCode: 'PF-001',
-        itemName: 'Steel-Toe Boots',
-        category: 'protective-footwear',
+        id: 'PPE002',
+        category: 'foot',
+        item: 'Safety Boots',
         size: '10',
-        color: 'Brown',
-        material: 'Leather',
-        safetyStandard: 'ASTM F2413',
-        unitCost: 89.99,
-        reorderLevel: 5,
-        currentStock: 12,
-        isActive: true
+        issuedDate: '2024-03-20',
+        expiryDate: '2025-03-20',
+        quantity: 1,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Steel toe boots'
       },
       {
-        id: 'ppe-005',
-        itemCode: 'GL-001',
-        itemName: 'Cut-Resistant Gloves',
-        category: 'gloves',
+        id: 'PPE003',
+        category: 'hand',
+        item: 'Leather Gloves',
         size: 'L',
-        color: 'Gray',
-        material: 'HPPE/Steel',
-        safetyStandard: 'ANSI Cut A4',
-        unitCost: 15.25,
-        reorderLevel: 20,
-        currentStock: 28,
-        isActive: true
+        issuedDate: '2024-09-01',
+        expiryDate: '2024-12-01',
+        quantity: 2,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Heavy duty leather gloves'
       }
-    ];
-  };
-
-  const generateSampleAllocations = async () => {
-    const now = new Date();
-    return [
+    ]
+  },
+  {
+    id: 'EMP002',
+    name: 'Maria Garcia',
+    department: 'Electrical',
+    position: 'Electrician',
+    email: 'maria.garcia@company.com',
+    phone: '+1-555-0102',
+    hireDate: '2021-06-10',
+    photo: '👩‍🔧',
+    ppeHistory: [
       {
-        id: 'alloc-001',
-        employeeId: 'emp-1',
-        employeeName: 'Mike Johnson',
-        ppeItemId: 'ppe-001',
-        ppeItemName: 'Hard Hat - Standard',
-        ppeCategory: 'safety-helmet',
-        serialNumber: 'SH2024001',
-        size: 'Universal',
-        issueDate: new Date(now.getFullYear(), now.getMonth() - 2, 15).toISOString(),
-        expiryDate: new Date(now.getFullYear() + 1, now.getMonth() - 2, 15).toISOString(),
-        condition: 'good',
-        status: 'active',
-        issuedBy: 'safety-manager-1',
-        notes: 'Standard issue for construction site',
-        createdAt: new Date(now.getFullYear(), now.getMonth() - 2, 15).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth() - 2, 15).toISOString()
+        id: 'PPE004',
+        category: 'head',
+        item: 'Hard Hat',
+        size: 'M',
+        issuedDate: '2024-02-10',
+        expiryDate: '2026-02-10',
+        quantity: 1,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Electrical hazard rated'
       },
       {
-        id: 'alloc-002',
-        employeeId: 'emp-2',
-        employeeName: 'Sarah Chen',
-        ppeItemId: 'ppe-002',
-        ppeItemName: 'Safety Glasses - Clear',
-        ppeCategory: 'safety-glasses',
-        serialNumber: 'SG2024001',
+        id: 'PPE005',
+        category: 'hand',
+        item: 'Chemical Gloves',
+        size: 'M',
+        issuedDate: '2024-10-15',
+        expiryDate: '2025-01-15',
+        quantity: 3,
+        condition: 'New',
+        issuedBy: 'Sarah Manager',
+        notes: 'Insulated gloves'
+      }
+    ]
+  },
+  {
+    id: 'EMP003',
+    name: 'David Chen',
+    department: 'Welding',
+    position: 'Welder',
+    email: 'david.chen@company.com',
+    phone: '+1-555-0103',
+    hireDate: '2023-03-22',
+    photo: '👨‍🏭',
+    ppeHistory: [
+      {
+        id: 'PPE006',
+        category: 'head',
+        item: 'Welding Helmet',
         size: 'Universal',
-        issueDate: new Date(now.getFullYear(), now.getMonth() - 1, 10).toISOString(),
-        expiryDate: new Date(now.getFullYear() + 1, now.getMonth() - 1, 10).toISOString(),
-        condition: 'good',
-        status: 'active',
-        issuedBy: 'safety-manager-1',
-        notes: 'Lab safety requirement',
-        createdAt: new Date(now.getFullYear(), now.getMonth() - 1, 10).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth() - 1, 10).toISOString()
+        issuedDate: '2024-04-01',
+        expiryDate: '2026-04-01',
+        quantity: 1,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Auto-darkening helmet'
       },
       {
-        id: 'alloc-003',
-        employeeId: 'emp-3',
-        employeeName: 'David Rodriguez',
-        ppeItemId: 'ppe-003',
-        ppeItemName: 'High-Vis Vest - Class 2',
-        ppeCategory: 'high-visibility',
-        serialNumber: 'HV2024001',
+        id: 'PPE007',
+        category: 'body',
+        item: 'Welding Jacket',
         size: 'XL',
-        issueDate: new Date(now.getFullYear(), now.getMonth() - 3, 5).toISOString(),
-        expiryDate: new Date(now.getFullYear(), now.getMonth() + 3, 5).toISOString(),
-        condition: 'worn',
-        status: 'expired',
-        issuedBy: 'safety-manager-2',
-        notes: 'Vest showing signs of wear',
-        createdAt: new Date(now.getFullYear(), now.getMonth() - 3, 5).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+        issuedDate: '2024-05-15',
+        expiryDate: '2025-05-15',
+        quantity: 1,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Flame resistant jacket'
       },
       {
-        id: 'alloc-004',
-        employeeId: 'emp-4',
-        employeeName: 'Emily Watson',
-        ppeItemId: 'ppe-004',
-        ppeItemName: 'Steel-Toe Boots',
-        ppeCategory: 'protective-footwear',
-        serialNumber: 'PF2024001',
-        size: '8',
-        issueDate: new Date(now.getFullYear(), now.getMonth() - 6, 20).toISOString(),
-        expiryDate: new Date(now.getFullYear() + 1, now.getMonth() - 6, 20).toISOString(),
-        condition: 'damaged',
-        status: 'damaged',
-        issuedBy: 'safety-manager-1',
-        notes: 'Right boot sole separation',
-        createdAt: new Date(now.getFullYear(), now.getMonth() - 6, 20).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth() - 1, 15).toISOString()
-      },
-      {
-        id: 'alloc-005',
-        employeeId: 'emp-1',
-        employeeName: 'Mike Johnson',
-        ppeItemId: 'ppe-005',
-        ppeItemName: 'Cut-Resistant Gloves',
-        ppeCategory: 'gloves',
-        serialNumber: 'GL2024001',
+        id: 'PPE008',
+        category: 'hand',
+        item: 'Welding Gloves',
         size: 'L',
-        issueDate: new Date(now.getFullYear(), now.getMonth() - 1, 25).toISOString(),
-        expiryDate: new Date(now.getFullYear(), now.getMonth() + 5, 25).toISOString(),
-        condition: 'good',
-        status: 'active',
-        issuedBy: 'safety-manager-2',
-        notes: 'Metal fabrication work',
-        createdAt: new Date(now.getFullYear(), now.getMonth() - 1, 25).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth() - 1, 25).toISOString()
+        issuedDate: '2024-10-01',
+        expiryDate: '2025-01-01',
+        quantity: 2,
+        condition: 'Good',
+        issuedBy: 'Sarah Manager',
+        notes: 'Heat resistant gloves'
       }
-    ];
-  };
+    ]
+  }
+];
 
-  const saveAllocations = (allocations) => {
-    try {
-      localStorage.setItem(PPE_STORAGE_KEY, JSON.stringify(allocations));
-    } catch (error) {
-      console.error('Error saving PPE allocations:', error);
-    }
-  };
+// Toast notification
+const toast = {
+  success: (title, options = {}) => {
+    alert(`✓ ${title}${options.description ? '\n' + options.description : ''}`);
+  },
+  warning: (title, options = {}) => {
+    alert(`⚠ ${title}${options.description ? '\n' + options.description : ''}`);
+  },
+  error: (title, options = {}) => {
+    alert(`✗ ${title}${options.description ? '\n' + options.description : ''}`);
+  }
+};
 
-  const savePPEItems = (items) => {
-    try {
-      localStorage.setItem(PPE_ITEMS_KEY, JSON.stringify(items));
-    } catch (error) {
-      console.error('Error saving PPE items:', error);
-    }
-  };
-
-  const createAllocation = (newAllocation) => {
-    const updatedAllocations = [...allocations, { 
-      ...newAllocation, 
-      id: `alloc-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }];
-    setAllocations(updatedAllocations);
-    saveAllocations(updatedAllocations);
-  };
-
-  const updateAllocation = (allocationId, updates) => {
-    const updatedAllocations = allocations.map(allocation => 
-      allocation.id === allocationId ? { ...allocation, ...updates, updatedAt: new Date().toISOString() } : allocation
-    );
-    setAllocations(updatedAllocations);
-    saveAllocations(updatedAllocations);
-  };
-
-  const deleteAllocation = (allocationId) => {
-    const updatedAllocations = allocations.filter(allocation => allocation.id !== allocationId);
-    setAllocations(updatedAllocations);
-    saveAllocations(updatedAllocations);
-  };
-
-  const markForReturn = (allocationId) => {
-    updateAllocation(allocationId, { 
-      status: 'pending-return',
-      condition: 'pending-inspection'
-    });
-  };
-
-  const renewAllocation = (allocationId) => {
-    const allocation = allocations.find(a => a.id === allocationId);
-    const newExpiry = new Date();
-    newExpiry.setFullYear(newExpiry.getFullYear() + 1);
-    
-    updateAllocation(allocationId, { 
-      status: 'active',
-      expiryDate: newExpiry.toISOString(),
-      condition: 'good',
-      notes: allocation.notes ? `${allocation.notes} - Renewed on ${new Date().toLocaleDateString()}` : `Renewed on ${new Date().toLocaleDateString()}`
-    });
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      'active': 'bg-green-100 text-green-800 border-green-200',
-      'expired': 'bg-red-100 text-red-800 border-red-200',
-      'pending-return': 'bg-amber-100 text-amber-800 border-amber-200',
-      'damaged': 'bg-orange-100 text-orange-800 border-orange-200',
-      'lost': 'bg-slate-100 text-slate-800 border-slate-200'
-    };
-    return colors[status] || colors.active;
-  };
-
-  const getCategoryColor = (category) => {
-    const colors = {
-      'safety-helmet': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'safety-glasses': 'bg-blue-100 text-blue-800 border-blue-200',
-      'high-visibility': 'bg-orange-100 text-orange-800 border-orange-200',
-      'protective-footwear': 'bg-brown-100 text-brown-800 border-brown-200',
-      'gloves': 'bg-gray-100 text-gray-800 border-gray-200',
-      'ear-protection': 'bg-purple-100 text-purple-800 border-purple-200',
-      'respiratory': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-      'full-body': 'bg-indigo-100 text-indigo-800 border-indigo-200'
-    };
-    return colors[category] || colors['safety-helmet'];
-  };
-
-  const getConditionColor = (condition) => {
-    const colors = {
-      'excellent': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      'good': 'bg-green-100 text-green-800 border-green-200',
-      'fair': 'bg-amber-100 text-amber-800 border-amber-200',
-      'worn': 'bg-orange-100 text-orange-800 border-orange-200',
-      'damaged': 'bg-red-100 text-red-800 border-red-200',
-      'pending-inspection': 'bg-slate-100 text-slate-800 border-slate-200'
-    };
-    return colors[condition] || colors.good;
-  };
-
-  // Filter allocations
-  const filteredAllocations = allocations.filter(allocation => {
-    const matchesSearch = allocation.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      allocation.ppeItemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      allocation.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = selectedStatus.length === 0 || selectedStatus.includes(allocation.status);
-    
-    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(allocation.ppeCategory);
-    
-    const matchesEmployee = selectedEmployees.length === 0 || selectedEmployees.includes(allocation.employeeId);
-    
-    return matchesSearch && matchesStatus && matchesType && matchesEmployee;
+// PPE Issue Form Component
+const PPEIssueForm = ({ isOpen, onClose, onSubmit, employee, editingItem }) => {
+  const [formData, setFormData] = useState({
+    category: '',
+    item: '',
+    size: '',
+    quantity: 1,
+    issuedDate: format(new Date(), 'yyyy-MM-dd'),
+    condition: 'New',
+    issuedBy: 'Current User',
+    notes: ''
   });
 
-  const clearFilters = () => {
-    setSelectedStatus([]);
-    setSelectedTypes([]);
-    setSelectedEmployees([]);
-    setSearchTerm("");
+  useEffect(() => {
+    if (editingItem) {
+      setFormData({
+        category: editingItem.category,
+        item: editingItem.item,
+        size: editingItem.size,
+        quantity: editingItem.quantity,
+        issuedDate: format(new Date(editingItem.issuedDate), 'yyyy-MM-dd'),
+        condition: editingItem.condition,
+        issuedBy: editingItem.issuedBy,
+        notes: editingItem.notes || ''
+      });
+    }
+  }, [editingItem]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const category = PPE_CATEGORIES[formData.category];
+    const expiryDate = addMonths(new Date(formData.issuedDate), category.lifespan);
+    
+    const ppeData = {
+      ...formData,
+      id: editingItem ? editingItem.id : `PPE${Date.now()}`,
+      expiryDate: expiryDate.toISOString(),
+      employeeId: employee.id,
+      employeeName: employee.name
+    };
+    
+    onSubmit(ppeData);
+    onClose();
+    setFormData({
+      category: '',
+      item: '',
+      size: '',
+      quantity: 1,
+      issuedDate: format(new Date(), 'yyyy-MM-dd'),
+      condition: 'New',
+      issuedBy: 'Current User',
+      notes: ''
+    });
   };
 
-  const stats = {
-    total: allocations.length,
-    active: allocations.filter(a => a.status === 'active').length,
-    expired: allocations.filter(a => a.status === 'expired').length,
-    expiringSoon: allocations.filter(a => {
-      const expiryDate = new Date(a.expiryDate);
-      const now = new Date();
-      const thirtyDaysFromNow = new Date(now.setDate(now.getDate() + 30));
-      return expiryDate <= thirtyDaysFromNow && expiryDate > now && a.status === 'active';
-    }).length
+  if (!isOpen) return null;
+
+  const selectedCategory = formData.category ? PPE_CATEGORIES[formData.category] : null;
+
+  const categoryOptions = Object.entries(PPE_CATEGORIES).map(([key, cat]) => ({
+    value: key,
+    label: `${cat.icon} ${cat.name}`
+  }));
+
+  const itemOptions = selectedCategory ? selectedCategory.items.map(item => ({
+    value: item,
+    label: item
+  })) : [];
+
+  const conditionOptions = [
+    { value: 'New', label: 'New' },
+    { value: 'Good', label: 'Good' },
+    { value: 'Fair', label: 'Fair' },
+    { value: 'Replacement', label: 'Replacement' }
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-slate-200">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-semibold flex items-center gap-3">
+                <Shield className="w-6 h-6" />
+                {editingItem ? 'Update PPE Issue' : 'Issue PPE'}
+              </h2>
+              <p className="text-blue-100 mt-1">
+                {employee.name} - {employee.department}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-blue-800">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="category">PPE Category *</Label>
+                <CustomSelect
+                  value={formData.category}
+                  onChange={(value) => setFormData({ ...formData, category: value, item: '' })}
+                  options={categoryOptions}
+                  placeholder="Select category"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="item">PPE Item *</Label>
+                <CustomSelect
+                  value={formData.item}
+                  onChange={(value) => setFormData({ ...formData, item: value })}
+                  options={itemOptions}
+                  placeholder="Select item"
+                  disabled={!formData.category}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="size">Size *</Label>
+                <Input
+                  id="size"
+                  value={formData.size}
+                  onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                  placeholder="e.g., L, XL, 10, etc."
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Quantity *</Label>
+                <Input
+                  type="number"
+                  id="quantity"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
+                  min="1"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="issuedDate">Issue Date *</Label>
+                <Input
+                  type="date"
+                  id="issuedDate"
+                  value={formData.issuedDate}
+                  onChange={(e) => setFormData({ ...formData, issuedDate: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="condition">Condition *</Label>
+                <CustomSelect
+                  value={formData.condition}
+                  onChange={(value) => setFormData({ ...formData, condition: value })}
+                  options={conditionOptions}
+                  placeholder="Select condition"
+                />
+              </div>
+            </div>
+
+            {selectedCategory && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Expected Lifespan:</strong> {selectedCategory.lifespan} months
+                </p>
+                <p className="text-sm text-blue-800 mt-1">
+                  <strong>Expiry Date:</strong> {format(addMonths(new Date(formData.issuedDate), selectedCategory.lifespan), 'MMM dd, yyyy')}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Additional notes or comments..."
+                className="min-h-[80px] resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {editingItem ? 'Update PPE' : 'Issue PPE'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Employee PPE Card Component
+const EmployeePPECard = ({ employee, onIssue, onView, getDueItems }) => {
+  const dueItems = getDueItems(employee);
+  const totalItems = employee.ppeHistory.length;
+  const activeItems = employee.ppeHistory.filter(ppe => 
+    isAfter(new Date(ppe.expiryDate), new Date())
+  ).length;
+
+  return (
+    <Card className="border border-slate-200 hover:shadow-lg transition-all duration-300 group">
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="text-5xl">{employee.photo}</div>
+              <div>
+                <h3 className="font-semibold text-lg text-slate-800">{employee.name}</h3>
+                <p className="text-sm text-slate-600">{employee.position}</p>
+                <p className="text-xs text-slate-500">{employee.department}</p>
+              </div>
+            </div>
+            {dueItems.length > 0 && (
+              <Badge variant="destructive" className="animate-pulse">
+                <Bell className="w-3 h-3 mr-1" />
+                {dueItems.length} Due
+              </Badge>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-3 border-y">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-blue-600">{totalItems}</p>
+              <p className="text-xs text-slate-600">Total PPE</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">{activeItems}</p>
+              <p className="text-xs text-slate-600">Active</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">{dueItems.length}</p>
+              <p className="text-xs text-slate-600">Due Soon</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => onView(employee)}
+              className="flex-1"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              View Details
+            </Button>
+            <Button 
+              size="sm"
+              onClick={() => onIssue(employee)}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Issue PPE
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Employee Details View
+const EmployeeDetailsView = ({ employee, onClose, onIssue, onEdit, onDelete }) => {
+  if (!employee) return null;
+
+  const getStatusBadge = (expiryDate) => {
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const daysUntilExpiry = differenceInDays(expiry, today);
+
+    if (daysUntilExpiry < 0) {
+      return <Badge variant="destructive">Expired</Badge>;
+    } else if (daysUntilExpiry <= 30) {
+      return <Badge className="bg-orange-500">Due Soon ({daysUntilExpiry}d)</Badge>;
+    } else {
+      return <Badge className="bg-green-500">Active</Badge>;
+    }
   };
 
-  const statusCounts = {
-    active: allocations.filter(a => a.status === 'active').length,
-    expired: allocations.filter(a => a.status === 'expired').length,
-    'pending-return': allocations.filter(a => a.status === 'pending-return').length,
-    damaged: allocations.filter(a => a.status === 'damaged').length
-  };
-
-  const isExpiringSoon = (allocation) => {
-    const expiryDate = new Date(allocation.expiryDate);
-    const now = new Date();
-    const thirtyDaysFromNow = new Date(now.setDate(now.getDate() + 30));
-    return expiryDate <= thirtyDaysFromNow && expiryDate > now && allocation.status === 'active';
-  };
-
-  const isExpired = (allocation) => {
-    const expiryDate = new Date(allocation.expiryDate);
-    const now = new Date();
-    return expiryDate < now && allocation.status === 'active';
+  const generatePPECard = () => {
+    const printWindow = window.open('', '_blank');
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>PPE Card - ${employee.name}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; padding: 2rem; background: #f8fafc; }
+          .card { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; }
+          .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 2rem; text-align: center; }
+          .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+          .header p { opacity: 0.9; }
+          .content { padding: 2rem; }
+          .employee-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid #e2e8f0; }
+          .info-field { margin-bottom: 0.5rem; }
+          .info-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+          .info-value { font-size: 1rem; color: #1e293b; }
+          .ppe-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+          .ppe-table th { background: #f1f5f9; padding: 0.75rem; text-align: left; font-size: 0.875rem; color: #475569; border: 1px solid #e2e8f0; }
+          .ppe-table td { padding: 0.75rem; border: 1px solid #e2e8f0; font-size: 0.875rem; }
+          .status-active { color: #16a34a; font-weight: 600; }
+          .status-due { color: #ea580c; font-weight: 600; }
+          .status-expired { color: #dc2626; font-weight: 600; }
+          .footer { text-align: center; padding: 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.875rem; }
+          @media print { body { padding: 0; background: white; } .card { box-shadow: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <h1>🛡️ Personal Protective Equipment Card</h1>
+            <p>Safety Equipment Issue Record</p>
+          </div>
+          <div class="content">
+            <div class="employee-info">
+              <div>
+                <div class="info-field">
+                  <div class="info-label">Employee Name</div>
+                  <div class="info-value">${employee.name}</div>
+                </div>
+                <div class="info-field">
+                  <div class="info-label">Employee ID</div>
+                  <div class="info-value">${employee.id}</div>
+                </div>
+                <div class="info-field">
+                  <div class="info-label">Email</div>
+                  <div class="info-value">${employee.email}</div>
+                </div>
+              </div>
+              <div>
+                <div class="info-field">
+                  <div class="info-label">Position</div>
+                  <div class="info-value">${employee.position}</div>
+                </div>
+                <div class="info-field">
+                  <div class="info-label">Department</div>
+                  <div class="info-value">${employee.department}</div>
+                </div>
+                <div class="info-field">
+                  <div class="info-label">Hire Date</div>
+                  <div class="info-value">${format(new Date(employee.hireDate), 'MMM dd, yyyy')}</div>
+                </div>
+              </div>
+            </div>
+            <h3 style="font-size: 1.25rem; color: #1e293b; margin-bottom: 1rem;">PPE Issue History</h3>
+            <table class="ppe-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Size</th>
+                  <th>Issued Date</th>
+                  <th>Expiry Date</th>
+                  <th>Status</th>
+                  <th>Issued By</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${employee.ppeHistory.map(ppe => {
+                  const daysUntilExpiry = differenceInDays(new Date(ppe.expiryDate), new Date());
+                  let statusClass = 'status-active';
+                  let statusText = 'Active';
+                  if (daysUntilExpiry < 0) {
+                    statusClass = 'status-expired';
+                    statusText = 'Expired';
+                  } else if (daysUntilExpiry <= 30) {
+                    statusClass = 'status-due';
+                    statusText = `Due (${daysUntilExpiry}d)`;
+                  }
+                  return `
+                    <tr>
+                      <td>${ppe.item}</td>
+                      <td>${ppe.size}</td>
+                      <td>${format(new Date(ppe.issuedDate), 'MMM dd, yyyy')}</td>
+                      <td>${format(new Date(ppe.expiryDate), 'MMM dd, yyyy')}</td>
+                      <td class="${statusClass}">${statusText}</td>
+                      <td>${ppe.issuedBy}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="footer">
+            <p>Generated on ${format(new Date(), 'MMM dd, yyyy HH:mm')}</p>
+            <p>PPE Management System</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950/20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-              <div className="flex items-center gap-3 ml-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg">
-                  <Shield className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-extrabold tracking-tight text-foreground">PPE Management</span>
-                  <span className="text-xs text-blue-600 font-semibold uppercase tracking-wider hidden sm:inline-block">
-                    Protective Equipment Allocation
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden border border-slate-200">
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-white">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              <div className="text-6xl">{employee.photo}</div>
+              <div>
+                <h2 className="text-2xl font-semibold">{employee.name}</h2>
+                <p className="text-slate-300">{employee.position} • {employee.department}</p>
+                <div className="flex gap-4 mt-2 text-sm">
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-4 h-4" />
+                    {employee.email}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Phone className="w-4 h-4" />
+                    {employee.phone}
                   </span>
                 </div>
               </div>
             </div>
-            
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                <Home className="h-4 w-4" />
-              </Link>
-              <Link href="/employees" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Personnel
-              </Link>
-              <Link href="/ppe" className="text-sm font-semibold text-primary transition-colors">
-                PPE
-              </Link>
-            </nav>
-
-            <Button size="sm" asChild className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800">
-              <Link href="/ppe/allocate">
-                <Plus className="h-4 w-4 mr-2" />
-                New Allocation
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 sm:px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                PPE Allocation Management
-              </h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                Track protective equipment assignments, monitor expiry dates, and manage returns
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border rounded-lg bg-white dark:bg-slate-800 overflow-hidden">
-                <Button 
-                  variant={viewMode === "grid" ? "default" : "ghost"} 
-                  size="sm" 
-                  className="rounded-none border-0"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant={viewMode === "list" ? "default" : "ghost"} 
-                  size="sm" 
-                  className="rounded-none border-0"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-              <Button variant="outline" size="sm" onClick={loadPPEData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={generatePPECard} className="text-white hover:bg-slate-700">
+                <Printer className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-slate-700">
+                <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-blue-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-                    <div className="text-sm text-muted-foreground">Total Allocations</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                    <Package className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-green-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.active}</div>
-                    <div className="text-sm text-muted-foreground">Active</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400">
-                    <CheckCircle className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-amber-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.expiringSoon}</div>
-                    <div className="text-sm text-muted-foreground">Expiring Soon</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
-                    <Clock className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-red-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.expired}</div>
-                    <div className="text-sm text-muted-foreground">Expired</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400">
-                    <AlertTriangle className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
-        {/* Main Content */}
-        <div className="space-y-6">
-          {/* Search and Filters */}
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex-1 w-full sm:max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by employee, item, or serial number..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-full border-slate-300 dark:border-slate-600"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button 
-                    variant={showFilters ? "default" : "outline"} 
-                    size="sm" 
-                    className="gap-2"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filters
-                    {(selectedStatus.length > 0 || selectedTypes.length > 0 || selectedEmployees.length > 0) && (
-                      <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 text-xs">
-                        {selectedStatus.length + selectedTypes.length + selectedEmployees.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </div>
-              </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
+              <History className="w-5 h-5" />
+              PPE Issue History
+            </h3>
+            <Button onClick={() => onIssue(employee)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Issue New PPE
+            </Button>
+          </div>
 
-              {/* Advanced Filters */}
-              {showFilters && (
-                <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-foreground">Filter PPE Allocations</h3>
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs">
-                      <X className="h-3 w-3 mr-1" />
-                      Clear All
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Status Filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Status</label>
-                      <div className="space-y-2">
-                        {allocationStatuses.map(status => (
-                          <div key={status} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`status-${status}`}
-                              checked={selectedStatus.includes(status)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedStatus([...selectedStatus, status]);
-                                } else {
-                                  setSelectedStatus(selectedStatus.filter(s => s !== status));
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <label htmlFor={`status-${status}`} className="ml-2 text-sm text-foreground capitalize">
-                              {status.replace('-', ' ')} ({statusCounts[status] || 0})
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Category Filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">PPE Category</label>
-                      <div className="space-y-2">
-                        {ppeCategories.map(category => (
-                          <div key={category} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`category-${category}`}
-                              checked={selectedTypes.includes(category)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedTypes([...selectedTypes, category]);
-                                } else {
-                                  setSelectedTypes(selectedTypes.filter(t => t !== category));
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <label htmlFor={`category-${category}`} className="ml-2 text-sm text-foreground capitalize">
-                              {category.replace('-', ' ')}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Employee Filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Employee</label>
-                      <div className="space-y-2">
-                        {employees.slice(0, 5).map(employee => (
-                          <div key={employee.id} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`employee-${employee.id}`}
-                              checked={selectedEmployees.includes(employee.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedEmployees([...selectedEmployees, employee.id]);
-                                } else {
-                                  setSelectedEmployees(selectedEmployees.filter(e => e !== employee.id));
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <label htmlFor={`employee-${employee.id}`} className="ml-2 text-sm text-foreground">
-                              {employee.name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Allocations Display */}
-          <Tabs defaultValue="all" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-                <TabsTrigger value="all" className="relative">
-                  All Allocations
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {filteredAllocations.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="active" className="relative">
-                  Active
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {statusCounts.active}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="expiring" className="relative">
-                  Expiring Soon
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {stats.expiringSoon}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="expired" className="relative">
-                  Expired
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {statusCounts.expired}
-                  </Badge>
-                </TabsTrigger>
-              </TabsList>
-              
-              {filteredAllocations.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Showing {filteredAllocations.length} of {allocations.length} allocations
-                </div>
-              )}
+          {employee.ppeHistory.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+              <p className="text-slate-600">No PPE issued yet</p>
+              <Button onClick={() => onIssue(employee)} className="mt-4">
+                Issue First PPE
+              </Button>
             </div>
-
-            {/* Empty State */}
-            {filteredAllocations.length === 0 && (
-              <Card className="shadow-sm border border-slate-200 dark:border-slate-700">
-                <CardContent className="p-12 text-center">
-                  <div className="mx-auto max-w-md">
-                    <div className="mx-auto h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 flex items-center justify-center mb-6">
-                      <Shield className="h-12 w-12 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-                      {allocations.length === 0 ? 'No PPE Allocations Yet' : 'No Allocations Found'}
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      {allocations.length === 0 
-                        ? 'Get started by creating your first PPE allocation to track protective equipment assignments.'
-                        : 'No allocations match your search criteria. Try adjusting your filters.'
-                      }
-                    </p>
-                    <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md">
-                      <Link href="/ppe/allocate">
-                        <Plus className="h-5 w-5 mr-2" />
-                        Create First Allocation
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Allocations Grid/List View */}
-            {filteredAllocations.length > 0 && (
-              <TabsContent value="all" className="space-y-4">
-                {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredAllocations.map((allocation) => (
-                      <PPECard 
-                        key={allocation.id} 
-                        allocation={allocation}
-                        onUpdate={updateAllocation}
-                        onDelete={deleteAllocation}
-                        onMarkReturn={markForReturn}
-                        onRenew={renewAllocation}
-                        getStatusColor={getStatusColor}
-                        getCategoryColor={getCategoryColor}
-                        getConditionColor={getConditionColor}
-                        isExpiringSoon={isExpiringSoon}
-                        isExpired={isExpired}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredAllocations.map((allocation) => (
-                      <PPEListItem 
-                        key={allocation.id} 
-                        allocation={allocation}
-                        onUpdate={updateAllocation}
-                        onDelete={deleteAllocation}
-                        onMarkReturn={markForReturn}
-                        onRenew={renewAllocation}
-                        getStatusColor={getStatusColor}
-                        getCategoryColor={getCategoryColor}
-                        getConditionColor={getConditionColor}
-                        isExpiringSoon={isExpiringSoon}
-                        isExpired={isExpired}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            )}
-
-            {/* Filtered Status Tabs */}
-            {['active', 'expiring', 'expired'].map((status) => (
-              <TabsContent key={status} value={status} className="space-y-4">
-                {filteredAllocations.filter(allocation => 
-                  status === 'expiring' ? isExpiringSoon(allocation) : 
-                  status === 'expired' ? isExpired(allocation) : allocation.status === status
-                ).length > 0 ? (
-                  viewMode === "grid" ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredAllocations
-                        .filter(allocation => 
-                          status === 'expiring' ? isExpiringSoon(allocation) : 
-                          status === 'expired' ? isExpired(allocation) : allocation.status === status
-                        )
-                        .map((allocation) => (
-                          <PPECard 
-                            key={allocation.id} 
-                            allocation={allocation}
-                            onUpdate={updateAllocation}
-                            onDelete={deleteAllocation}
-                            onMarkReturn={markForReturn}
-                            onRenew={renewAllocation}
-                            getStatusColor={getStatusColor}
-                            getCategoryColor={getCategoryColor}
-                            getConditionColor={getConditionColor}
-                            isExpiringSoon={isExpiringSoon}
-                            isExpired={isExpired}
-                          />
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {filteredAllocations
-                        .filter(allocation => 
-                          status === 'expiring' ? isExpiringSoon(allocation) : 
-                          status === 'expired' ? isExpired(allocation) : allocation.status === status
-                        )
-                        .map((allocation) => (
-                          <PPEListItem 
-                            key={allocation.id} 
-                            allocation={allocation}
-                            onUpdate={updateAllocation}
-                            onDelete={deleteAllocation}
-                            onMarkReturn={markForReturn}
-                            onRenew={renewAllocation}
-                            getStatusColor={getStatusColor}
-                            getCategoryColor={getCategoryColor}
-                            getConditionColor={getConditionColor}
-                            isExpiringSoon={isExpiringSoon}
-                            isExpired={isExpired}
-                          />
-                        ))}
-                    </div>
-                  )
-                ) : (
-                  <Card className="shadow-sm border border-slate-200 dark:border-slate-700">
-                    <CardContent className="p-12 text-center">
-                      <div className="mx-auto max-w-md">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                          <Shield className="h-8 w-8 text-muted-foreground" />
+          ) : (
+            <div className="space-y-4">
+              {employee.ppeHistory.map((ppe) => (
+                <Card key={ppe.id} className="border border-slate-200">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-2xl">{PPE_CATEGORIES[ppe.category].icon}</span>
+                              <div>
+                                <h4 className="font-semibold text-lg text-slate-800">{ppe.item}</h4>
+                                <p className="text-sm text-slate-600">{PPE_CATEGORIES[ppe.category].name}</p>
+                              </div>
+                            </div>
+                          </div>
+                          {getStatusBadge(ppe.expiryDate)}
                         </div>
-                        <h3 className="text-xl font-semibold mb-2">
-                          No {status} PPE Allocations
-                        </h3>
-                        <p className="text-muted-foreground mb-4">
-                          {status === 'active' 
-                            ? 'No active PPE allocations found.'
-                            : status === 'expiring'
-                            ? 'No PPE items are expiring soon.'
-                            : 'No expired PPE allocations found.'
-                          }
-                        </p>
-                        <Button asChild>
-                          <Link href="/ppe/allocate">
-                            Create New Allocation
-                          </Link>
-                        </Button>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                          <div>
+                            <p className="text-xs text-slate-600">Size</p>
+                            <p className="font-semibold text-slate-800">{ppe.size}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-600">Quantity</p>
+                            <p className="font-semibold text-slate-800">{ppe.quantity}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-600">Condition</p>
+                            <p className="font-semibold text-slate-800">{ppe.condition}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-600">Issued By</p>
+                            <p className="font-semibold text-slate-800">{ppe.issuedBy}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-slate-600" />
+                            <div>
+                              <p className="text-xs text-slate-600">Issued Date</p>
+                              <p className="font-semibold text-slate-800">{format(new Date(ppe.issuedDate), 'MMM dd, yyyy')}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-slate-600" />
+                            <div>
+                              <p className="text-xs text-slate-600">Expiry Date</p>
+                              <p className="font-semibold text-slate-800">{format(new Date(ppe.expiryDate), 'MMM dd, yyyy')}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {ppe.notes && (
+                          <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                            <p className="text-xs text-slate-600 mb-1">Notes</p>
+                            <p className="text-sm text-slate-700">{ppe.notes}</p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => onEdit(employee, ppe)}>
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => onDelete(employee, ppe)}>
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-// PPE Card Component (Grid View)
-function PPECard({ allocation, onUpdate, onDelete, onMarkReturn, onRenew, getStatusColor, getCategoryColor, getConditionColor, isExpiringSoon, isExpired }) {
-  const [showActions, setShowActions] = useState(false);
-  
-  const issueDate = new Date(allocation.issueDate);
-  const expiryDate = new Date(allocation.expiryDate);
-  
-  const formattedIssue = issueDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-  
-  const formattedExpiry = expiryDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-
-  const isActive = allocation.status === 'active';
-  const needsRenewal = isExpiringSoon(allocation) || isExpired(allocation);
-
-  return (
-    <Card className={`group hover:shadow-xl transition-all duration-300 hover:scale-105 border-l-4 ${
-      isExpired(allocation) ? 'border-l-red-500' : 
-      isExpiringSoon(allocation) ? 'border-l-amber-500' : 'border-l-green-500'
-    } shadow-sm border border-slate-200 dark:border-slate-700`}>
-      <CardContent className="p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
-              isExpired(allocation) ? 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400' :
-              isExpiringSoon(allocation) ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' :
-              'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400'
-            }`}>
-              <Shield className="h-5 w-5" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-lg text-foreground truncate group-hover:text-blue-600 transition-colors">
-                {allocation.employeeName}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1 capitalize">
-                {allocation.ppeItemName}
-              </p>
-            </div>
-          </div>
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setShowActions(!showActions)}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-            {showActions && (
-              <div className="absolute right-0 top-10 bg-background border border-border rounded-lg shadow-xl z-10 w-48 py-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start px-3"
-                  asChild
-                >
-                  <Link href={`/ppe/edit/${allocation.id}`}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Link>
-                </Button>
-                {isActive && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                    onClick={() => onMarkReturn(allocation.id)}
-                  >
-                    <Truck className="h-4 w-4 mr-2" />
-                    Mark for Return
-                  </Button>
-                )}
-                {needsRenewal && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start px-3 text-green-600 hover:text-green-700 hover:bg-green-50"
-                    onClick={() => onRenew(allocation.id)}
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Renew
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete this PPE allocation?')) {
-                      onDelete(allocation.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Item Details */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Serial No:</span>
-            <span className="font-mono text-foreground">{allocation.serialNumber}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Size:</span>
-            <span className="text-foreground">{allocation.size}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Issued:</span>
-            <span className="text-foreground">{formattedIssue}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Expires:</span>
-            <span className={`font-medium ${
-              isExpired(allocation) ? 'text-red-600' : 
-              isExpiringSoon(allocation) ? 'text-amber-600' : 'text-foreground'
-            }`}>
-              {formattedExpiry}
-            </span>
-          </div>
-        </div>
-        
-        {/* Status and Condition */}
-        <div className="flex gap-2 mb-4">
-          <Badge variant="outline" className={`${getStatusColor(allocation.status)} border`}>
-            {allocation.status.replace('-', ' ')}
-          </Badge>
-          <Badge variant="outline" className={`${getCategoryColor(allocation.ppeCategory)} border capitalize`}>
-            {allocation.ppeCategory.replace('-', ' ')}
-          </Badge>
-          <Badge variant="outline" className={`${getConditionColor(allocation.condition)} border capitalize`}>
-            {allocation.condition}
-          </Badge>
-        </div>
-        
-        {/* Alerts */}
-        {isExpired(allocation) && (
-          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <span>This PPE has expired and needs replacement</span>
-          </div>
-        )}
-        
-        {isExpiringSoon(allocation) && (
-          <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg mb-4">
-            <Clock className="h-4 w-4" />
-            <span>Expiring in {Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24))} days</span>
-          </div>
-        )}
-
-        {allocation.notes && (
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-            {allocation.notes}
-          </p>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1 gap-2" asChild>
-            <Link href={`/ppe/view/${allocation.id}`}>
-              <Eye className="h-4 w-4" />
-              View Details
-            </Link>
-          </Button>
-          {needsRenewal && (
-            <Button 
-              size="sm" 
-              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => onRenew(allocation.id)}
-            >
-              <RotateCcw className="h-4 w-4" />
-              Renew
-            </Button>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
-}
+};
 
-// PPE List Item Component (List View)
-function PPEListItem({ allocation, onUpdate, onDelete, onMarkReturn, onRenew, getStatusColor, getCategoryColor, getConditionColor, isExpiringSoon, isExpired }) {
-  const [showActions, setShowActions] = useState(false);
-  
-  const issueDate = new Date(allocation.issueDate);
-  const expiryDate = new Date(allocation.expiryDate);
-  
-  const formattedIssue = issueDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  });
-  
-  const formattedExpiry = expiryDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
+// Statistics Card Component
+const StatCard = ({ title, value, icon: Icon, color = 'blue', trend }) => {
+  const colorConfig = {
+    blue: { bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-600', border: 'border-blue-200' },
+    green: { bg: 'bg-green-50', text: 'text-green-700', icon: 'text-green-600', border: 'border-green-200' },
+    orange: { bg: 'bg-orange-50', text: 'text-orange-700', icon: 'text-orange-600', border: 'border-orange-200' },
+    red: { bg: 'bg-red-50', text: 'text-red-700', icon: 'text-red-600', border: 'border-red-200' }
+  };
 
-  const isActive = allocation.status === 'active';
-  const needsRenewal = isExpiringSoon(allocation) || isExpired(allocation);
+  const config = colorConfig[color];
 
   return (
-    <Card className={`hover:shadow-md transition-all duration-300 border-l-4 ${
-      isExpired(allocation) ? 'border-l-red-500' : 
-      isExpiringSoon(allocation) ? 'border-l-amber-500' : 'border-l-green-500'
-    } shadow-sm border border-slate-200 dark:border-slate-700`}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <div className={`p-3 rounded-lg ${
-              isExpired(allocation) ? 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400' :
-              isExpiringSoon(allocation) ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' :
-              'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400'
-            }`}>
-              <Shield className="h-5 w-5" />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-bold text-lg text-foreground truncate">
-                  {allocation.employeeName}
-                </h3>
-                <div className="flex gap-2">
-                  <Badge variant="outline" className={`${getStatusColor(allocation.status)} border`}>
-                    {allocation.status.replace('-', ' ')}
-                  </Badge>
-                  <Badge variant="outline" className={`${getCategoryColor(allocation.ppeCategory)} border capitalize`}>
-                    {allocation.ppeCategory.replace('-', ' ')}
-                  </Badge>
-                  <Badge variant="outline" className={`${getConditionColor(allocation.condition)} border capitalize`}>
-                    {allocation.condition}
-                  </Badge>
-                  {isExpired(allocation) && (
-                    <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-                      Expired
-                    </Badge>
-                  )}
-                  {isExpiringSoon(allocation) && (
-                    <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
-                      Expiring Soon
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                <div className="flex items-center gap-1">
-                  <Package className="h-4 w-4" />
-                  <span>{allocation.ppeItemName}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>SN: {allocation.serialNumber}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Scissors className="h-4 w-4" />
-                  <span>Size: {allocation.size}</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>Issued: {formattedIssue}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>Expires: {formattedExpiry}</span>
-                </div>
-              </div>
-              
-              {allocation.notes && (
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-1">
-                  {allocation.notes}
-                </p>
-              )}
-            </div>
+    <Card className={`${config.bg} ${config.border} border shadow-sm hover:shadow-md transition-all duration-300`}>
+      <CardContent className="pt-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm font-medium mb-1 text-slate-600">{title}</p>
+            <p className={`text-3xl font-bold ${config.text}`}>{value}</p>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <Button size="sm" variant="outline" className="gap-2" asChild>
-              <Link href={`/ppe/view/${allocation.id}`}>
-                <Eye className="h-4 w-4" />
-                View
-              </Link>
-            </Button>
-            
-            {needsRenewal && (
-              <Button 
-                size="sm" 
-                className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => onRenew(allocation.id)}
-              >
-                <RotateCcw className="h-4 w-4" />
-                Renew
-              </Button>
-            )}
-            
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setShowActions(!showActions)}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-              {showActions && (
-                <div className="absolute right-0 top-10 bg-background border border-border rounded-lg shadow-xl z-10 w-48 py-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start px-3"
-                    asChild
-                  >
-                    <Link href={`/ppe/edit/${allocation.id}`}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </Button>
-                  {isActive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                      onClick={() => onMarkReturn(allocation.id)}
-                    >
-                      <Truck className="h-4 w-4 mr-2" />
-                      Mark for Return
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this PPE allocation?')) {
-                        onDelete(allocation.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              )}
-            </div>
+          <div className="p-3 bg-white rounded-lg shadow-sm">
+            <Icon className={`w-7 h-7 ${config.icon}`} />
           </div>
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+// Main PPE Management Component
+export default function PPEManagementSystem() {
+  const [employees, setEmployees] = useState(SAMPLE_EMPLOYEES);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueEmployee, setIssueEmployee] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [showDetailsView, setShowDetailsView] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+
+  const getDueItems = (employee) => {
+    return employee.ppeHistory.filter(ppe => {
+      const daysUntilExpiry = differenceInDays(new Date(ppe.expiryDate), new Date());
+      return daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+    });
+  };
+
+  const getExpiredItems = (employee) => {
+    return employee.ppeHistory.filter(ppe => {
+      return isBefore(new Date(ppe.expiryDate), new Date());
+    });
+  };
+
+  const filteredEmployees = useMemo(() => {
+    let filtered = employees;
+
+    if (searchTerm) {
+      filtered = filtered.filter(emp => 
+        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filterDepartment) {
+      filtered = filtered.filter(emp => emp.department === filterDepartment);
+    }
+
+    if (activeTab === 'due') {
+      filtered = filtered.filter(emp => getDueItems(emp).length > 0);
+    } else if (activeTab === 'expired') {
+      filtered = filtered.filter(emp => getExpiredItems(emp).length > 0);
+    }
+
+    return filtered;
+  }, [employees, searchTerm, filterDepartment, activeTab]);
+
+  const allDepartments = useMemo(() => {
+    return [...new Set(employees.map(emp => emp.department))];
+  }, [employees]);
+
+  const statistics = useMemo(() => {
+    const totalEmployees = employees.length;
+    const totalPPEIssued = employees.reduce((sum, emp) => sum + emp.ppeHistory.length, 0);
+    const dueForRenewal = employees.reduce((sum, emp) => sum + getDueItems(emp).length, 0);
+    const expired = employees.reduce((sum, emp) => sum + getExpiredItems(emp).length, 0);
+
+    return { totalEmployees, totalPPEIssued, dueForRenewal, expired };
+  }, [employees]);
+
+  const handleIssuePPE = (ppeData) => {
+    setEmployees(employees.map(emp => {
+      if (emp.id === ppeData.employeeId) {
+        if (editingItem) {
+          return {
+            ...emp,
+            ppeHistory: emp.ppeHistory.map(ppe => 
+              ppe.id === editingItem.id ? { ...ppe, ...ppeData } : ppe
+            )
+          };
+        } else {
+          return {
+            ...emp,
+            ppeHistory: [...emp.ppeHistory, ppeData]
+          };
+        }
+      }
+      return emp;
+    }));
+
+    toast.success(
+      editingItem ? 'PPE Updated' : 'PPE Issued Successfully',
+      { description: `${ppeData.item} has been ${editingItem ? 'updated' : 'issued'} to ${ppeData.employeeName}` }
+    );
+
+    setEditingItem(null);
+  };
+
+  const handleDeletePPE = (employee, ppe) => {
+    if (window.confirm(`Are you sure you want to remove ${ppe.item} from ${employee.name}?`)) {
+      setEmployees(employees.map(emp => {
+        if (emp.id === employee.id) {
+          return {
+            ...emp,
+            ppeHistory: emp.ppeHistory.filter(p => p.id !== ppe.id)
+          };
+        }
+        return emp;
+      }));
+
+      toast.success('PPE Removed', { description: `${ppe.item} has been removed from records` });
+    }
+  };
+
+  const handleEditPPE = (employee, ppe) => {
+    setIssueEmployee(employee);
+    setEditingItem(ppe);
+    setShowIssueForm(true);
+  };
+
+  const handleViewEmployee = (employee) => {
+    setSelectedEmployee(employee);
+    setShowDetailsView(true);
+  };
+
+  const handleIssueClick = (employee) => {
+    setIssueEmployee(employee);
+    setEditingItem(null);
+    setShowIssueForm(true);
+  };
+
+  const notifications = useMemo(() => {
+    const alerts = [];
+    employees.forEach(emp => {
+      const dueItems = getDueItems(emp);
+      const expiredItems = getExpiredItems(emp);
+      
+      dueItems.forEach(ppe => {
+        alerts.push({
+          type: 'warning',
+          employee: emp,
+          ppe: ppe,
+          message: `${emp.name}'s ${ppe.item} expires in ${differenceInDays(new Date(ppe.expiryDate), new Date())} days`
+        });
+      });
+
+      expiredItems.forEach(ppe => {
+        alerts.push({
+          type: 'danger',
+          employee: emp,
+          ppe: ppe,
+          message: `${emp.name}'s ${ppe.item} has expired`
+        });
+      });
+    });
+    return alerts;
+  }, [employees]);
+
+  const departmentOptions = [
+    { value: '', label: 'All Departments' },
+    ...allDepartments.map(dept => ({ value: dept, label: dept }))
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {showIssueForm && (
+        <PPEIssueForm
+          isOpen={showIssueForm}
+          onClose={() => {
+            setShowIssueForm(false);
+            setIssueEmployee(null);
+            setEditingItem(null);
+          }}
+          onSubmit={handleIssuePPE}
+          employee={issueEmployee}
+          editingItem={editingItem}
+        />
+      )}
+
+      {showDetailsView && (
+        <EmployeeDetailsView
+          employee={selectedEmployee}
+          onClose={() => {
+            setShowDetailsView(false);
+            setSelectedEmployee(null);
+          }}
+          onIssue={handleIssueClick}
+          onEdit={handleEditPPE}
+          onDelete={handleDeletePPE}
+        />
+      )}
+
+      <div className="container mx-auto p-6 space-y-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+              <Shield className="w-10 h-10 text-blue-600" />
+              PPE Management System
+            </h1>
+            <p className="text-slate-600 mt-2">
+              Track and manage Personal Protective Equipment for all employees
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => {
+                if (notifications.length > 0) {
+                  const message = notifications.slice(0, 5).map(n => n.message).join('\n');
+                  toast.warning('PPE Notifications', { description: message });
+                } else {
+                  toast.success('All Clear', { description: 'No pending PPE renewals' });
+                }
+              }}
+            >
+              <Bell className="w-4 h-4" />
+              Notifications
+              {notifications.length > 0 && (
+                <Badge variant="destructive" className="ml-1">{notifications.length}</Badge>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Total Employees"
+            value={statistics.totalEmployees}
+            icon={Users}
+            color="blue"
+          />
+          <StatCard
+            title="Total PPE Issued"
+            value={statistics.totalPPEIssued}
+            icon={Package}
+            color="green"
+          />
+          <StatCard
+            title="Due for Renewal"
+            value={statistics.dueForRenewal}
+            icon={Clock}
+            color="orange"
+          />
+          <StatCard
+            title="Expired Items"
+            value={statistics.expired}
+            icon={AlertTriangle}
+            color="red"
+          />
+        </div>
+
+        {notifications.length > 0 && (
+          <Card className="border-l-4 border-l-orange-500 bg-orange-50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Bell className="w-5 h-5 text-orange-600 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-orange-900 mb-2">
+                    PPE Renewal Alerts ({notifications.length})
+                  </h3>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {notifications.slice(0, 5).map((alert, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white rounded-lg p-3 text-sm">
+                        <span className="text-slate-700">{alert.message}</span>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewEmployee(alert.employee)}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  {notifications.length > 5 && (
+                    <p className="text-sm text-orange-700 mt-2">
+                      +{notifications.length - 5} more notifications
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border border-slate-200">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search employees by name, ID, department..."
+                  className="pl-10 border-slate-300 focus:border-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div className="w-[200px]">
+                <CustomSelect
+                  value={filterDepartment}
+                  onChange={setFilterDepartment}
+                  options={departmentOptions}
+                  placeholder="All Departments"
+                />
+              </div>
+
+              {(searchTerm || filterDepartment) && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterDepartment('');
+                  }}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-100 p-1">
+            <TabsTrigger value="all">
+              All Employees ({employees.length})
+            </TabsTrigger>
+            <TabsTrigger value="due" className="text-orange-700">
+              Due Soon ({employees.filter(emp => getDueItems(emp).length > 0).length})
+            </TabsTrigger>
+            <TabsTrigger value="expired" className="text-red-700">
+              Expired ({employees.filter(emp => getExpiredItems(emp).length > 0).length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab}>
+            {filteredEmployees.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-12">
+                  <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                  <p className="text-slate-600">No employees found</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredEmployees.map((employee) => (
+                  <EmployeePPECard
+                    key={employee.id}
+                    employee={employee}
+                    onIssue={handleIssueClick}
+                    onView={handleViewEmployee}
+                    getDueItems={getDueItems}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <Card className="border border-slate-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              PPE Categories & Expected Lifespan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Object.entries(PPE_CATEGORIES).map(([key, category]) => (
+                <div key={key} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">{category.icon}</span>
+                    <h4 className="font-semibold text-slate-800">{category.name}</h4>
+                  </div>
+                  <p className="text-sm text-slate-600 mb-2">
+                    <strong>Lifespan:</strong> {category.lifespan} months
+                  </p>
+                  <div className="text-xs text-slate-500">
+                    {category.items.join(', ')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

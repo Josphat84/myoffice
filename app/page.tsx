@@ -1124,7 +1124,7 @@ export default async function Home() {
           </div>
 
           <div className="border-t border-slate-800 mt-8 pt-6 text-center text-xs sm:text-sm text-slate-500">
-            <p>&copy; {new Date().getFullYear()} Positive Software Inc. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Company Name Inc. All rights reserved.</p>
             <p className="mt-1">
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link> 
               <span className="mx-2">|</span> 
