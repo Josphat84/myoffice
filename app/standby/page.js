@@ -1,1041 +1,786 @@
-// app/standby/page.js
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { 
+  Calendar,
   Clock,
   Users,
-  Calendar,
+  User,
+  UserCheck,
+  UserX,
   Phone,
-  AlertTriangle,
-  CheckCircle,
-  Plus,
+  Mail,
+  MapPin,
+  Building,
+  Star,
+  Crown,
+  Zap,
+  Moon,
+  Sun,
   Search,
   Filter,
-  MoreHorizontal,
-  Eye,
+  Plus,
   Edit,
   Trash2,
-  RefreshCw,
-  Home,
-  ArrowLeft,
-  SlidersHorizontal,
-  X,
-  Grid,
-  List,
-  UserCheck,
-  RotateCcw,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  ArrowUpRight,
+  Sparkles,
+  Target,
+  Rocket,
   Shield,
-  MapPin,
-  Mail,
-  MessageSquare,
-  FileText
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  Battery,
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  BarChart3
+} from 'lucide-react';
 
-const STANDBY_STORAGE_KEY = 'standby-rosters';
+const EmployeeStandbyRoster = () => {
+  const [isClient, setIsClient] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [darkMode, setDarkMode] = useState(false);
+  const [activeView, setActiveView] = useState('roster');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
 
-export default function StandbyPage() {
-  const [rosters, setRosters] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("grid");
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState([]);
-  const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [selectedTypes, setSelectedTypes] = useState([]);
+  // Sample employee data
+  const employees = useMemo(() => [
+    {
+      id: 1,
+      name: 'Sarah Chen',
+      position: 'Senior Engineer',
+      department: 'Engineering',
+      status: 'on-standby',
+      skills: ['React', 'Node.js', 'AWS'],
+      contact: '+1 (555) 123-4567',
+      email: 'sarah.chen@company.com',
+      location: 'San Francisco',
+      avatar: 'SC',
+      efficiency: 95,
+      lastActive: '2 hours ago',
+      color: 'bg-blue-500'
+    },
+    {
+      id: 2,
+      name: 'Marcus Johnson',
+      position: 'DevOps Specialist',
+      department: 'Operations',
+      status: 'active',
+      skills: ['Docker', 'Kubernetes', 'CI/CD'],
+      contact: '+1 (555) 234-5678',
+      email: 'marcus.j@company.com',
+      location: 'New York',
+      avatar: 'MJ',
+      efficiency: 88,
+      lastActive: 'Currently active',
+      color: 'bg-green-500'
+    },
+    {
+      id: 3,
+      name: 'Elena Rodriguez',
+      position: 'Product Manager',
+      department: 'Product',
+      status: 'on-standby',
+      skills: ['Agile', 'UX Research', 'Roadmapping'],
+      contact: '+1 (555) 345-6789',
+      email: 'elena.rodriguez@company.com',
+      location: 'Austin',
+      avatar: 'ER',
+      efficiency: 92,
+      lastActive: '30 minutes ago',
+      color: 'bg-purple-500'
+    },
+    {
+      id: 4,
+      name: 'David Kim',
+      position: 'Security Engineer',
+      department: 'Security',
+      status: 'unavailable',
+      skills: ['Cybersecurity', 'Pen Testing', 'Compliance'],
+      contact: '+1 (555) 456-7890',
+      email: 'david.kim@company.com',
+      location: 'Remote',
+      avatar: 'DK',
+      efficiency: 85,
+      lastActive: '8 hours ago',
+      color: 'bg-red-500'
+    },
+    {
+      id: 5,
+      name: 'Lisa Wang',
+      position: 'Data Scientist',
+      department: 'Data',
+      status: 'on-standby',
+      skills: ['Python', 'ML', 'TensorFlow'],
+      contact: '+1 (555) 567-8901',
+      email: 'lisa.wang@company.com',
+      location: 'Boston',
+      avatar: 'LW',
+      efficiency: 96,
+      lastActive: '1 hour ago',
+      color: 'bg-pink-500'
+    },
+    {
+      id: 6,
+      name: 'James Wilson',
+      position: 'Frontend Lead',
+      department: 'Engineering',
+      status: 'active',
+      skills: ['React', 'TypeScript', 'GraphQL'],
+      contact: '+1 (555) 678-9012',
+      email: 'james.wilson@company.com',
+      location: 'Chicago',
+      avatar: 'JW',
+      efficiency: 90,
+      lastActive: 'Currently active',
+      color: 'bg-orange-500'
+    },
+    {
+      id: 7,
+      name: 'Maria Garcia',
+      position: 'UX Designer',
+      department: 'Design',
+      status: 'on-standby',
+      skills: ['Figma', 'Prototyping', 'User Research'],
+      contact: '+1 (555) 789-0123',
+      email: 'maria.garcia@company.com',
+      location: 'Miami',
+      avatar: 'MG',
+      efficiency: 89,
+      lastActive: '45 minutes ago',
+      color: 'bg-teal-500'
+    },
+    {
+      id: 8,
+      name: 'Alex Thompson',
+      position: 'Backend Engineer',
+      department: 'Engineering',
+      status: 'unavailable',
+      skills: ['Java', 'Spring Boot', 'Microservices'],
+      contact: '+1 (555) 890-1234',
+      email: 'alex.thompson@company.com',
+      location: 'Seattle',
+      avatar: 'AT',
+      efficiency: 87,
+      lastActive: '6 hours ago',
+      color: 'bg-indigo-500'
+    }
+  ], []);
 
-  // Sample departments and types
-  const departments = ['Maintenance', 'Operations', 'Safety', 'IT', 'Engineering', 'Medical'];
-  const rosterTypes = ['Emergency Response', 'Technical Support', 'Safety Watch', 'Medical Standby', 'Operations Coverage'];
+  // Departments
+  const departments = ['All', 'Engineering', 'Operations', 'Product', 'Security', 'Data', 'Design'];
 
-  // Sample employees - would come from your personnel module
-  const employees = [
-    { id: 'emp-1', name: 'Mike Johnson', department: 'Maintenance', phone: '+1-555-0101', email: 'mike.j@company.com' },
-    { id: 'emp-2', name: 'Sarah Chen', department: 'Operations', phone: '+1-555-0102', email: 'sarah.c@company.com' },
-    { id: 'emp-3', name: 'David Rodriguez', department: 'Safety', phone: '+1-555-0103', email: 'david.r@company.com' },
-    { id: 'emp-4', name: 'Emily Watson', department: 'IT', phone: '+1-555-0104', email: 'emily.w@company.com' },
-    { id: 'emp-5', name: 'James Wilson', department: 'Engineering', phone: '+1-555-0105', email: 'james.w@company.com' },
-    { id: 'emp-6', name: 'Lisa Brown', department: 'Medical', phone: '+1-555-0106', email: 'lisa.b@company.com' }
-  ];
-
+  // Update current time
   useEffect(() => {
-    loadRosters();
+    setIsClient(true);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
-  const loadRosters = () => {
-    try {
-      const storedRosters = localStorage.getItem(STANDBY_STORAGE_KEY);
-      if (storedRosters) {
-        setRosters(JSON.parse(storedRosters));
-      } else {
-        const sampleData = generateSampleRosters();
-        setRosters(sampleData);
-        saveRosters(sampleData);
-      }
-    } catch (error) {
-      console.error('Error loading rosters:', error);
+  // Format time display
+  const formattedTime = useMemo(() => {
+    return currentTime.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true 
+    });
+  }, [currentTime]);
+
+  const formattedDate = useMemo(() => {
+    return currentTime.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }, [currentTime]);
+
+  // Filter employees based on search and department
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(employee => {
+      const matchesSearch = searchQuery === '' || 
+        employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        employee.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        employee.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        employee.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchesDepartment = selectedDepartment === 'all' || employee.department === selectedDepartment;
+      
+      return matchesSearch && matchesDepartment;
+    });
+  }, [employees, searchQuery, selectedDepartment]);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const total = employees.length;
+    const onStandby = employees.filter(e => e.status === 'on-standby').length;
+    const active = employees.filter(e => e.status === 'active').length;
+    const unavailable = employees.filter(e => e.status === 'unavailable').length;
+    
+    return {
+      total,
+      onStandby,
+      active,
+      unavailable,
+      standbyRate: Math.round((onStandby / total) * 100)
+    };
+  }, [employees]);
+
+  // Status configuration
+  const statusConfig = {
+    'on-standby': { 
+      label: 'On Standby', 
+      color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+      icon: UserCheck,
+      description: 'Available for immediate assignment'
+    },
+    'active': { 
+      label: 'Active', 
+      color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+      icon: Zap,
+      description: 'Currently working on tasks'
+    },
+    'unavailable': { 
+      label: 'Unavailable', 
+      color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
+      icon: UserX,
+      description: 'Not available for work'
     }
   };
 
-  const generateSampleRosters = () => {
-    const now = new Date();
-    return [
-      {
-        id: 'sb-001',
-        title: 'Weekend Emergency Maintenance',
-        type: 'Emergency Response',
-        department: 'Maintenance',
-        primaryContact: 'emp-1',
-        secondaryContact: 'emp-2',
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString(),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3).toISOString(),
-        status: 'active',
-        location: 'Main Plant',
-        notes: 'Coverage for critical equipment failures and emergency repairs',
-        responseTime: '30 minutes',
-        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString()
-      },
-      {
-        id: 'sb-002',
-        title: 'Night Shift Safety Watch',
-        type: 'Safety Watch',
-        department: 'Safety',
-        primaryContact: 'emp-3',
-        secondaryContact: 'emp-1',
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString(),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7).toISOString(),
-        status: 'active',
-        location: 'All Sites',
-        notes: '24/7 safety monitoring and incident response',
-        responseTime: 'Immediate',
-        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 5).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString()
-      },
-      {
-        id: 'sb-003',
-        title: 'IT Infrastructure Support',
-        type: 'Technical Support',
-        department: 'IT',
-        primaryContact: 'emp-4',
-        secondaryContact: 'emp-5',
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString(),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 9).toISOString(),
-        status: 'scheduled',
-        location: 'Data Center',
-        notes: 'Server and network infrastructure emergency support',
-        responseTime: '15 minutes',
-        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString()
-      },
-      {
-        id: 'sb-004',
-        title: 'Medical Emergency Coverage',
-        type: 'Medical Standby',
-        department: 'Medical',
-        primaryContact: 'emp-6',
-        secondaryContact: 'emp-3',
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString(),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 6).toISOString(),
-        status: 'active',
-        location: 'Medical Center',
-        notes: 'Emergency medical response and first aid',
-        responseTime: '5 minutes',
-        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString()
-      },
-      {
-        id: 'sb-005',
-        title: 'Operations Control Room',
-        type: 'Operations Coverage',
-        department: 'Operations',
-        primaryContact: 'emp-2',
-        secondaryContact: 'emp-1',
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3).toISOString(),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString(),
-        status: 'completed',
-        location: 'Control Room A',
-        notes: '24/7 operations monitoring and coordination',
-        responseTime: 'Immediate',
-        createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 10).toISOString(),
-        updatedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString()
-      }
-    ];
-  };
-
-  const saveRosters = (rostersData) => {
-    try {
-      localStorage.setItem(STANDBY_STORAGE_KEY, JSON.stringify(rostersData));
-    } catch (error) {
-      console.error('Error saving rosters:', error);
+  // Quick actions
+  const quickActions = [
+    { 
+      icon: Plus, 
+      label: 'Add Employee', 
+      description: 'Add new team member',
+      color: 'from-green-500 to-emerald-600',
+      action: () => toast.success('Add employee dialog would open...')
+    },
+    { 
+      icon: Users, 
+      label: 'Create Shift', 
+      description: 'Schedule new shift',
+      color: 'from-blue-500 to-cyan-600',
+      action: () => toast.info('Create shift dialog would open...')
+    },
+    { 
+      icon: Calendar, 
+      label: 'View Schedule', 
+      description: 'Weekly roster view',
+      color: 'from-purple-500 to-pink-600',
+      action: () => setActiveView('schedule')
+    },
+    { 
+      icon: BarChart3, 
+      label: 'Analytics', 
+      description: 'Team performance',
+      color: 'from-orange-500 to-amber-600',
+      action: () => setActiveView('analytics')
     }
-  };
+  ];
 
-  const createRoster = (newRoster) => {
-    const updatedRosters = [...rosters, { 
-      ...newRoster, 
-      id: `sb-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }];
-    setRosters(updatedRosters);
-    saveRosters(updatedRosters);
-  };
+  // Status Indicator Component
+  const StatusIndicator = ({ status, size = 'md' }) => {
+    const config = {
+      'on-standby': { color: 'bg-blue-400', pulse: 'animate-pulse' },
+      'active': { color: 'bg-green-400', pulse: '' },
+      'unavailable': { color: 'bg-red-400', pulse: '' }
+    }[status] || { color: 'bg-gray-400', pulse: '' };
 
-  const updateRoster = (rosterId, updates) => {
-    const updatedRosters = rosters.map(roster => 
-      roster.id === rosterId ? { ...roster, ...updates, updatedAt: new Date().toISOString() } : roster
+    const sizes = {
+      sm: 'w-2 h-2',
+      md: 'w-3 h-3',
+      lg: 'w-4 h-4'
+    };
+
+    return (
+      <div className={`rounded-full ${config.color} ${sizes[size]} ${config.pulse}`} />
     );
-    setRosters(updatedRosters);
-    saveRosters(updatedRosters);
   };
 
-  const deleteRoster = (rosterId) => {
-    const updatedRosters = rosters.filter(roster => roster.id !== rosterId);
-    setRosters(updatedRosters);
-    saveRosters(updatedRosters);
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      'scheduled': 'bg-blue-100 text-blue-800 border-blue-200',
-      'active': 'bg-green-100 text-green-800 border-green-200',
-      'completed': 'bg-slate-100 text-slate-800 border-slate-200',
-      'cancelled': 'bg-red-100 text-red-800 border-red-200'
-    };
-    return colors[status] || colors.scheduled;
-  };
-
-  const getTypeColor = (type) => {
-    const colors = {
-      'Emergency Response': 'bg-red-100 text-red-800 border-red-200',
-      'Technical Support': 'bg-purple-100 text-purple-800 border-purple-200',
-      'Safety Watch': 'bg-amber-100 text-amber-800 border-amber-200',
-      'Medical Standby': 'bg-green-100 text-green-800 border-green-200',
-      'Operations Coverage': 'bg-blue-100 text-blue-800 border-blue-200'
-    };
-    return colors[type] || colors['Technical Support'];
-  };
-
-  // Filter rosters
-  const filteredRosters = rosters.filter(roster => {
-    const matchesSearch = roster.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      roster.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      roster.notes.toLowerCase().includes(searchTerm.toLowerCase());
+  // Employee Card Component
+  const EmployeeCard = ({ employee }) => {
+    const StatusIcon = statusConfig[employee.status].icon;
     
-    const matchesStatus = selectedStatus.length === 0 || selectedStatus.includes(roster.status);
-    
-    const matchesDepartment = selectedDepartments.length === 0 || selectedDepartments.includes(roster.department);
-    
-    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(roster.type);
-    
-    return matchesSearch && matchesStatus && matchesDepartment && matchesType;
-  });
-
-  const clearFilters = () => {
-    setSelectedStatus([]);
-    setSelectedDepartments([]);
-    setSelectedTypes([]);
-    setSearchTerm("");
-  };
-
-  const stats = {
-    total: rosters.length,
-    active: rosters.filter(r => r.status === 'active').length,
-    scheduled: rosters.filter(r => r.status === 'scheduled').length,
-    completed: rosters.filter(r => r.status === 'completed').length
-  };
-
-  const statusCounts = {
-    scheduled: rosters.filter(r => r.status === 'scheduled').length,
-    active: rosters.filter(r => r.status === 'active').length,
-    completed: rosters.filter(r => r.status === 'completed').length
-  };
-
-  const getEmployeeById = (id) => {
-    return employees.find(emp => emp.id === id) || { name: 'Unknown', department: 'Unknown', phone: 'N/A', email: 'N/A' };
-  };
-
-  const isActive = (roster) => {
-    const now = new Date();
-    const start = new Date(roster.startDate);
-    const end = new Date(roster.endDate);
-    return start <= now && end >= now && roster.status === 'active';
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950/20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex h-16 items-center justify-between">
+    return (
+      <Card className={`group hover:shadow-xl transition-all duration-300 border-l-4 ${
+        employee.status === 'on-standby' ? 'border-l-blue-500 hover:border-l-blue-600' :
+        employee.status === 'active' ? 'border-l-green-500 hover:border-l-green-600' :
+        'border-l-red-500 hover:border-l-red-600'
+      } backdrop-blur-sm ${
+        darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white/70 border-slate-200'
+      }`}>
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-              <div className="flex items-center gap-3 ml-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-600 to-amber-700 shadow-lg">
-                  <Clock className="h-5 w-5 text-white" />
+              <div className={`w-12 h-12 ${employee.color} rounded-full flex items-center justify-center text-white font-semibold text-lg`}>
+                {employee.avatar}
+              </div>
+              <div>
+                <div className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  {employee.name}
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-extrabold tracking-tight text-foreground">Standby & Duty Roster</span>
-                  <span className="text-xs text-orange-600 font-semibold uppercase tracking-wider hidden sm:inline-block">
-                    Shift Management & On-Call
-                  </span>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {employee.position}
                 </div>
               </div>
             </div>
-            
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                <Home className="h-4 w-4" />
-              </Link>
-              <Link href="/employees" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Personnel
-              </Link>
-              <Link href="/equipment" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Assets
-              </Link>
-              <Link href="/overtime" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Overtime
-              </Link>
-              <Link href="/standby" className="text-sm font-semibold text-primary transition-colors">
-                Standby
-              </Link>
-            </nav>
-
-            <Button size="sm" asChild className="bg-gradient-to-r from-orange-600 to-amber-700 hover:from-orange-700 hover:to-amber-800">
-              <Link href="/standby/create">
-                <Plus className="h-4 w-4 mr-2" />
-                New Roster
-              </Link>
-            </Button>
+            <Badge variant="secondary" className={statusConfig[employee.status].color}>
+              <StatusIcon className="w-3 h-3 mr-1" />
+              {statusConfig[employee.status].label}
+            </Badge>
           </div>
-        </div>
-      </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Standby & Duty Management
-              </h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                Manage on-call schedules, emergency response teams, and shift coverage
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border rounded-lg bg-white dark:bg-slate-800 overflow-hidden">
-                <Button 
-                  variant={viewMode === "grid" ? "default" : "ghost"} 
-                  size="sm" 
-                  className="rounded-none border-0"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant={viewMode === "list" ? "default" : "ghost"} 
-                  size="sm" 
-                  className="rounded-none border-0"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+          <div className="space-y-3">
+            {/* Department & Location */}
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                  <Building className="w-4 h-4" />
+                  {employee.department}
+                </div>
+                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                  <MapPin className="w-4 h-4" />
+                  {employee.location}
+                </div>
               </div>
-              <Button variant="outline" size="sm" onClick={loadRosters}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-500">
+                <Star className="w-4 h-4 text-yellow-500" />
+                {employee.efficiency}%
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="flex flex-wrap gap-1">
+              {employee.skills.slice(0, 3).map((skill, index) => (
+                <Badge key={index} variant="outline" className="text-xs bg-slate-100 dark:bg-slate-700">
+                  {skill}
+                </Badge>
+              ))}
+              {employee.skills.length > 3 && (
+                <Badge variant="outline" className="text-xs bg-slate-100 dark:bg-slate-700">
+                  +{employee.skills.length - 3} more
+                </Badge>
+              )}
+            </div>
+
+            {/* Contact & Status */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Phone className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Call {employee.contact}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Mail className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Email {employee.email}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              <div className="text-right">
+                <div className="text-xs text-gray-500 dark:text-gray-400">Last active</div>
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {employee.lastActive}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              {employee.status === 'on-standby' && (
+                <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Assign Task
+                </Button>
+              )}
+              <Button size="sm" variant="outline" className="flex-1">
+                <Eye className="w-4 h-4 mr-2" />
+                View Profile
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-orange-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-                    <div className="text-sm text-muted-foreground">Total Rosters</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
-                    <Clock className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+  // Metric Card Component
+  const MetricCard = ({ title, value, subtitle, trend, change, icon: Icon, color = 'blue' }) => {
+    const colors = {
+      blue: 'from-blue-500 to-cyan-600',
+      green: 'from-green-500 to-emerald-600',
+      purple: 'from-purple-500 to-pink-600',
+      orange: 'from-orange-500 to-amber-600'
+    };
 
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-green-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.active}</div>
-                    <div className="text-sm text-muted-foreground">Active Now</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400">
-                    <UserCheck className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+    const trendIcons = {
+      up: <TrendingUp className="w-4 h-4 text-green-500" />,
+      down: <TrendingUp className="w-4 h-4 text-red-500 rotate-180" />,
+      stable: <Activity className="w-4 h-4 text-blue-500" />
+    };
 
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-blue-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.scheduled}</div>
-                    <div className="text-sm text-muted-foreground">Scheduled</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                    <Calendar className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-l-4 border-l-slate-500 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.completed}</div>
-                    <div className="text-sm text-muted-foreground">Completed</div>
-                  </div>
-                  <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400">
-                    <CheckCircle className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+    return (
+      <Card className={`bg-gradient-to-br ${colors[color]} text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer`}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold text-white/90">{title}</CardTitle>
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Icon className="w-5 h-5 text-white" />
+            </div>
           </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="space-y-6">
-          {/* Search and Filters */}
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex-1 w-full sm:max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search rosters by title, department, notes..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-full border-slate-300 dark:border-slate-600"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button 
-                    variant={showFilters ? "default" : "outline"} 
-                    size="sm" 
-                    className="gap-2"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filters
-                    {(selectedStatus.length > 0 || selectedDepartments.length > 0 || selectedTypes.length > 0) && (
-                      <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 text-xs">
-                        {selectedStatus.length + selectedDepartments.length + selectedTypes.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Advanced Filters */}
-              {showFilters && (
-                <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-foreground">Filter Rosters</h3>
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs">
-                      <X className="h-3 w-3 mr-1" />
-                      Clear All
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Status Filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Status</label>
-                      <div className="space-y-2">
-                        {['scheduled', 'active', 'completed', 'cancelled'].map(status => (
-                          <div key={status} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`status-${status}`}
-                              checked={selectedStatus.includes(status)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedStatus([...selectedStatus, status]);
-                                } else {
-                                  setSelectedStatus(selectedStatus.filter(s => s !== status));
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                            />
-                            <label htmlFor={`status-${status}`} className="ml-2 text-sm text-foreground capitalize">
-                              {status} ({statusCounts[status] || 0})
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Department Filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Department</label>
-                      <div className="space-y-2">
-                        {departments.map(dept => (
-                          <div key={dept} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`dept-${dept}`}
-                              checked={selectedDepartments.includes(dept)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedDepartments([...selectedDepartments, dept]);
-                                } else {
-                                  setSelectedDepartments(selectedDepartments.filter(d => d !== dept));
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                            />
-                            <label htmlFor={`dept-${dept}`} className="ml-2 text-sm text-foreground">
-                              {dept}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Type Filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Roster Type</label>
-                      <div className="space-y-2">
-                        {rosterTypes.map(type => (
-                          <div key={type} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`type-${type}`}
-                              checked={selectedTypes.includes(type)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedTypes([...selectedTypes, type]);
-                                } else {
-                                  setSelectedTypes(selectedTypes.filter(t => t !== type));
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                            />
-                            <label htmlFor={`type-${type}`} className="ml-2 text-sm text-foreground">
-                              {type}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Rosters Display */}
-          <Tabs defaultValue="all" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-                <TabsTrigger value="all" className="relative">
-                  All Rosters
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {filteredRosters.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="active" className="relative">
-                  Active
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {statusCounts.active}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="scheduled" className="relative">
-                  Scheduled
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {statusCounts.scheduled}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="relative">
-                  Completed
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                    {statusCounts.completed}
-                  </Badge>
-                </TabsTrigger>
-              </TabsList>
-              
-              {filteredRosters.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Showing {filteredRosters.length} of {rosters.length} rosters
+          <CardDescription className="text-white/70 text-sm">{subtitle}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end justify-between">
+            <div className="space-y-1">
+              <div className="text-3xl font-bold">{value}</div>
+              {change !== undefined && (
+                <div className={`flex items-center gap-1 text-sm ${change > 0 ? 'text-green-300' : change < 0 ? 'text-red-300' : 'text-blue-300'}`}>
+                  {trendIcons[trend]}
+                  <span>{change > 0 ? '+' : ''}{change}%</span>
                 </div>
               )}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
-            {/* Empty State */}
-            {filteredRosters.length === 0 && (
-              <Card className="shadow-sm border border-slate-200 dark:border-slate-700">
-                <CardContent className="p-12 text-center">
-                  <div className="mx-auto max-w-md">
-                    <div className="mx-auto h-24 w-24 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/50 dark:to-amber-900/50 flex items-center justify-center mb-6">
-                      <Clock className="h-12 w-12 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-                      {rosters.length === 0 ? 'No Standby Rosters Yet' : 'No Rosters Found'}
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      {rosters.length === 0 
-                        ? 'Get started by creating your first standby roster to manage on-call schedules and emergency coverage.'
-                        : 'No rosters match your search criteria. Try adjusting your filters.'
-                      }
-                    </p>
-                    <Button asChild size="lg" className="bg-gradient-to-r from-orange-600 to-amber-700 hover:from-orange-700 hover:to-amber-800 shadow-md">
-                      <Link href="/standby/create">
-                        <Plus className="h-5 w-5 mr-2" />
-                        Create First Roster
-                      </Link>
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading Roster...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`min-h-screen transition-all duration-500 ${
+      darkMode 
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white' 
+        : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 text-slate-900'
+    }`}>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Standby Roster
+                </h1>
+                <p className="text-slate-600 dark:text-slate-400 mt-1 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-yellow-500" />
+                  Real-time team availability and management
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              {/* Time Display */}
+              <div className="text-right">
+                <div className="text-2xl font-mono font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {formattedTime}
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">{formattedDate}</div>
+              </div>
+
+              {/* Theme Toggle */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setDarkMode(!darkMode)}
+                      className={`rounded-full ${
+                        darkMode ? 'border-slate-600 hover:border-slate-500' : 'border-slate-300 hover:border-slate-400'
+                      }`}
+                    >
+                      {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {darkMode ? 'Light mode' : 'Dark mode'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="space-y-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              title="Total Team"
+              value={stats.total}
+              subtitle="Team members"
+              trend="up"
+              change={2}
+              icon={Users}
+              color="blue"
+            />
+            <MetricCard
+              title="On Standby"
+              value={stats.onStandby}
+              subtitle="Available now"
+              trend="stable"
+              change={0}
+              icon={UserCheck}
+              color="green"
+            />
+            <MetricCard
+              title="Active"
+              value={stats.active}
+              subtitle="Currently working"
+              trend="up"
+              change={1}
+              icon={Zap}
+              color="purple"
+            />
+            <MetricCard
+              title="Standby Rate"
+              value={`${stats.standbyRate}%`}
+              subtitle="Availability score"
+              trend="up"
+              change={5}
+              icon={Target}
+              color="orange"
+            />
+          </div>
+
+          {/* Main Dashboard Area */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Column - Quick Actions & Filters */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Quick Actions */}
+              <Card className={`backdrop-blur-sm ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white/70 border-slate-200'}`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <Zap className="w-5 h-5 text-yellow-500" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {quickActions.map((action, index) => (
+                    <Button
+                      key={index}
+                      onClick={action.action}
+                      className={`w-full justify-start p-4 h-auto bg-gradient-to-r ${action.color} text-white border-0 hover:shadow-lg transition-all duration-300 group hover:scale-105`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors">
+                          <action.icon className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold">{action.label}</div>
+                          <div className="text-xs opacity-90">{action.description}</div>
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Filters */}
+              <Card className={`backdrop-blur-sm ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white/70 border-slate-200'}`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                    <Filter className="w-5 h-5 text-blue-500" />
+                    Filters
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Search */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Search Team
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="Search by name, skills..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className={`pl-10 ${darkMode ? 'bg-slate-700 border-slate-600' : ''}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Department Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Department
+                    </label>
+                    <div className="space-y-2">
+                      {departments.map(dept => (
+                        <Button
+                          key={dept}
+                          variant={selectedDepartment === dept.toLowerCase() ? "default" : "outline"}
+                          onClick={() => setSelectedDepartment(dept.toLowerCase())}
+                          className="w-full justify-start"
+                        >
+                          <Building className="w-4 h-4 mr-2" />
+                          {dept}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status Summary */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <StatusIndicator status="on-standby" />
+                          <span>On Standby</span>
+                        </div>
+                        <Badge variant="secondary">{stats.onStandby}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <StatusIndicator status="active" />
+                          <span>Active</span>
+                        </div>
+                        <Badge variant="secondary">{stats.active}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <StatusIndicator status="unavailable" />
+                          <span>Unavailable</span>
+                        </div>
+                        <Badge variant="secondary">{stats.unavailable}</Badge>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
 
-            {/* Rosters Grid/List View */}
-            {filteredRosters.length > 0 && (
-              <TabsContent value="all" className="space-y-4">
-                {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredRosters.map((roster) => (
-                      <StandbyCard 
-                        key={roster.id} 
-                        roster={roster}
-                        employees={employees}
-                        onUpdate={updateRoster}
-                        onDelete={deleteRoster}
-                        getStatusColor={getStatusColor}
-                        getTypeColor={getTypeColor}
-                        getEmployeeById={getEmployeeById}
-                        isActive={isActive}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredRosters.map((roster) => (
-                      <StandbyListItem 
-                        key={roster.id} 
-                        roster={roster}
-                        employees={employees}
-                        onUpdate={updateRoster}
-                        onDelete={deleteRoster}
-                        getStatusColor={getStatusColor}
-                        getTypeColor={getTypeColor}
-                        getEmployeeById={getEmployeeById}
-                        isActive={isActive}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            )}
-
-            {/* Filtered Status Tabs */}
-            {['active', 'scheduled', 'completed'].map((status) => (
-              <TabsContent key={status} value={status} className="space-y-4">
-                {filteredRosters.filter(roster => roster.status === status).length > 0 ? (
-                  viewMode === "grid" ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredRosters
-                        .filter(roster => roster.status === status)
-                        .map((roster) => (
-                          <StandbyCard 
-                            key={roster.id} 
-                            roster={roster}
-                            employees={employees}
-                            onUpdate={updateRoster}
-                            onDelete={deleteRoster}
-                            getStatusColor={getStatusColor}
-                            getTypeColor={getTypeColor}
-                            getEmployeeById={getEmployeeById}
-                            isActive={isActive}
-                          />
-                        ))}
+            {/* Right Column - Employee Roster */}
+            <div className="lg:col-span-3">
+              {/* Roster Header */}
+              <Card className={`backdrop-blur-sm mb-6 ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white/70 border-slate-200'}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Team Roster
+                      </h2>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {filteredEmployees.length} team members found
+                      </p>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {filteredRosters
-                        .filter(roster => roster.status === status)
-                        .map((roster) => (
-                          <StandbyListItem 
-                            key={roster.id} 
-                            roster={roster}
-                            employees={employees}
-                            onUpdate={updateRoster}
-                            onDelete={deleteRoster}
-                            getStatusColor={getStatusColor}
-                            getTypeColor={getTypeColor}
-                            getEmployeeById={getEmployeeById}
-                            isActive={isActive}
-                          />
-                        ))}
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="text-sm">
+                        Updated: {formattedTime}
+                      </Badge>
                     </div>
-                  )
-                ) : (
-                  <Card className="shadow-sm border border-slate-200 dark:border-slate-700">
-                    <CardContent className="p-12 text-center">
-                      <div className="mx-auto max-w-md">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                          <Clock className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <h3 className="text-xl font-semibold mb-2">
-                          No {status} Rosters
-                        </h3>
-                        <p className="text-muted-foreground mb-4">
-                          {status === 'active' 
-                            ? 'No rosters are currently active. Check scheduled rosters.'
-                            : `No rosters are currently ${status}.`
-                          }
-                        </p>
-                        <Button asChild>
-                          <Link href="/standby/create">
-                            Create New Roster
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-      </main>
-    </div>
-  );
-}
+                  </div>
+                </CardContent>
+              </Card>
 
-// Standby Card Component (Grid View)
-function StandbyCard({ roster, employees, onUpdate, onDelete, getStatusColor, getTypeColor, getEmployeeById, isActive }) {
-  const [showActions, setShowActions] = useState(false);
-  
-  const primaryContact = getEmployeeById(roster.primaryContact);
-  const secondaryContact = getEmployeeById(roster.secondaryContact);
-  const currentlyActive = isActive(roster);
-
-  const startDate = new Date(roster.startDate);
-  const endDate = new Date(roster.endDate);
-  
-  const formattedStart = startDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-  
-  const formattedEnd = endDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-
-  return (
-    <Card className={`group hover:shadow-xl transition-all duration-300 hover:scale-105 border-l-4 ${
-      currentlyActive ? 'border-l-green-500' : 'border-l-orange-500'
-    } shadow-sm border border-slate-200 dark:border-slate-700`}>
-      <CardContent className="p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
-              currentlyActive ? 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400'
-            }`}>
-              <Clock className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-lg text-foreground truncate group-hover:text-orange-600 transition-colors">
-                {roster.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {roster.department} • {roster.type}
-              </p>
-            </div>
-          </div>
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setShowActions(!showActions)}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-            {showActions && (
-              <div className="absolute right-0 top-10 bg-background border border-border rounded-lg shadow-xl z-10 w-40 py-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start px-3"
-                  asChild
-                >
-                  <Link href={`/standby/edit/${roster.id}`}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Link>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete this roster?')) {
-                      onDelete(roster.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Description */}
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-          {roster.notes}
-        </p>
-        
-        {/* Roster Information */}
-        <div className="space-y-3 mb-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{formattedStart} - {formattedEnd}</span>
-            </div>
-            <div className="flex gap-2">
-              <Badge variant="outline" className={`${getStatusColor(roster.status)} border`}>
-                {roster.status}
-              </Badge>
-              <Badge variant="outline" className={`${getTypeColor(roster.type)} border`}>
-                {roster.type}
-              </Badge>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{roster.location}</span>
-            </div>
-            <div className="text-sm font-medium">
-              {roster.responseTime} response
-            </div>
-          </div>
-
-          {/* Contacts */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Primary Contact</span>
-              <span>{primaryContact.name}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Secondary Contact</span>
-              <span>{secondaryContact.name}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1 gap-2" asChild>
-            <Link href={`/standby/view/${roster.id}`}>
-              <Eye className="h-4 w-4" />
-              View Details
-            </Link>
-          </Button>
-          {currentlyActive && (
-            <Button 
-              size="sm" 
-              className="gap-2 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 shadow-md"
-              asChild
-            >
-              <Link href={`/standby/contact/${roster.id}`}>
-                <Phone className="h-4 w-4" />
-                Contact
-              </Link>
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Standby List Item Component (List View)
-function StandbyListItem({ roster, employees, onUpdate, onDelete, getStatusColor, getTypeColor, getEmployeeById, isActive }) {
-  const [showActions, setShowActions] = useState(false);
-  
-  const primaryContact = getEmployeeById(roster.primaryContact);
-  const secondaryContact = getEmployeeById(roster.secondaryContact);
-  const currentlyActive = isActive(roster);
-
-  const startDate = new Date(roster.startDate);
-  const endDate = new Date(roster.endDate);
-  
-  const formattedStart = startDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  });
-  
-  const formattedEnd = endDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  });
-
-  return (
-    <Card className={`hover:shadow-md transition-all duration-300 border-l-4 ${
-      currentlyActive ? 'border-l-green-500' : 'border-l-orange-500'
-    } shadow-sm border border-slate-200 dark:border-slate-700`}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <div className={`p-3 rounded-lg ${
-              currentlyActive ? 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400'
-            }`}>
-              <Clock className="h-5 w-5" />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-bold text-lg text-foreground truncate">
-                  {roster.title}
-                </h3>
-                <div className="flex gap-2">
-                  <Badge variant="outline" className={`${getStatusColor(roster.status)} border`}>
-                    {roster.status}
-                  </Badge>
-                  <Badge variant="outline" className={`${getTypeColor(roster.type)} border`}>
-                    {roster.type}
-                  </Badge>
-                  {currentlyActive && (
-                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                      Active Now
-                    </Badge>
-                  )}
+              {/* Employee Grid */}
+              {filteredEmployees.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredEmployees.map(employee => (
+                    <EmployeeCard key={employee.id} employee={employee} />
+                  ))}
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{roster.department}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{roster.location}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formattedStart} - {formattedEnd}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>{roster.responseTime} response</span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground line-clamp-1">
-                {roster.notes}
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-medium text-foreground">
-                {primaryContact.name}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Primary Contact
-              </div>
-            </div>
-            
-            <Button size="sm" variant="outline" className="gap-2" asChild>
-              <Link href={`/standby/view/${roster.id}`}>
-                <Eye className="h-4 w-4" />
-                View
-              </Link>
-            </Button>
-            
-            {currentlyActive && (
-              <Button 
-                size="sm" 
-                className="gap-2 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 shadow-md"
-                asChild
-              >
-                <Link href={`/standby/contact/${roster.id}`}>
-                  <Phone className="h-4 w-4" />
-                  Contact
-                </Link>
-              </Button>
-            )}
-            
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setShowActions(!showActions)}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-              {showActions && (
-                <div className="absolute right-0 top-10 bg-background border border-border rounded-lg shadow-xl z-10 w-40 py-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start px-3"
-                    asChild
-                  >
-                    <Link href={`/standby/edit/${roster.id}`}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this roster?')) {
-                        onDelete(roster.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
+              ) : (
+                <Card className={`backdrop-blur-sm ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white/70 border-slate-200'}`}>
+                  <CardContent className="p-12 text-center">
+                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      No team members found
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                      Try adjusting your search criteria or filters.
+                    </p>
+                    <Button onClick={() => { setSearchQuery(''); setSelectedDepartment('all'); }}>
+                      <Filter className="w-4 h-4 mr-2" />
+                      Clear Filters
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </main>
+
+        {/* Footer */}
+        <footer className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <StatusIndicator status="on-standby" size="sm" />
+                <span>{stats.onStandby} team members on standby</span>
+              </div>
+              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600"></div>
+              <span>Last updated: {formattedTime}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span>v2.1.4</span>
+              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600"></div>
+              <span>© 2024 Team Roster</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
   );
-}
+};
+
+export default EmployeeStandbyRoster;
