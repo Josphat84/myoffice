@@ -44,7 +44,10 @@ import {
     TrendingDown,
     Eye,
     ChevronRight,
-    ChevronLeft
+    ChevronLeft,
+    Grid3X3,
+    List,
+    MoreVertical
 } from "lucide-react";
 
 // ✅ Correct - using the environment variable name
@@ -117,6 +120,19 @@ const handleEmailClick = (email) => {
     if (email) {
         window.open(`mailto:${email}`, '_self');
     }
+};
+
+// Enhanced employee ID generator that allows custom formats
+const generateEmployeeId = (customId = '') => {
+    if (customId && customId.trim() !== '') {
+        // Allow custom IDs like C1165, PM134, etc.
+        return customId.trim().toUpperCase();
+    }
+    
+    // Generate default ID if no custom ID provided
+    const timestamp = Date.now().toString(36);
+    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `EMP_${timestamp}_${randomStr}`;
 };
 
 // --- Enhanced Visualization Components ---
@@ -1087,6 +1103,520 @@ const EmployeeCard = ({ employee, onEdit, onDelete }) => {
     );
 };
 
+// --- NEW: Gorgeous List View Component ---
+const EmployeeListItem = ({ employee, onEdit, onDelete, isSelected, onSelect }) => {
+    const [showActions, setShowActions] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+
+    const tenure = calculateTenure(employee.date_of_engagement);
+    const qualCount = employee.qualifications?.length ?? 0;
+    const awardCount = employee.awards_recognition?.length ?? 0;
+    const offenceCount = employee.offences?.length ?? 0;
+    const fullName = `${employee.first_name} ${employee.last_name}`;
+
+    return (
+        <div 
+            className={`bg-white rounded-xl border transition-all duration-300 hover:shadow-lg group ${
+                isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
+            }`}
+        >
+            {/* Main List Item */}
+            <div className="p-6">
+                <div className="flex items-center justify-between">
+                    {/* Left Section - Basic Info */}
+                    <div className="flex items-center space-x-4 flex-1 min-w-0">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">
+                                {employee.first_name?.[0]}{employee.last_name?.[0]}
+                            </div>
+                        </div>
+
+                        {/* Core Information */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-3 mb-1">
+                                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                    {fullName}
+                                </h3>
+                                <Badge className={getClassBadgeColor(employee.employee_class || "N/A")}>
+                                    {employee.employee_class || "N/A"}
+                                </Badge>
+                            </div>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <span className="flex items-center space-x-1">
+                                    <Briefcase className="h-4 w-4 text-blue-500" />
+                                    <span>{employee.designation || "No designation"}</span>
+                                </span>
+                                <span className="flex items-center space-x-1">
+                                    <Building className="h-4 w-4 text-green-500" />
+                                    <span>{employee.department || "No department"}</span>
+                                </span>
+                                <span className="flex items-center space-x-1">
+                                    <Clock className="h-4 w-4 text-orange-500" />
+                                    <span>{tenure}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Section - Stats & Actions */}
+                    <div className="flex items-center space-x-6">
+                        {/* Quick Stats */}
+                        <div className="flex items-center space-x-4">
+                            {qualCount > 0 && (
+                                <div className="text-center">
+                                    <div className="flex items-center space-x-1 text-sm text-amber-600">
+                                        <GraduationCap className="h-4 w-4" />
+                                        <span className="font-semibold">{qualCount}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">Quals</div>
+                                </div>
+                            )}
+                            {awardCount > 0 && (
+                                <div className="text-center">
+                                    <div className="flex items-center space-x-1 text-sm text-green-600">
+                                        <Award className="h-4 w-4" />
+                                        <span className="font-semibold">{awardCount}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">Awards</div>
+                                </div>
+                            )}
+                            {offenceCount > 0 && (
+                                <div className="text-center">
+                                    <div className="flex items-center space-x-1 text-sm text-red-600">
+                                        <Shield className="h-4 w-4" />
+                                        <span className="font-semibold">{offenceCount}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">Offences</div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Contact Actions */}
+                        <div className="flex items-center space-x-2">
+                            {employee.email && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-50"
+                                    onClick={() => handleEmailClick(employee.email)}
+                                >
+                                    <Mail className="h-4 w-4" />
+                                </Button>
+                            )}
+                            {employee.phone && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-green-500 hover:bg-green-50"
+                                    onClick={() => handlePhoneClick(employee.phone)}
+                                >
+                                    <Phone className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+
+                        {/* More Actions */}
+                        <div className="relative">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                onClick={() => setShowActions(!showActions)}
+                            >
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+
+                            {showActions && (
+                                <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48 py-1">
+                                    <button
+                                        className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                                        onClick={() => {
+                                            onEdit(employee);
+                                            setShowActions(false);
+                                        }}
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                        <span>Edit</span>
+                                    </button>
+                                    <button
+                                        className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                                        onClick={() => {
+                                            onDelete(employee);
+                                            setShowActions(false);
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span>Delete</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Expandable Details */}
+                {expanded && (
+                    <div className="mt-6 pt-6 border-t border-gray-200 animate-in fade-in duration-300">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            {/* Contact Information */}
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                                    <User className="h-4 w-4 text-blue-500" />
+                                    <span>Contact Info</span>
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                    {employee.email && (
+                                        <div className="flex items-center space-x-2 text-gray-600">
+                                            <Mail className="h-4 w-4 text-blue-500" />
+                                            <span className="truncate">{employee.email}</span>
+                                        </div>
+                                    )}
+                                    {employee.phone && (
+                                        <div className="flex items-center space-x-2 text-gray-600">
+                                            <Phone className="h-4 w-4 text-green-500" />
+                                            <span>{employee.phone}</span>
+                                        </div>
+                                    )}
+                                    {employee.address && (
+                                        <div className="flex items-start space-x-2 text-gray-600">
+                                            <MapPin className="h-4 w-4 text-red-500 mt-0.5" />
+                                            <span className="flex-1">{employee.address}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Organizational Details */}
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                                    <Building className="h-4 w-4 text-green-500" />
+                                    <span>Organization</span>
+                                </h4>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                    <div><span className="font-medium">Section:</span> {employee.section || "N/A"}</div>
+                                    <div><span className="font-medium">Grade:</span> {employee.grade || "N/A"}</div>
+                                    <div><span className="font-medium">Supervisor:</span> {employee.supervisor || "N/A"}</div>
+                                    <div><span className="font-medium">ID Number:</span> {employee.id_number || "N/A"}</div>
+                                </div>
+                            </div>
+
+                            {/* Qualifications */}
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                                    <GraduationCap className="h-4 w-4 text-amber-500" />
+                                    <span>Qualifications ({qualCount})</span>
+                                </h4>
+                                {qualCount > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                        {employee.qualifications.slice(0, 3).map((q, index) => (
+                                            <Badge key={index} variant="outline" className="text-xs bg-amber-50 text-amber-700">
+                                                {q}
+                                            </Badge>
+                                        ))}
+                                        {qualCount > 3 && (
+                                            <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600">
+                                                +{qualCount - 3} more
+                                            </Badge>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-gray-500">No qualifications</p>
+                                )}
+                            </div>
+
+                            {/* Performance */}
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                                    <Activity className="h-4 w-4 text-purple-500" />
+                                    <span>Performance</span>
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-green-600">Awards:</span>
+                                        <Badge variant="outline" className="bg-green-50 text-green-700">
+                                            {awardCount}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-red-600">Offences:</span>
+                                        <Badge variant="outline" className="bg-red-50 text-red-700">
+                                            {offenceCount}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Expand/Collapse Button */}
+                <div className="mt-4 flex justify-center">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        onClick={() => setExpanded(!expanded)}
+                    >
+                        {expanded ? (
+                            <>
+                                <ChevronUp className="h-3 w-3 mr-1" />
+                                Show Less
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown className="h-3 w-3 mr-1" />
+                                Show Full Details
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- NEW: List View Component ---
+const EmployeeListView = ({ 
+    employees, 
+    onEdit, 
+    onDelete, 
+    isLoading, 
+    searchTerm, 
+    onSearchChange,
+    filterDesignation,
+    onFilterDesignationChange,
+    filterClass,
+    onFilterClassChange,
+    sortBy,
+    onSortByChange,
+    sortOrder,
+    onSortOrderChange,
+    uniqueDesignations,
+    uniqueClasses,
+    page,
+    onPageChange,
+    perPage,
+    selectedEmployees,
+    onSelectEmployee,
+    onSelectAll
+}) => {
+    const totalPages = Math.ceil(employees.length / perPage);
+    const paginatedEmployees = employees.slice((page - 1) * perPage, page * perPage);
+    const allSelected = paginatedEmployees.length > 0 && paginatedEmployees.every(emp => selectedEmployees.includes(emp.id));
+
+    return (
+        <div className="space-y-6">
+            {/* Enhanced List Header */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-900">Employee Directory</h2>
+                        <p className="text-sm text-gray-600 mt-1">
+                            {employees.length} employees found • {selectedEmployees.length} selected
+                        </p>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Quick Actions */}
+                        {selectedEmployees.length > 0 && (
+                            <div className="flex items-center space-x-2">
+                                <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                                    <Mail className="h-4 w-4 mr-1" />
+                                    Email Selected
+                                </Button>
+                                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete Selected
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* View Options */}
+                        <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-3 text-gray-600 hover:text-gray-900"
+                                disabled
+                            >
+                                <List className="h-4 w-4 mr-1" />
+                                List
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-3 text-gray-400 hover:text-gray-600"
+                                onClick={() => {/* Switch to grid view */}}
+                            >
+                                <Grid3X3 className="h-4 w-4 mr-1" />
+                                Grid
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Enhanced Filters Bar */}
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-5 gap-4">
+                    {/* Search */}
+                    <div className="lg:col-span-2">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                                placeholder="Search employees by name..."
+                                value={searchTerm}
+                                onChange={onSearchChange}
+                                className="pl-10 bg-gray-50 border-gray-200"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Designation Filter */}
+                    <Select value={filterDesignation} onValueChange={onFilterDesignationChange}>
+                        <SelectTrigger className="bg-gray-50 border-gray-200">
+                            <SelectValue placeholder="All Roles" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Roles</SelectItem>
+                            <Separator />
+                            {uniqueDesignations.map(d => (
+                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Class Filter */}
+                    <Select value={filterClass} onValueChange={onFilterClassChange}>
+                        <SelectTrigger className="bg-gray-50 border-gray-200">
+                            <SelectValue placeholder="All Classes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Classes</SelectItem>
+                            <Separator />
+                            {uniqueClasses.map(c => (
+                                <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Sort */}
+                    <div className="flex gap-2">
+                        <Select value={sortBy} onValueChange={onSortByChange}>
+                            <SelectTrigger className="bg-gray-50 border-gray-200">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="first_name">Name</SelectItem>
+                                <SelectItem value="designation">Role</SelectItem>
+                                <SelectItem value="department">Department</SelectItem>
+                                <SelectItem value="date_of_engagement">Engagement Date</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={onSortOrderChange}
+                            className="bg-gray-50 border-gray-200"
+                        >
+                            {sortOrder === 'asc' ? 
+                                <ChevronUp className="h-4 w-4" /> : 
+                                <ChevronDown className="h-4 w-4" />
+                            }
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Employee List */}
+            {isLoading ? (
+                <div className="flex justify-center items-center h-48 bg-white rounded-xl border border-gray-200">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                    <span className="ml-2 text-lg text-gray-600">Loading employees...</span>
+                </div>
+            ) : paginatedEmployees.length === 0 ? (
+                <div className="text-center p-12 bg-white rounded-xl border border-gray-200">
+                    <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No employees found</h3>
+                    <p className="text-gray-600 max-w-sm mx-auto">
+                        {searchTerm || filterDesignation !== 'all' || filterClass !== 'all' 
+                            ? "Try adjusting your search or filters to find what you're looking for."
+                            : "Get started by adding your first employee to the system."
+                        }
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {paginatedEmployees.map(employee => (
+                        <EmployeeListItem
+                            key={employee.id}
+                            employee={employee}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            isSelected={selectedEmployees.includes(employee.id)}
+                            onSelect={() => onSelectEmployee(employee.id)}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Enhanced Pagination */}
+            {paginatedEmployees.length > 0 && (
+                <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 bg-white rounded-xl border border-gray-200 p-6">
+                    <p className="text-sm text-gray-600">
+                        Showing <span className="font-semibold">{Math.min(employees.length, (page - 1) * perPage + 1)}</span> to{" "}
+                        <span className="font-semibold">{Math.min(employees.length, page * perPage)}</span> of{" "}
+                        <span className="font-semibold">{employees.length}</span> employees
+                    </p>
+                    
+                    <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onPageChange(Math.max(1, page - 1))}
+                            disabled={page === 1}
+                            className="flex items-center space-x-1"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span>Previous</span>
+                        </Button>
+                        
+                        <div className="flex items-center space-x-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                const pageNum = i + 1;
+                                return (
+                                    <Button
+                                        key={pageNum}
+                                        variant={page === pageNum ? "default" : "outline"}
+                                        size="sm"
+                                        className="w-8 h-8 p-0"
+                                        onClick={() => onPageChange(pageNum)}
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                );
+                            })}
+                            {totalPages > 5 && (
+                                <span className="px-2 text-sm text-gray-500">...</span>
+                            )}
+                        </div>
+                        
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+                            disabled={page === totalPages}
+                            className="flex items-center space-x-1"
+                        >
+                            <span>Next</span>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // Custom Hook
 const useEmployeeManagement = () => {
     const [employees, setEmployees] = useState([]);
@@ -1125,10 +1655,22 @@ const useEmployeeManagement = () => {
     const mutateEmployee = async (url, method, payload = null) => {
         setError(null);
         try {
+            // ✅ FIXED: Enhanced employee ID handling
+            let processedPayload = payload;
+            
+            // For new employees, ensure employee_id is provided
+            if (method === "POST") {
+                processedPayload = {
+                    ...payload,
+                    // Use provided employee_id or generate one
+                    employee_id: payload.employee_id || generateEmployeeId()
+                };
+            }
+
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: payload ? JSON.stringify(payload) : undefined,
+                body: processedPayload ? JSON.stringify(processedPayload) : undefined,
             });
             
             if (!res.ok) {
@@ -1264,8 +1806,9 @@ export default function Employees() {
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [page, setPage] = useState(1);
-    const perPage = 6;
     const [activeViewTab, setActiveViewTab] = useState("profiles");
+    const [viewMode, setViewMode] = useState("list"); // 'list' or 'cards'
+    const [selectedEmployees, setSelectedEmployees] = useState([]);
 
     // Filtering and Sorting
     const uniqueDesignations = useMemo(() => [...new Set(employees.map(e => e.designation).filter(Boolean))], [employees]);
@@ -1301,10 +1844,12 @@ export default function Employees() {
         return filtered;
     }, [employees, searchTerm, filterDesignation, filterClass, sortBy, sortOrder]);
 
-    const totalPages = Math.ceil(processedEmployees.length / perPage);
-    const paginatedEmployees = processedEmployees.slice((page - 1) * perPage, page * perPage);
+    const perPage = viewMode === "list" ? 8 : 6;
 
-    useEffect(() => { setPage(1); }, [searchTerm, filterDesignation, filterClass, sortBy, sortOrder]);
+    useEffect(() => { 
+        setPage(1);
+        setSelectedEmployees([]);
+    }, [searchTerm, filterDesignation, filterClass, sortBy, sortOrder, viewMode]);
 
     // Handlers
     const handleAdd = () => { 
@@ -1323,9 +1868,14 @@ export default function Employees() {
     };
 
     const handleSubmitForm = async (data) => {
+        const processedData = {
+            ...data,
+            employee_id: selectedEmployee ? data.employee_id : (data.employee_id || generateEmployeeId(data.employee_id))
+        };
+
         const result = selectedEmployee 
-            ? await handleUpdateEmployee(data) 
-            : await handleAddEmployee(data);
+            ? await handleUpdateEmployee(processedData) 
+            : await handleAddEmployee(processedData);
             
         if (result.success) {
             handleDialogClose();
@@ -1338,6 +1888,30 @@ export default function Employees() {
         const result = await handleDeleteEmployee(emp.id, fullName);
         if (!result.success && result.message) {
              setError(result.message);
+        }
+    };
+
+    const handleSelectEmployee = (employeeId) => {
+        setSelectedEmployees(prev => 
+            prev.includes(employeeId) 
+                ? prev.filter(id => id !== employeeId)
+                : [...prev, employeeId]
+        );
+    };
+
+    const handleSelectAll = () => {
+        const currentPageEmployees = processedEmployees.slice((page - 1) * perPage, page * perPage);
+        const allSelected = currentPageEmployees.every(emp => selectedEmployees.includes(emp.id));
+        
+        if (allSelected) {
+            // Deselect all
+            setSelectedEmployees(prev => 
+                prev.filter(id => !currentPageEmployees.some(emp => emp.id === id))
+            );
+        } else {
+            // Select all
+            const newSelected = [...new Set([...selectedEmployees, ...currentPageEmployees.map(emp => emp.id)])];
+            setSelectedEmployees(newSelected);
         }
     };
 
@@ -1401,92 +1975,156 @@ export default function Employees() {
 
                 {/* Employee Profiles Tab */}
                 <TabsContent value="profiles" className="space-y-6">
-                    {/* Search and Filters */}
-                    <div className="flex flex-wrap items-center gap-4 p-4 border rounded-xl bg-gray-50 shadow-sm">
-                        <div className="flex items-center space-x-2 flex-grow min-w-[200px] sm:min-w-[250px]">
-                            <Search className="h-4 w-4 text-gray-500" />
-                            <Input
-                                placeholder="Search by full name..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="flex-grow bg-white"
-                            />
+                    {/* View Mode Toggle */}
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                {viewMode === 'list' ? 'List View' : 'Card View'}
+                            </h3>
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                                {processedEmployees.length} employees
+                            </Badge>
                         </div>
-                        <Select value={filterDesignation} onValueChange={setFilterDesignation}>
-                            <SelectTrigger className="w-[180px] bg-white"><SelectValue placeholder="Filter by Role" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Roles</SelectItem>
-                                <Separator />
-                                {uniqueDesignations.map(d => (<SelectItem key={d} value={d}>{d}</SelectItem>))}
-                            </SelectContent>
-                        </Select>
-                        <Select value={filterClass} onValueChange={setFilterClass}>
-                            <SelectTrigger className="w-[180px] bg-white"><SelectValue placeholder="Filter by Class" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Classes</SelectItem>
-                                <Separator />
-                                {uniqueClasses.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
-                            </SelectContent>
-                        </Select>
-                        <div className="flex gap-2">
-                            <Select value={sortBy} onValueChange={setSortBy}>
-                                <SelectTrigger className="w-[120px] bg-white"><SelectValue placeholder="Sort By" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="first_name">Name</SelectItem>
-                                    <SelectItem value="id">ID</SelectItem>
-                                    <SelectItem value="designation">Role</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Button variant="outline" size="icon" onClick={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))} title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}>
-                                {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        
+                        <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                            <Button
+                                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                                size="sm"
+                                className="h-8 px-3"
+                                onClick={() => setViewMode('list')}
+                            >
+                                <List className="h-4 w-4 mr-1" />
+                                List
+                            </Button>
+                            <Button
+                                variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                                size="sm"
+                                className="h-8 px-3"
+                                onClick={() => setViewMode('cards')}
+                            >
+                                <Grid3X3 className="h-4 w-4 mr-1" />
+                                Cards
                             </Button>
                         </div>
                     </div>
 
-                    {/* Employee Cards */}
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-48">
-                            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                            <span className="ml-2 text-lg text-gray-600">Retrieving personnel records...</span>
-                        </div>
-                    ) : processedEmployees.length === 0 ? (
-                        <div className="text-center p-10 border rounded-xl bg-white shadow-sm">
-                            <p className="text-xl text-gray-500">No personnel records match the current criteria.</p>
-                            <p className="text-sm text-gray-400 mt-1">Try adjusting your search query or filters.</p>
-                        </div>
+                    {/* Conditional Rendering based on View Mode */}
+                    {viewMode === 'list' ? (
+                        <EmployeeListView
+                            employees={processedEmployees}
+                            onEdit={handleEdit}
+                            onDelete={handleEmployeeDeletion}
+                            isLoading={isLoading}
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            filterDesignation={filterDesignation}
+                            onFilterDesignationChange={setFilterDesignation}
+                            filterClass={filterClass}
+                            onFilterClassChange={setFilterClass}
+                            sortBy={sortBy}
+                            onSortByChange={setSortBy}
+                            sortOrder={sortOrder}
+                            onSortOrderChange={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                            uniqueDesignations={uniqueDesignations}
+                            uniqueClasses={uniqueClasses}
+                            page={page}
+                            onPageChange={setPage}
+                            perPage={perPage}
+                            selectedEmployees={selectedEmployees}
+                            onSelectEmployee={handleSelectEmployee}
+                            onSelectAll={handleSelectAll}
+                        />
                     ) : (
-                        <>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {paginatedEmployees.map(emp => (
-                                    <EmployeeCard 
-                                        key={emp.id}
-                                        employee={emp}
-                                        onEdit={handleEdit}
-                                        onDelete={handleEmployeeDeletion}
+                        /* Existing Card View */
+                        <div className="space-y-6">
+                            {/* Search and Filters for Card View */}
+                            <div className="flex flex-wrap items-center gap-4 p-4 border rounded-xl bg-gray-50 shadow-sm">
+                                <div className="flex items-center space-x-2 flex-grow min-w-[200px] sm:min-w-[250px]">
+                                    <Search className="h-4 w-4 text-gray-500" />
+                                    <Input
+                                        placeholder="Search by full name..."
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                        className="flex-grow bg-white"
                                     />
-                                ))}
+                                </div>
+                                <Select value={filterDesignation} onValueChange={setFilterDesignation}>
+                                    <SelectTrigger className="w-[180px] bg-white"><SelectValue placeholder="Filter by Role" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Roles</SelectItem>
+                                        <Separator />
+                                        {uniqueDesignations.map(d => (<SelectItem key={d} value={d}>{d}</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                                <Select value={filterClass} onValueChange={setFilterClass}>
+                                    <SelectTrigger className="w-[180px] bg-white"><SelectValue placeholder="Filter by Class" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Classes</SelectItem>
+                                        <Separator />
+                                        {uniqueClasses.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                                <div className="flex gap-2">
+                                    <Select value={sortBy} onValueChange={setSortBy}>
+                                        <SelectTrigger className="w-[120px] bg-white"><SelectValue placeholder="Sort By" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="first_name">Name</SelectItem>
+                                            <SelectItem value="id">ID</SelectItem>
+                                            <SelectItem value="designation">Role</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Button variant="outline" size="icon" onClick={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))} title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}>
+                                        {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    </Button>
+                                </div>
                             </div>
 
-                            {/* Pagination */}
-                            {processedEmployees.length > 0 && (
-                                <div className="flex flex-wrap justify-between items-center mt-6 p-4 border-t pt-4">
-                                    <p className="text-sm text-gray-600">
-                                        Showing {Math.min(processedEmployees.length, (page - 1) * perPage + 1)} to {Math.min(processedEmployees.length, page * perPage)} of {processedEmployees.length} filtered records.
-                                    </p>
-                                    <div className="flex gap-2 items-center">
-                                        <Button variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                                            &larr; Previous
-                                        </Button>
-                                        <span className="px-3 py-1 text-sm border rounded-full font-medium bg-white shadow-sm">
-                                            Page {page} / {totalPages}
-                                        </span>
-                                        <Button variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-                                            Next &rarr;
-                                        </Button>
-                                    </div>
+                            {/* Employee Cards */}
+                            {isLoading ? (
+                                <div className="flex justify-center items-center h-48">
+                                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                                    <span className="ml-2 text-lg text-gray-600">Retrieving personnel records...</span>
                                 </div>
+                            ) : processedEmployees.length === 0 ? (
+                                <div className="text-center p-10 border rounded-xl bg-white shadow-sm">
+                                    <p className="text-xl text-gray-500">No personnel records match the current criteria.</p>
+                                    <p className="text-sm text-gray-400 mt-1">Try adjusting your search query or filters.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                        {processedEmployees.slice((page - 1) * perPage, page * perPage).map(emp => (
+                                            <EmployeeCard 
+                                                key={emp.id}
+                                                employee={emp}
+                                                onEdit={handleEdit}
+                                                onDelete={handleEmployeeDeletion}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {processedEmployees.length > 0 && (
+                                        <div className="flex flex-wrap justify-between items-center mt-6 p-4 border-t pt-4">
+                                            <p className="text-sm text-gray-600">
+                                                Showing {Math.min(processedEmployees.length, (page - 1) * perPage + 1)} to {Math.min(processedEmployees.length, page * perPage)} of {processedEmployees.length} filtered records.
+                                            </p>
+                                            <div className="flex gap-2 items-center">
+                                                <Button variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                                                    &larr; Previous
+                                                </Button>
+                                                <span className="px-3 py-1 text-sm border rounded-full font-medium bg-white shadow-sm">
+                                                    Page {page} / {Math.ceil(processedEmployees.length / perPage)}
+                                                </span>
+                                                <Button variant="outline" onClick={() => setPage(p => Math.min(Math.ceil(processedEmployees.length / perPage), p + 1))} disabled={page === Math.ceil(processedEmployees.length / perPage)}>
+                                                    Next &rarr;
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
-                        </>
+                        </div>
                     )}
                 </TabsContent>
 
