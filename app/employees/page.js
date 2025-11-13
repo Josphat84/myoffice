@@ -1269,13 +1269,23 @@ const EmployeeListItem = ({ employee, onEdit, onDelete, isSelected, onSelect }) 
                                     {employee.email && (
                                         <div className="flex items-center space-x-2 text-gray-600">
                                             <Mail className="h-4 w-4 text-blue-500" />
-                                            <span className="truncate">{employee.email}</span>
+                                            <span 
+                                                className="truncate cursor-pointer hover:text-blue-600 hover:underline"
+                                                onClick={() => handleEmailClick(employee.email)}
+                                            >
+                                                {employee.email}
+                                            </span>
                                         </div>
                                     )}
                                     {employee.phone && (
                                         <div className="flex items-center space-x-2 text-gray-600">
                                             <Phone className="h-4 w-4 text-green-500" />
-                                            <span>{employee.phone}</span>
+                                            <span 
+                                                className="cursor-pointer hover:text-green-600 hover:underline"
+                                                onClick={() => handlePhoneClick(employee.phone)}
+                                            >
+                                                {employee.phone}
+                                            </span>
                                         </div>
                                     )}
                                     {employee.address && (
@@ -1810,15 +1820,20 @@ export default function Employees() {
     const [viewMode, setViewMode] = useState("list"); // 'list' or 'cards'
     const [selectedEmployees, setSelectedEmployees] = useState([]);
 
-    // Filtering and Sorting
+    // Filtering and Sorting - FIXED: Added proper null handling for search
     const uniqueDesignations = useMemo(() => [...new Set(employees.map(e => e.designation).filter(Boolean))], [employees]);
     const uniqueClasses = useMemo(() => [...new Set(employees.map(e => e.employee_class || "N/A").filter(Boolean))], [employees]);
 
     const processedEmployees = useMemo(() => {
         let filtered = employees
             .filter(emp => {
-                const name = `${emp.first_name} ${emp.last_name}`.toLowerCase();
-                const passesSearch = name.includes(searchTerm.toLowerCase());
+                // FIXED: Handle null/undefined values for search
+                const firstName = emp.first_name || '';
+                const lastName = emp.last_name || '';
+                const name = `${firstName} ${lastName}`.toLowerCase();
+                
+                const searchTermLower = (searchTerm || '').toLowerCase();
+                const passesSearch = name.includes(searchTermLower);
                 
                 const empClass = emp.employee_class || "N/A";
                 const passesClassFilter = filterClass === "all" || empClass === filterClass;
