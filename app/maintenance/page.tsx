@@ -935,8 +935,24 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, subtitle, icon, trend, trendValue, className, onClick }: StatCardProps) {
-  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-  const trendColor = trend === 'up' ? 'text-green-600' : trend === 'down' ? 'text-red-500' : 'text-gray-400';
+  const getTrendIcon = (trendType?: 'up' | 'down' | 'stable') => {
+    switch (trendType) {
+      case 'up': return TrendingUp;
+      case 'down': return TrendingDown;
+      default: return Minus;
+    }
+  };
+  
+  const getTrendColor = (trendType?: 'up' | 'down' | 'stable') => {
+    switch (trendType) {
+      case 'up': return 'text-green-600';
+      case 'down': return 'text-red-500';
+      default: return 'text-gray-400';
+    }
+  };
+  
+  const TrendIcon = getTrendIcon(trend);
+  const trendColor = getTrendColor(trend);
 
   return (
     <Card 
@@ -1650,24 +1666,24 @@ function MaintenanceContent({
                 onClick={handleExport}
                 variant="outline" 
                 className="bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              >
-                <DownloadCloud className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button 
-                onClick={() => setShowWorkOrderForm(true)}
-                className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Work Order
-              </Button>
-            </div>
-          </div>
-
-          {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <StatCard
               title="Total Work Orders"
+              value={dashboardData.totalWorkOrders || 0}
+              subtitle="Active work orders"
+              icon={<FileText className="h-4 w-4" />}
+              trend={dashboardData.trending === 'improving' ? 'up' : dashboardData.trending === 'declining' ? 'down' : 'stable'}
+              trendValue="+12%"
+              onClick={() => handleStatCardClick('Total Work Orders')}
+            />
+            
+            <StatCard
+              title="Efficiency"
+              value={`${dashboardData.efficiency || 0}%`}
+              subtitle="Operational performance"
+              icon={<TrendingUp className="h-4 w-4" />}
+              trend={dashboardData.trending === 'improving' ? 'up' : dashboardData.trending === 'declining' ? 'down' : 'stable'}
+              onClick={() => handleStatCardClick('Efficiency')}
+            />
               value={dashboardData.totalWorkOrders || 0}
               subtitle="Active work orders"
               icon={<FileText className="h-4 w-4" />}
