@@ -1666,69 +1666,11 @@ function MaintenanceContent({
                 onClick={handleExport}
                 variant="outline" 
                 className="bg-white/10 hover:bg-white/20 border-white/20 text-white"
-            <StatCard
-              title="Total Work Orders"
-              value={dashboardData.totalWorkOrders || 0}
-              subtitle="Active work orders"
-              icon={<FileText className="h-4 w-4" />}
-              trend={dashboardData.trending === 'improving' ? 'up' : dashboardData.trending === 'declining' ? 'down' : 'stable'}
-              trendValue="+12%"
-              onClick={() => handleStatCardClick('Total Work Orders')}
-            />
-            
-            <StatCard
-              title="Efficiency"
-              value={`${dashboardData.efficiency || 0}%`}
-              subtitle="Operational performance"
-              icon={<TrendingUp className="h-4 w-4" />}
-              trend={dashboardData.trending === 'improving' ? 'up' : dashboardData.trending === 'declining' ? 'down' : 'stable'}
-              onClick={() => handleStatCardClick('Efficiency')}
-            />
-              value={dashboardData.totalWorkOrders || 0}
-              subtitle="Active work orders"
-              icon={<FileText className="h-4 w-4" />}
-              trend={dashboardData.trending}
-              trendValue="+12%"
-              onClick={() => handleStatCardClick('Total Work Orders')}
-            />
-            
-            <StatCard
-              title="Efficiency"
-              value={`${dashboardData.efficiency || 0}%`}
-              subtitle="Operational performance"
-              icon={<TrendingUp className="h-4 w-4" />}
-              trend={dashboardData.trending}
-              onClick={() => handleStatCardClick('Efficiency')}
-            />
-            
-            <StatCard
-              title="Completed"
-              value={dashboardData.completed || 0}
-              subtitle="Successfully resolved"
-              icon={<CheckCircle2 className="h-4 w-4" />}
-              trend={dashboardData.completed > 0 ? 'up' : 'stable'}
-              trendValue="+8%"
-              onClick={() => handleStatCardClick('Completed')}
-            />
-            
-            <StatCard
-              title="Overdue"
-              value={dashboardData.overdueCount || 0}
-              subtitle="Requiring attention"
-              icon={<AlertTriangle className="h-4 w-4" />}
-              trend={dashboardData.overdueCount > 0 ? 'down' : 'stable'}
-              trendValue="-3%"
-              onClick={() => handleStatCardClick('Overdue')}
-            />
-            
-            <StatCard
-              title="Safety Score"
-              value={`${dashboardData.safetyScore || 0}%`}
-              subtitle="Safety compliance"
-              icon={<Shield className="h-4 w-4" />}
-              trend={dashboardData.safetyScore > 90 ? 'up' : 'stable'}
-              onClick={() => handleStatCardClick('Safety Score')}
-            />
+              >
+                <DownloadCloud className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
         </div>
       </div>
