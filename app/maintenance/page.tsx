@@ -2361,6 +2361,7 @@ export default function MaintenancePage() {
   // Prepare dashboard data
   const dashboardData: DashboardData = {
     ...workOrderStats,
+    totalWorkOrders: workOrderStats.total,
     efficiency: calculateEfficiency(),
     trending: getTrendingStatus(),
     recommendations: generateAIRecommendations(workOrders, workOrderStats),
