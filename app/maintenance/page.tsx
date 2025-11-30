@@ -264,7 +264,7 @@ interface FilterButton {
   key: string;
   label: string;
   count: number;
-  icon?: React.ReactNode;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color?: string;
 }
 
