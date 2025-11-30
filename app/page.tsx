@@ -832,7 +832,7 @@ export default async function Home() {
               </h1>
               
               <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto mb-8"> 
-                Unify your team and assets effortlessly. Achieve peak productivity with our sophisticated management platform.
+                Organize your information, make it easy to access with our sophisticated management platform.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -38,17 +38,203 @@ import {
   Plane,
   PartyPopper,
   UserPlus,
-  Trash2
+  Trash2,
+  Copy,
+  RotateCcw,
+  Play,
+  Square,
+  FastForward,
+  RefreshCw,
+  Database,
+  Cloud,
+  CloudOff
 } from 'lucide-react';
 
-// Initial employees data
-const INITIAL_EMPLOYEES = [
-  { id: 1, name: 'John Smith', department: 'Engineering', rate: 85, color: 'bg-blue-500' },
-  { id: 2, name: 'Sarah Johnson', department: 'Design', rate: 75, color: 'bg-purple-500' },
-  { id: 3, name: 'Mike Chen', department: 'Management', rate: 100, color: 'bg-green-500' },
-  { id: 4, name: 'Emily Davis', department: 'Marketing', rate: 65, color: 'bg-pink-500' },
-  { id: 5, name: 'David Wilson', department: 'Engineering', rate: 80, color: 'bg-orange-500' }
-];
+// API service for FastAPI backend
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+const timesheetsApi = {
+  // Employees
+  async getEmployees(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.department && filters.department !== 'all') {
+      params.append('department', filters.department);
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/employees?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch employees');
+    return await response.json();
+  },
+
+  async createEmployee(employeeData) {
+    const response = await fetch(`${API_BASE_URL}/employees`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(employeeData)
+    });
+    if (!response.ok) throw new Error('Failed to create employee');
+    return await response.json();
+  },
+
+  async updateEmployee(employeeId, employeeData) {
+    const response = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(employeeData)
+    });
+    if (!response.ok) throw new Error('Failed to update employee');
+    return await response.json();
+  },
+
+  async deleteEmployee(employeeId) {
+    const response = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Failed to delete employee');
+    return await response.json();
+  },
+
+  // Timesheets
+  async getTimesheets(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.employeeId) params.append('employee_id', filters.employeeId);
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+    if (filters.department && filters.department !== 'all') {
+      params.append('department', filters.department);
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/timesheets?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch timesheets');
+    return await response.json();
+  },
+
+  async createTimesheetEntry(entryData) {
+    const response = await fetch(`${API_BASE_URL}/timesheets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entryData)
+    });
+    if (!response.ok) throw new Error('Failed to create timesheet entry');
+    return await response.json();
+  },
+
+  async updateTimesheetEntry(entryId, entryData) {
+    const response = await fetch(`${API_BASE_URL}/timesheets/${entryId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entryData)
+    });
+    if (!response.ok) throw new Error('Failed to update timesheet entry');
+    return await response.json();
+  },
+
+  async deleteTimesheetEntry(entryId) {
+    const response = await fetch(`${API_BASE_URL}/timesheets/${entryId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Failed to delete timesheet entry');
+    return await response.json();
+  },
+
+  // Bulk operations
+  async applyShiftToRange(bulkData) {
+    const response = await fetch(`${API_BASE_URL}/timesheets/apply-shift`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bulkData)
+    });
+    if (!response.ok) throw new Error('Failed to apply shift to range');
+    return await response.json();
+  },
+
+  // Holidays
+  async getHolidays(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+    
+    const response = await fetch(`${API_BASE_URL}/holidays?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch holidays');
+    return await response.json();
+  },
+
+  async createHoliday(holidayData) {
+    const response = await fetch(`${API_BASE_URL}/holidays`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(holidayData)
+    });
+    if (!response.ok) throw new Error('Failed to create holiday');
+    return await response.json();
+  },
+
+  async deleteHoliday(holidayId) {
+    const response = await fetch(`${API_BASE_URL}/holidays/${holidayId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Failed to delete holiday');
+    return await response.json();
+  },
+
+  // Leave Days
+  async getLeaveDays(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.employeeId) params.append('employee_id', filters.employeeId);
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+    
+    const response = await fetch(`${API_BASE_URL}/leave-days?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch leave days');
+    return await response.json();
+  },
+
+  async createLeaveDay(leaveData) {
+    const response = await fetch(`${API_BASE_URL}/leave-days`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(leaveData)
+    });
+    if (!response.ok) throw new Error('Failed to create leave day');
+    return await response.json();
+  },
+
+  async deleteLeaveDay(leaveDayId) {
+    const response = await fetch(`${API_BASE_URL}/leave-days/${leaveDayId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Failed to delete leave day');
+    return await response.json();
+  },
+
+  // Statistics
+  async getMonthlySummary(year, month, department = null) {
+    const params = new URLSearchParams();
+    params.append('year', year);
+    params.append('month', month);
+    if (department && department !== 'all') params.append('department', department);
+    
+    const response = await fetch(`${API_BASE_URL}/stats/monthly-summary?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch monthly summary');
+    return await response.json();
+  },
+
+  async getEmployeeSummary(employeeId, year, month) {
+    const params = new URLSearchParams();
+    params.append('year', year);
+    params.append('month', month);
+    
+    const response = await fetch(`${API_BASE_URL}/stats/employee-summary/${employeeId}?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch employee summary');
+    return await response.json();
+  },
+
+  async getSystemOverview() {
+    const response = await fetch(`${API_BASE_URL}/stats/overview`);
+    if (!response.ok) throw new Error('Failed to fetch system overview');
+    return await response.json();
+  }
+};
 
 // Status types
 const STATUS_TYPES = {
@@ -76,115 +262,89 @@ const COLOR_OPTIONS = [
   'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-teal-500', 'bg-cyan-500'
 ];
 
+// Common shift patterns
+const SHIFT_PRESETS = [
+  { name: 'Standard 9-5', start: '09:00', end: '17:00', break: 60 },
+  { name: 'Early 7-3', start: '07:00', end: '15:00', break: 30 },
+  { name: 'Late 12-8', start: '12:00', end: '20:00', break: 45 },
+  { name: 'Night 22-6', start: '22:00', end: '06:00', break: 60 },
+  { name: 'Flexible 10-6', start: '10:00', end: '18:00', break: 60 }
+];
+
 const TimesheetsSystem = () => {
   const [isClient, setIsClient] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [employees, setEmployees] = useState([]);
-  const [timesheets, setTimesheets] = useState({});
+  const [timesheets, setTimesheets] = useState([]);
   const [holidays, setHolidays] = useState([]);
-  const [leaveDays, setLeaveDays] = useState({});
+  const [leaveDays, setLeaveDays] = useState([]);
   const [activeTab, setActiveTab] = useState('monthly-view');
   const [settings, setSettings] = useState({
     autoOvertime: true,
     overtimeThreshold: 8,
     darkMode: false,
     showWeekends: true,
-    holidayOvertimeRate: 2.0
+    holidayOvertimeRate: 2.0,
+    enableTimer: true,
+    autoCopyPrevious: false
   });
   const [filters, setFilters] = useState({
     department: 'all',
     search: ''
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [activeTimers, setActiveTimers] = useState({});
+  const [quickEntryMode, setQuickEntryMode] = useState(false);
+  const [selectedShift, setSelectedShift] = useState(SHIFT_PRESETS[0]);
 
-  // Initialize component with localStorage data
+  // Initialize component
   useEffect(() => {
     setIsClient(true);
     loadAllData();
+    
+    // Check online status
+    setIsOnline(navigator.onLine);
+    window.addEventListener('online', () => setIsOnline(true));
+    window.addEventListener('offline', () => setIsOnline(false));
+    
+    return () => {
+      window.removeEventListener('online', () => setIsOnline(true));
+      window.removeEventListener('offline', () => setIsOnline(false));
+    };
   }, []);
 
-  // Load all data from localStorage
-  const loadAllData = () => {
+  // Load all data from API
+  const loadAllData = async () => {
     try {
       setIsLoading(true);
       
-      // Load employees
-      const savedEmployees = localStorage.getItem('timesheets-employees');
-      if (savedEmployees) {
-        setEmployees(JSON.parse(savedEmployees));
-      } else {
-        setEmployees(INITIAL_EMPLOYEES);
-        localStorage.setItem('timesheets-employees', JSON.stringify(INITIAL_EMPLOYEES));
-      }
+      const [employeesData, timesheetsData, holidaysData, leaveDaysData, overviewData] = await Promise.all([
+        timesheetsApi.getEmployees(),
+        timesheetsApi.getTimesheets(),
+        timesheetsApi.getHolidays(),
+        timesheetsApi.getLeaveDays(),
+        timesheetsApi.getSystemOverview()
+      ]);
 
-      // Load timesheets
-      const savedTimesheets = localStorage.getItem('timesheets-data');
-      setTimesheets(savedTimesheets ? JSON.parse(savedTimesheets) : {});
-
-      // Load holidays
-      const savedHolidays = localStorage.getItem('timesheets-holidays');
-      setHolidays(savedHolidays ? JSON.parse(savedHolidays) : []);
-
-      // Load leave days
-      const savedLeaveDays = localStorage.getItem('timesheets-leaveDays');
-      setLeaveDays(savedLeaveDays ? JSON.parse(savedLeaveDays) : {});
-
-      // Load settings
-      const savedSettings = localStorage.getItem('timesheets-settings');
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-      }
+      setEmployees(employeesData);
+      setTimesheets(timesheetsData);
+      setHolidays(holidaysData);
+      setLeaveDays(leaveDaysData);
+      
+      toast.success('Data loaded successfully');
     } catch (error) {
       console.error('Failed to load data:', error);
-      // Initialize with default data
-      setEmployees(INITIAL_EMPLOYEES);
-      setTimesheets({});
-      setHolidays([]);
-      setLeaveDays({});
+      toast.error('Failed to load data from server');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Save data to localStorage
-  const saveData = useCallback((key, data) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error('Failed to save data:', error);
-      toast.error('Failed to save changes');
-    }
-  }, []);
-
-  // Save employees
-  const saveEmployees = useCallback((newEmployees) => {
-    setEmployees(newEmployees);
-    saveData('timesheets-employees', newEmployees);
-  }, [saveData]);
-
-  // Save timesheets
-  const saveTimesheets = useCallback((newTimesheets) => {
-    setTimesheets(newTimesheets);
-    saveData('timesheets-data', newTimesheets);
-  }, [saveData]);
-
-  // Save holidays
-  const saveHolidays = useCallback((newHolidays) => {
-    setHolidays(newHolidays);
-    saveData('timesheets-holidays', newHolidays);
-  }, [saveData]);
-
-  // Save leave days
-  const saveLeaveDays = useCallback((newLeaveDays) => {
-    setLeaveDays(newLeaveDays);
-    saveData('timesheets-leaveDays', newLeaveDays);
-  }, [saveData]);
-
-  // Save settings
-  const saveSettings = useCallback((newSettings) => {
-    setSettings(newSettings);
-    saveData('timesheets-settings', newSettings);
-  }, [saveData]);
+  // Refresh data
+  const refreshData = async () => {
+    await loadAllData();
+  };
 
   // Get all days in current month
   const getDaysInMonth = useCallback(() => {
@@ -212,8 +372,10 @@ const TimesheetsSystem = () => {
   // Check if date is leave/off/absent
   const getDayStatus = useCallback((employeeId, date) => {
     const dateStr = date.toISOString().split('T')[0];
-    const employeeLeaveDays = leaveDays[employeeId] || {};
-    return employeeLeaveDays[dateStr] || STATUS_TYPES.WORK;
+    const employeeLeaveDay = leaveDays.find(ld => 
+      ld.employee_id === employeeId && ld.date === dateStr
+    );
+    return employeeLeaveDay ? employeeLeaveDay.status : STATUS_TYPES.WORK;
   }, [leaveDays]);
 
   // Navigate months
@@ -234,7 +396,6 @@ const TimesheetsSystem = () => {
 
   // Format time input
   const formatTimeInput = (value) => {
-    // Remove non-numeric characters
     const numbers = value.replace(/[^\d]/g, '');
     
     if (numbers.length <= 2) {
@@ -247,163 +408,182 @@ const TimesheetsSystem = () => {
   };
 
   // Calculate hours from start/end times
-  const calculateHoursFromTimes = useCallback((employeeId, dateStr, entry) => {
-    if (!entry.startTime || !entry.endTime || !isValidTime(entry.startTime) || !isValidTime(entry.endTime)) {
-      entry.regularHours = 0;
-      entry.overtimeHours = 0;
-      entry.holidayOvertimeHours = 0;
-      entry.totalHours = 0;
-      return;
+  const calculateHoursFromTimes = useCallback((startTime, endTime, breakMinutes = 60) => {
+    if (!startTime || !endTime || !isValidTime(startTime) || !isValidTime(endTime)) {
+      return { regularHours: 0, overtimeHours: 0, holidayOvertimeHours: 0, totalHours: 0 };
     }
 
-    const [startHours, startMinutes] = entry.startTime.split(':').map(Number);
-    const [endHours, endMinutes] = entry.endTime.split(':').map(Number);
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
     
     let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-    totalMinutes -= entry.breakMinutes || 0;
+    totalMinutes -= breakMinutes;
     
     const totalHours = Math.max(0, totalMinutes / 60);
-    const date = new Date(dateStr);
-    const isHolidayDay = isHoliday(date);
     
-    if (isHolidayDay) {
-      // Holiday work gets special overtime rate
-      entry.regularHours = 0;
-      entry.overtimeHours = 0;
-      entry.holidayOvertimeHours = totalHours;
-    } else if (settings.autoOvertime && totalHours > settings.overtimeThreshold) {
-      entry.regularHours = settings.overtimeThreshold;
-      entry.overtimeHours = totalHours - settings.overtimeThreshold;
-      entry.holidayOvertimeHours = 0;
+    if (settings.autoOvertime && totalHours > settings.overtimeThreshold) {
+      return {
+        regularHours: settings.overtimeThreshold,
+        overtimeHours: totalHours - settings.overtimeThreshold,
+        holidayOvertimeHours: 0,
+        totalHours
+      };
     } else {
-      entry.regularHours = totalHours;
-      entry.overtimeHours = 0;
-      entry.holidayOvertimeHours = 0;
+      return {
+        regularHours: totalHours,
+        overtimeHours: 0,
+        holidayOvertimeHours: 0,
+        totalHours
+      };
     }
-    
-    entry.totalHours = totalHours;
-  }, [isHoliday, settings.autoOvertime, settings.overtimeThreshold]);
+  }, [settings.autoOvertime, settings.overtimeThreshold]);
 
   // Update time entry
-  const updateTimeEntry = useCallback((employeeId, date, field, value) => {
-    const dateStr = date.toISOString().split('T')[0];
-    setTimesheets(prev => {
-      const newData = {
-        ...prev,
-        [employeeId]: {
-          ...prev[employeeId],
-          [dateStr]: {
-            ...prev[employeeId]?.[dateStr],
-            [field]: value,
-            status: STATUS_TYPES.WORK // Reset to work when updating times
-          }
-        }
+  const updateTimeEntry = async (employeeId, date, field, value) => {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+      const existingEntry = timesheets.find(ts => 
+        ts.employee_id === employeeId && ts.date === dateStr
+      );
+
+      let entryData = {
+        employee_id: employeeId,
+        date: dateStr,
+        [field]: value
       };
-      
-      // Recalculate hours if times are updated
-      const entry = newData[employeeId]?.[dateStr];
-      if (entry && (field === 'startTime' || field === 'endTime' || field === 'breakMinutes')) {
-        calculateHoursFromTimes(employeeId, dateStr, entry);
+
+      // If updating times, calculate hours
+      if (field === 'startTime' || field === 'endTime' || field === 'breakMinutes') {
+        const currentEntry = existingEntry || {};
+        const startTime = field === 'startTime' ? value : currentEntry.start_time;
+        const endTime = field === 'endTime' ? value : currentEntry.end_time;
+        const breakMins = field === 'breakMinutes' ? value : currentEntry.break_minutes;
+
+        if (startTime && endTime) {
+          const hours = calculateHoursFromTimes(startTime, endTime, breakMins);
+          Object.assign(entryData, hours);
+        }
       }
-      
-      // Save to localStorage
-      saveTimesheets(newData);
-      
-      return newData;
-    });
-  }, [calculateHoursFromTimes, saveTimesheets]);
+
+      if (existingEntry) {
+        // Update existing entry
+        const updated = await timesheetsApi.updateTimesheetEntry(existingEntry.id, entryData);
+        setTimesheets(prev => prev.map(ts => 
+          ts.id === existingEntry.id ? { ...ts, ...updated } : ts
+        ));
+      } else {
+        // Create new entry
+        const newEntry = await timesheetsApi.createTimesheetEntry({
+          ...entryData,
+          status: STATUS_TYPES.WORK
+        });
+        setTimesheets(prev => [...prev, newEntry]);
+      }
+
+      toast.success('Timesheet updated');
+    } catch (error) {
+      console.error('Failed to update timesheet:', error);
+      toast.error('Failed to update timesheet');
+    }
+  };
 
   // Update day status (leave, off, absent, etc.)
-  const updateDayStatus = useCallback((employeeId, date, status) => {
-    const dateStr = date.toISOString().split('T')[0];
-    
-    if (status === STATUS_TYPES.WORK) {
-      // Remove from leave days and clear timesheet entry
-      setLeaveDays(prev => {
-        const newLeaveDays = { ...prev };
-        if (newLeaveDays[employeeId]) {
-          delete newLeaveDays[employeeId][dateStr];
-        }
-        saveLeaveDays(newLeaveDays);
-        return newLeaveDays;
-      });
+  const updateDayStatus = async (employeeId, date, status) => {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
       
-      setTimesheets(prev => {
-        const newData = { ...prev };
-        if (newData[employeeId]?.[dateStr]) {
-          delete newData[employeeId][dateStr];
+      if (status === STATUS_TYPES.WORK) {
+        // Remove leave day and clear timesheet
+        const existingLeaveDay = leaveDays.find(ld => 
+          ld.employee_id === employeeId && ld.date === dateStr
+        );
+        
+        if (existingLeaveDay) {
+          await timesheetsApi.deleteLeaveDay(existingLeaveDay.id);
+          setLeaveDays(prev => prev.filter(ld => ld.id !== existingLeaveDay.id));
         }
-        saveTimesheets(newData);
-        return newData;
-      });
-    } else {
-      // Add to leave days and set automatic hours
-      setLeaveDays(prev => {
-        const newLeaveDays = {
-          ...prev,
-          [employeeId]: {
-            ...prev[employeeId],
-            [dateStr]: status
-          }
+
+        const existingTimesheet = timesheets.find(ts => 
+          ts.employee_id === employeeId && ts.date === dateStr
+        );
+        
+        if (existingTimesheet) {
+          await timesheetsApi.deleteTimesheetEntry(existingTimesheet.id);
+          setTimesheets(prev => prev.filter(ts => ts.id !== existingTimesheet.id));
+        }
+      } else {
+        // Add leave day
+        const leaveData = {
+          employee_id: employeeId,
+          date: dateStr,
+          status
         };
-        saveLeaveDays(newLeaveDays);
-        return newLeaveDays;
-      });
-      
-      // Set automatic hours for leave/off days
-      const statusConfig = STATUS_CONFIG[status];
-      if (statusConfig.hours > 0) {
-        setTimesheets(prev => {
-          const newData = {
-            ...prev,
-            [employeeId]: {
-              ...prev[employeeId],
-              [dateStr]: {
-                startTime: '09:00',
-                endTime: '17:00',
-                breakMinutes: 60,
-                regularHours: statusConfig.hours,
-                overtimeHours: 0,
-                holidayOvertimeHours: 0,
-                totalHours: statusConfig.hours,
-                status: status
-              }
-            }
+        
+        const newLeaveDay = await timesheetsApi.createLeaveDay(leaveData);
+        setLeaveDays(prev => [...prev, newLeaveDay]);
+
+        // Set automatic hours for leave/off days
+        const statusConfig = STATUS_CONFIG[status];
+        if (statusConfig.hours > 0) {
+          const timesheetData = {
+            employee_id: employeeId,
+            date: dateStr,
+            start_time: '09:00',
+            end_time: '17:00',
+            break_minutes: 60,
+            regular_hours: statusConfig.hours,
+            overtime_hours: 0,
+            holiday_overtime_hours: 0,
+            total_hours: statusConfig.hours,
+            status
           };
-          saveTimesheets(newData);
-          return newData;
-        });
+          
+          const newTimesheet = await timesheetsApi.createTimesheetEntry(timesheetData);
+          setTimesheets(prev => [...prev, newTimesheet]);
+        }
       }
+
+      toast.success(`Status updated to ${STATUS_CONFIG[status].label}`);
+    } catch (error) {
+      console.error('Failed to update day status:', error);
+      toast.error('Failed to update day status');
     }
-  }, [saveLeaveDays, saveTimesheets]);
+  };
 
   // Add/remove holiday
-  const toggleHoliday = useCallback((date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    setHolidays(prev => {
-      const isCurrentlyHoliday = prev.some(holiday => holiday.date === dateStr);
-      let newHolidays;
-      
-      if (isCurrentlyHoliday) {
-        newHolidays = prev.filter(holiday => holiday.date !== dateStr);
+  const toggleHoliday = async (date) => {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+      const existingHoliday = holidays.find(h => h.date === dateStr);
+
+      if (existingHoliday) {
+        await timesheetsApi.deleteHoliday(existingHoliday.id);
+        setHolidays(prev => prev.filter(h => h.id !== existingHoliday.id));
+        toast.success('Holiday removed');
       } else {
-        newHolidays = [...prev, { date: dateStr, name: 'Holiday' }];
+        const newHoliday = await timesheetsApi.createHoliday({
+          date: dateStr,
+          name: 'Holiday'
+        });
+        setHolidays(prev => [...prev, newHoliday]);
+        toast.success('Holiday added');
       }
-      
-      saveHolidays(newHolidays);
-      return newHolidays;
-    });
-  }, [saveHolidays]);
+    } catch (error) {
+      console.error('Failed to toggle holiday:', error);
+      toast.error('Failed to update holiday');
+    }
+  };
 
   // Get hours for an employee on a specific date
   const getHours = useCallback((employeeId, date) => {
     const dateStr = date.toISOString().split('T')[0];
-    const entry = timesheets[employeeId]?.[dateStr];
+    const entry = timesheets.find(ts => 
+      ts.employee_id === employeeId && ts.date === dateStr
+    );
     const status = getDayStatus(employeeId, date);
     const isHolidayDay = isHoliday(date);
     
     if (isHolidayDay && status === STATUS_TYPES.WORK) {
-      // Default holiday entry
       return {
         startTime: '',
         endTime: '',
@@ -417,7 +597,6 @@ const TimesheetsSystem = () => {
     }
     
     if (status !== STATUS_TYPES.WORK) {
-      // Leave/off/absent day
       const statusConfig = STATUS_CONFIG[status];
       return {
         startTime: '09:00',
@@ -445,7 +624,13 @@ const TimesheetsSystem = () => {
     }
     
     return {
-      ...entry,
+      startTime: entry.start_time || '',
+      endTime: entry.end_time || '',
+      regularHours: entry.regular_hours || 0,
+      overtimeHours: entry.overtime_hours || 0,
+      holidayOvertimeHours: entry.holiday_overtime_hours || 0,
+      totalHours: entry.total_hours || 0,
+      breakMinutes: entry.break_minutes || 60,
       status: entry.status || STATUS_TYPES.WORK
     };
   }, [timesheets, getDayStatus, isHoliday]);
@@ -525,222 +710,129 @@ const TimesheetsSystem = () => {
   }, [updateTimeEntry]);
 
   // Add new employee
-  const addEmployee = useCallback((employeeData) => {
-    const newEmployee = {
-      id: Date.now(), // Simple ID generation
-      ...employeeData,
-      color: COLOR_OPTIONS[Math.floor(Math.random() * COLOR_OPTIONS.length)]
-    };
-    
-    const newEmployees = [...employees, newEmployee];
-    saveEmployees(newEmployees);
-    toast.success(`Employee ${employeeData.name} added successfully`);
-  }, [employees, saveEmployees]);
+  const addEmployee = async (employeeData) => {
+    try {
+      const newEmployee = await timesheetsApi.createEmployee({
+        ...employeeData,
+        color: COLOR_OPTIONS[Math.floor(Math.random() * COLOR_OPTIONS.length)]
+      });
+      
+      setEmployees(prev => [...prev, newEmployee]);
+      toast.success(`Employee ${employeeData.name} added successfully`);
+    } catch (error) {
+      console.error('Failed to add employee:', error);
+      toast.error('Failed to add employee');
+    }
+  };
 
   // Delete employee
-  const deleteEmployee = useCallback((employeeId) => {
-    const employee = employees.find(emp => emp.id === employeeId);
-    if (!employee) return;
+  const deleteEmployee = async (employeeId) => {
+    try {
+      const employee = employees.find(emp => emp.id === employeeId);
+      if (!employee) return;
 
-    const newEmployees = employees.filter(emp => emp.id !== employeeId);
-    saveEmployees(newEmployees);
-    
-    // Also remove their timesheets and leave days
-    setTimesheets(prev => {
-      const newTimesheets = { ...prev };
-      delete newTimesheets[employeeId];
-      saveTimesheets(newTimesheets);
-      return newTimesheets;
-    });
-    
-    setLeaveDays(prev => {
-      const newLeaveDays = { ...prev };
-      delete newLeaveDays[employeeId];
-      saveLeaveDays(newLeaveDays);
-      return newLeaveDays;
-    });
-    
-    toast.success(`Employee ${employee.name} deleted successfully`);
-  }, [employees, saveEmployees, saveTimesheets, saveLeaveDays]);
-
-  // Generate CSV content
-  const generateCSV = (data, headers) => {
-    const csvHeaders = headers.join(',');
-    const csvRows = data.map(row => 
-      row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
-    );
-    return [csvHeaders, ...csvRows].join('\n');
+      await timesheetsApi.deleteEmployee(employeeId);
+      setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
+      
+      // Remove related timesheets and leave days from state
+      setTimesheets(prev => prev.filter(ts => ts.employee_id !== employeeId));
+      setLeaveDays(prev => prev.filter(ld => ld.employee_id !== employeeId));
+      
+      toast.success(`Employee ${employee.name} deleted successfully`);
+    } catch (error) {
+      console.error('Failed to delete employee:', error);
+      toast.error('Failed to delete employee');
+    }
   };
 
-  // Download CSV file
-  const downloadCSV = (csvContent, filename) => {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Apply shift to date range
+  const applyShiftToRange = async (employeeId, startDate, endDate, shift) => {
+    try {
+      const bulkData = {
+        employee_id: employeeId,
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        start_time: shift.start,
+        end_time: shift.end,
+        break_minutes: shift.break
+      };
+
+      const results = await timesheetsApi.applyShiftToRange(bulkData);
+      setTimesheets(prev => [...prev, ...results]);
+      toast.success(`Applied ${shift.name} to selected range`);
+    } catch (error) {
+      console.error('Failed to apply shift to range:', error);
+      toast.error('Failed to apply shift to range');
+    }
   };
 
-  // Generate CSV report for individual employee
-  const generateEmployeeCSV = (employeeId) => {
-    const employee = employees.find(emp => emp.id === employeeId);
-    const totals = calculateEmployeeTotals(employeeId);
-    const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  // Copy previous day's times
+  const copyPreviousDay = useCallback((employeeId, currentDate) => {
+    const prevDate = new Date(currentDate);
+    prevDate.setDate(prevDate.getDate() - 1);
     
-    const headers = ['Date', 'Day', 'Start Time', 'End Time', 'Break (min)', 'Regular Hours', 'Overtime Hours', 'Holiday OT Hours', 'Total Hours', 'Status'];
+    const prevHours = getHours(employeeId, prevDate);
     
-    const data = daysInMonth.map(day => {
-      const hours = getHours(employeeId, day);
-      return [
-        day.toISOString().split('T')[0],
-        day.toLocaleDateString('en-US', { weekday: 'short' }),
-        hours.startTime,
-        hours.endTime,
-        hours.breakMinutes,
-        hours.regularHours.toFixed(1),
-        hours.overtimeHours.toFixed(1),
-        hours.holidayOvertimeHours.toFixed(1),
-        hours.totalHours.toFixed(1),
-        STATUS_CONFIG[hours.status]?.label || 'Work'
-      ];
+    if (prevHours.totalHours > 0) {
+      updateTimeEntry(employeeId, currentDate, 'startTime', prevHours.startTime);
+      updateTimeEntry(employeeId, currentDate, 'endTime', prevHours.endTime);
+      updateTimeEntry(employeeId, currentDate, 'breakMinutes', prevHours.breakMinutes);
+      toast.success('Copied previous day\'s times');
+    } else {
+      toast.error('No previous day data found');
+    }
+  }, [getHours, updateTimeEntry]);
+
+  // Start/stop timer
+  const toggleTimer = useCallback((employeeId, date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    const timerKey = `${employeeId}-${dateStr}`;
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    setActiveTimers(prev => {
+      const newTimers = { ...prev };
+      
+      if (newTimers[timerKey]) {
+        // Stop timer and set end time
+        updateTimeEntry(employeeId, date, 'endTime', currentTime);
+        delete newTimers[timerKey];
+        toast.success('Timer stopped');
+      } else {
+        // Start timer and set start time
+        updateTimeEntry(employeeId, date, 'startTime', currentTime);
+        newTimers[timerKey] = now.getTime();
+        toast.success('Timer started');
+      }
+      
+      return newTimers;
     });
+  }, [updateTimeEntry]);
 
-    // Add summary row
-    data.push([]);
-    data.push(['SUMMARY', '', '', '', '', '', '', '', '', '']);
-    data.push(['Total Regular Hours', '', '', '', '', totals.totalRegular.toFixed(1), '', '', '', '']);
-    data.push(['Total Overtime Hours', '', '', '', '', '', totals.totalOvertime.toFixed(1), '', '', '']);
-    data.push(['Total Holiday OT Hours', '', '', '', '', '', '', totals.totalHolidayOvertime.toFixed(1), '', '']);
-    data.push(['Total Hours', '', '', '', '', '', '', '', totals.totalHours.toFixed(1), '']);
-    data.push(['Total Amount', '', '', '', '', '', '', '', `$${totals.totalPay.toFixed(2)}`, '']);
+  // Get timer status
+  const getTimerStatus = useCallback((employeeId, date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    const timerKey = `${employeeId}-${dateStr}`;
+    return activeTimers[timerKey];
+  }, [activeTimers]);
 
-    const csvContent = generateCSV(data, headers);
-    downloadCSV(csvContent, `timesheet-${employee.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${monthName.toLowerCase().replace(' ', '-')}.csv`);
-    toast.success(`CSV report generated for ${employee.name}`);
-  };
+  // Quick fill current time
+  const fillCurrentTime = useCallback((employeeId, date, field) => {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+    updateTimeEntry(employeeId, date, field, currentTime);
+    toast.success(`Set ${field} to current time`);
+  }, [updateTimeEntry]);
 
-  // Generate comprehensive CSV report
-  const generateComprehensiveCSV = () => {
-    const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-    
-    // Summary sheet
-    const summaryHeaders = ['Employee', 'Department', 'Regular Hours', 'Overtime Hours', 'Holiday OT Hours', 'Total Hours', 'Total Amount'];
-    const summaryData = employees.map(employee => {
-      const totals = calculateEmployeeTotals(employee.id);
-      return [
-        employee.name,
-        employee.department,
-        totals.totalRegular.toFixed(1),
-        totals.totalOvertime.toFixed(1),
-        totals.totalHolidayOvertime.toFixed(1),
-        totals.totalHours.toFixed(1),
-        `$${totals.totalPay.toFixed(2)}`
-      ];
-    });
-
-    // Add monthly totals
-    const monthlyTotals = calculateMonthlyTotals();
-    summaryData.push([]);
-    summaryData.push(['MONTHLY TOTALS', '', 
-      monthlyTotals.totalRegular.toFixed(1),
-      monthlyTotals.totalOvertime.toFixed(1),
-      monthlyTotals.totalHolidayOvertime.toFixed(1),
-      monthlyTotals.totalHours.toFixed(1),
-      `$${monthlyTotals.totalPay.toFixed(2)}`
-    ]);
-
-    const csvContent = generateCSV(summaryData, summaryHeaders);
-    downloadCSV(csvContent, `timesheets-summary-${monthName.toLowerCase().replace(' ', '-')}.csv`);
-    toast.success('Comprehensive CSV report generated!');
-  };
-
-  // Generate PDF report for individual employee
-  const generateEmployeePDF = (employeeId) => {
-    const employee = employees.find(emp => emp.id === employeeId);
-    const totals = calculateEmployeeTotals(employeeId);
-    const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-    
-    // Dynamically import jsPDF only when needed
-    import('jspdf').then(({ jsPDF }) => {
-      const doc = new jsPDF();
-      
-      // Header
-      doc.setFillColor(30, 64, 175);
-      doc.rect(0, 0, 210, 30, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.text('EMPLOYEE TIMESHEET REPORT', 105, 15, { align: 'center' });
-      doc.setFontSize(12);
-      doc.text(`${employee.name} - ${monthName}`, 105, 22, { align: 'center' });
-      
-      // Employee Details
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
-      let yPos = 40;
-      
-      doc.text(`Employee: ${employee.name}`, 20, yPos);
-      doc.text(`Department: ${employee.department}`, 20, yPos + 7);
-      doc.text(`Rate: $${employee.rate}/hour`, 20, yPos + 14);
-      doc.text(`Month: ${monthName}`, 20, yPos + 21);
-      
-      yPos += 35;
-      
-      // Summary
-      doc.setFontSize(12);
-      doc.text('SUMMARY', 20, yPos);
-      doc.setFontSize(10);
-      doc.text(`Regular Hours: ${totals.totalRegular.toFixed(1)}`, 20, yPos + 10);
-      doc.text(`Overtime Hours: ${totals.totalOvertime.toFixed(1)}`, 20, yPos + 17);
-      doc.text(`Holiday Overtime Hours: ${totals.totalHolidayOvertime.toFixed(1)}`, 20, yPos + 24);
-      doc.text(`Total Hours: ${totals.totalHours.toFixed(1)}`, 20, yPos + 31);
-      doc.text(`Total Amount: $${totals.totalPay.toFixed(2)}`, 20, yPos + 38);
-      
-      yPos += 55;
-      
-      // Daily breakdown
-      doc.setFontSize(12);
-      doc.text('DAILY BREAKDOWN', 20, yPos);
-      yPos += 10;
-      
-      daysInMonth.forEach(day => {
-        if (yPos > 270) {
-          doc.addPage();
-          yPos = 20;
-        }
-        
-        const hours = getHours(employeeId, day);
-        const dayStr = day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        
-        let hoursText = '-';
-        if (hours.totalHours > 0) {
-          hoursText = `${hours.totalHours.toFixed(1)}h`;
-          if (hours.overtimeHours > 0) hoursText += ` (+${hours.overtimeHours.toFixed(1)} OT)`;
-          if (hours.holidayOvertimeHours > 0) hoursText += ` (+${hours.holidayOvertimeHours.toFixed(1)} HOT)`;
-        }
-        
-        doc.text(`${dayStr}: ${hoursText}`, 20, yPos);
-        yPos += 7;
-      });
-
-      doc.save(`timesheet-${employee.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${monthName.toLowerCase().replace(' ', '-')}.pdf`);
-      toast.success(`PDF report generated for ${employee.name}`);
-    }).catch(error => {
-      console.error('Failed to generate PDF:', error);
-      toast.error('Failed to generate PDF report');
-    });
-  };
-
-  // Fast Time Input Component
+  // Enhanced Time Input Component
   const TimeInput = React.memo(({ 
     value, 
     onChange, 
     placeholder, 
     disabled,
-    className = ''
+    className = '',
+    onNowClick,
+    showQuickActions = false
   }) => {
     const handleChange = (e) => {
       const formattedValue = formatTimeInput(e.target.value);
@@ -748,10 +840,8 @@ const TimesheetsSystem = () => {
     };
 
     const handleBlur = (e) => {
-      // Validate and format the time on blur
       const time = e.target.value;
       if (time && isValidTime(time)) {
-        // Ensure proper formatting (HH:MM)
         const [hours, minutes] = time.split(':');
         const formattedTime = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
         onChange(formattedTime);
@@ -759,17 +849,40 @@ const TimesheetsSystem = () => {
     };
 
     return (
-      <Input
-        type="text"
-        value={value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`h-7 text-xs ${className} ${
-          value && !isValidTime(value) ? 'border-red-500' : ''
-        } ${settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}`}
-      />
+      <div className="relative">
+        <Input
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`h-7 text-xs pr-8 ${className} ${
+            value && !isValidTime(value) ? 'border-red-500' : ''
+          } ${settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}`}
+        />
+        {showQuickActions && onNowClick && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-7 w-7 p-0 hover:bg-transparent"
+                  onClick={onNowClick}
+                  disabled={disabled}
+                >
+                  <Clock className="w-3 h-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Set to current time</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
     );
   });
 
@@ -789,35 +902,70 @@ const TimesheetsSystem = () => {
 
   StatusBadge.displayName = 'StatusBadge';
 
-  // Day Cell Component
+  // Enhanced Day Cell Component
   const DayCell = React.memo(({ employeeId, day, hours }) => {
     const isHolidayDay = isHoliday(day);
     const status = hours.status;
     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+    const isToday = day.toDateString() === new Date().toDateString();
+    const hasTimer = getTimerStatus(employeeId, day);
     
     return (
       <td className={`text-center p-1 ${
         isWeekend ? (settings.darkMode ? 'bg-slate-700/50' : 'bg-slate-50') : ''
       } ${
         isHolidayDay ? (settings.darkMode ? 'bg-purple-900/20' : 'bg-purple-50') : ''
+      } ${
+        isToday ? (settings.darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-500') : ''
       }`}>
         <div className="space-y-1">
-          {/* Status and Holiday Indicators */}
-          <div className="flex justify-center items-center gap-1">
-            {isHolidayDay && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <PartyPopper className="w-3 h-3 text-purple-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Holiday</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            <StatusBadge status={status} />
+          {/* Date and Status */}
+          <div className="flex justify-between items-center px-1">
+            <div className={`text-xs font-medium ${
+              isToday ? 'text-blue-600 font-bold' : 
+              settings.darkMode ? 'text-slate-300' : 'text-slate-700'
+            }`}>
+              {day.getDate()}
+            </div>
+            <div className="flex gap-1">
+              {isHolidayDay && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <PartyPopper className="w-3 h-3 text-purple-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Holiday</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <StatusBadge status={status} />
+            </div>
           </div>
+
+          {/* Timer Button */}
+          {settings.enableTimer && status === STATUS_TYPES.WORK && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={hasTimer ? "destructive" : "outline"}
+                    size="sm"
+                    className={`h-6 w-full text-xs ${
+                      hasTimer ? 'animate-pulse' : ''
+                    }`}
+                    onClick={() => toggleTimer(employeeId, day)}
+                  >
+                    {hasTimer ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{hasTimer ? 'Stop timer' : 'Start timer'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
           {/* Time Inputs */}
           <div className="space-y-1">
@@ -826,19 +974,98 @@ const TimesheetsSystem = () => {
               onChange={(value) => updateTimeEntry(employeeId, day, 'startTime', value)}
               placeholder="09:00"
               disabled={status !== STATUS_TYPES.WORK}
+              showQuickActions={true}
+              onNowClick={() => fillCurrentTime(employeeId, day, 'startTime')}
             />
             <TimeInput
               value={hours.endTime}
               onChange={(value) => updateTimeEntry(employeeId, day, 'endTime', value)}
               placeholder="17:00"
               disabled={status !== STATUS_TYPES.WORK}
+              showQuickActions={true}
+              onNowClick={() => fillCurrentTime(employeeId, day, 'endTime')}
             />
           </div>
 
+          {/* Quick Actions */}
+          <div className="flex gap-1 justify-center">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => copyPreviousDay(employeeId, day)}
+                    disabled={status !== STATUS_TYPES.WORK}
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Copy previous day</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <Zap className="w-3 h-3" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className={settings.darkMode ? 'bg-slate-800' : ''}>
+                <DialogHeader>
+                  <DialogTitle>Quick Actions</DialogTitle>
+                  <DialogDescription>
+                    Quick actions for {day.toLocaleDateString()}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Set Status</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(STATUS_CONFIG).map(([statusKey, config]) => (
+                        <Button
+                          key={statusKey}
+                          variant={hours.status === statusKey ? "default" : "outline"}
+                          onClick={() => updateDayStatus(employeeId, day, statusKey)}
+                          className="justify-start"
+                        >
+                          {config.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Quick Shifts</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {SHIFT_PRESETS.map(preset => (
+                        <Button
+                          key={preset.name}
+                          variant="outline"
+                          onClick={() => {
+                            updateTimeEntry(employeeId, day, 'startTime', preset.start);
+                            updateTimeEntry(employeeId, day, 'endTime', preset.end);
+                            updateTimeEntry(employeeId, day, 'breakMinutes', preset.break);
+                          }}
+                          disabled={status !== STATUS_TYPES.WORK}
+                        >
+                          {preset.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
           {/* Hours Display */}
-          <div className={`text-xs ${
-            hours.holidayOvertimeHours > 0 ? 'text-purple-600 font-semibold' :
-            hours.overtimeHours > 0 ? 'text-orange-600 font-semibold' : 
+          <div className={`text-xs font-medium ${
+            hours.holidayOvertimeHours > 0 ? 'text-purple-600' :
+            hours.overtimeHours > 0 ? 'text-orange-600' : 
             hours.totalHours > 0 ? 'text-green-600' :
             settings.darkMode ? 'text-slate-400' : 'text-slate-600'
           }`}>
@@ -846,63 +1073,117 @@ const TimesheetsSystem = () => {
             {hours.overtimeHours > 0 && ` (+${hours.overtimeHours.toFixed(1)})`}
             {hours.holidayOvertimeHours > 0 && ` (+${hours.holidayOvertimeHours.toFixed(1)} HOT)`}
           </div>
-
-          {/* Quick Actions */}
-          <div className="flex gap-1 justify-center">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <Settings className="w-3 h-3" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className={settings.darkMode ? 'bg-slate-800' : ''}>
-                <DialogHeader>
-                  <DialogTitle>Day Settings</DialogTitle>
-                  <DialogDescription>
-                    Set status for {day.toLocaleDateString()}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(STATUS_CONFIG).map(([statusKey, config]) => (
-                    <Button
-                      key={statusKey}
-                      variant={hours.status === statusKey ? "default" : "outline"}
-                      onClick={() => updateDayStatus(employeeId, day, statusKey)}
-                      className="justify-start"
-                    >
-                      {config.label}
-                    </Button>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
-            
-            {isHolidayDay ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 text-purple-500"
-                onClick={() => toggleHoliday(day)}
-              >
-                <PartyPopper className="w-3 h-3" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => toggleHoliday(day)}
-              >
-                <CalendarDays className="w-3 h-3" />
-              </Button>
-            )}
-          </div>
         </div>
       </td>
     );
   });
 
   DayCell.displayName = 'DayCell';
+
+  // Quick Entry Panel Component
+  const QuickEntryPanel = () => {
+    const [selectedEmployee, setSelectedEmployee] = useState(employees[0]?.id);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    useEffect(() => {
+      // Set default dates to current week
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+      
+      const endOfWeek = new Date(today);
+      endOfWeek.setDate(today.getDate() - today.getDay() + 5); // Friday
+      
+      setStartDate(startOfWeek.toISOString().split('T')[0]);
+      setEndDate(endOfWeek.toISOString().split('T')[0]);
+    }, []);
+
+    const applyToRange = () => {
+      if (!selectedEmployee || !startDate || !endDate) {
+        toast.error('Please select employee and date range');
+        return;
+      }
+
+      applyShiftToRange(selectedEmployee, new Date(startDate), new Date(endDate), selectedShift);
+    };
+
+    return (
+      <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
+        <CardHeader>
+          <CardTitle>Quick Shift Entry</CardTitle>
+          <CardDescription>Apply shifts to multiple days quickly</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Employee</Label>
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <SelectTrigger className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map(employee => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Start Date</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>End Date</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Shift Preset</Label>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {SHIFT_PRESETS.map(preset => (
+                <Button
+                  key={preset.name}
+                  variant={selectedShift.name === preset.name ? "default" : "outline"}
+                  onClick={() => setSelectedShift(preset)}
+                  className="h-16"
+                >
+                  <div className="text-xs">
+                    <div className="font-semibold">{preset.name}</div>
+                    <div>{preset.start} - {preset.end}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Button onClick={applyToRange} className="w-full" size="lg">
+            <FastForward className="w-4 h-4 mr-2" />
+            Apply to Selected Range
+          </Button>
+
+          <div className="text-xs text-slate-500 text-center">
+            This will apply the selected shift to all weekdays in the date range
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Add Employee Form Component
   const AddEmployeeForm = ({ onAdd, onCancel }) => {
@@ -1028,7 +1309,29 @@ const TimesheetsSystem = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-between mb-4">
-            <div></div>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={refreshData}
+                      disabled={!isOnline}
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Refresh data</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Badge variant={isOnline ? "default" : "destructive"} className="flex items-center gap-1">
+                {isOnline ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Badge>
+            </div>
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
                 <Calendar className="w-8 h-8 text-white" />
@@ -1037,10 +1340,28 @@ const TimesheetsSystem = () => {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Timesheets Pro
                 </h1>
-                <p className="text-slate-600 mt-2">Self-contained time tracking system</p>
+                <p className="text-slate-600 mt-2">FastAPI Backend • Real-time Sync</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={quickEntryMode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setQuickEntryMode(!quickEntryMode)}
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      Quick Entry
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {quickEntryMode ? 'Exit quick entry mode' : 'Enter quick entry mode'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1050,7 +1371,6 @@ const TimesheetsSystem = () => {
                       onClick={() => {
                         const newSettings = { ...settings, darkMode: !settings.darkMode };
                         setSettings(newSettings);
-                        saveSettings(newSettings);
                       }}
                     >
                       {settings.darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -1105,6 +1425,13 @@ const TimesheetsSystem = () => {
           </div>
         </div>
 
+        {/* Quick Entry Panel */}
+        {quickEntryMode && (
+          <div className="mb-6">
+            <QuickEntryPanel />
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full grid-cols-4 p-1 rounded-lg ${
             settings.darkMode ? 'bg-slate-800' : 'bg-slate-100'
@@ -1117,9 +1444,9 @@ const TimesheetsSystem = () => {
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
             </TabsTrigger>
-            <TabsTrigger value="quick-entry" className="rounded-md">
+            <TabsTrigger value="quick-shifts" className="rounded-md">
               <Zap className="w-4 h-4 mr-2" />
-              Quick Entry
+              Quick Shifts
             </TabsTrigger>
             <TabsTrigger value="settings" className="rounded-md">
               <Settings className="w-4 h-4 mr-2" />
@@ -1178,57 +1505,6 @@ const TimesheetsSystem = () => {
                         onCancel={() => {}} 
                       />
                     </Dialog>
-
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline">
-                          <Download className="w-4 h-4 mr-2" />
-                          Export
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className={settings.darkMode ? 'bg-slate-800' : ''}>
-                        <DialogHeader>
-                          <DialogTitle>Export Options</DialogTitle>
-                          <DialogDescription>
-                            Choose your preferred export format
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-3">
-                          <Button onClick={generateComprehensiveCSV} className="w-full justify-start">
-                            <FileText className="w-4 h-4 mr-2" />
-                            Export to CSV (Summary)
-                          </Button>
-                          <div className="space-y-2">
-                            <div className="text-sm font-medium">Individual PDF Reports</div>
-                            {employees.map(employee => (
-                              <Button
-                                key={employee.id}
-                                variant="outline"
-                                onClick={() => generateEmployeePDF(employee.id)}
-                                className="w-full justify-start"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                {employee.name} (PDF)
-                              </Button>
-                            ))}
-                          </div>
-                          <div className="space-y-2">
-                            <div className="text-sm font-medium">Individual CSV Reports</div>
-                            {employees.map(employee => (
-                              <Button
-                                key={employee.id}
-                                variant="outline"
-                                onClick={() => generateEmployeeCSV(employee.id)}
-                                className="w-full justify-start"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                {employee.name} (CSV)
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
                   </div>
                 </div>
               </CardHeader>
@@ -1246,12 +1522,15 @@ const TimesheetsSystem = () => {
                           const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                           if (!settings.showWeekends && isWeekend) return null;
                           const isHolidayDay = isHoliday(day);
+                          const isToday = day.toDateString() === new Date().toDateString();
                           
                           return (
                             <th key={day.toISOString()} className={`text-center p-2 font-semibold min-w-32 ${
                               isWeekend ? (settings.darkMode ? 'bg-slate-700' : 'bg-slate-50') : ''
                             } ${
                               isHolidayDay ? (settings.darkMode ? 'bg-purple-900/30' : 'bg-purple-100') : ''
+                            } ${
+                              isToday ? (settings.darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-500') : ''
                             }`}>
                               <div className="text-sm">{day.getDate()}</div>
                               <div className={`text-xs font-normal ${
@@ -1262,6 +1541,11 @@ const TimesheetsSystem = () => {
                               {isHolidayDay && (
                                 <div className="text-xs text-purple-500 mt-1">
                                   Holiday
+                                </div>
+                              )}
+                              {isToday && (
+                                <div className="text-xs text-blue-500 mt-1 font-semibold">
+                                  Today
                                 </div>
                               )}
                             </th>
@@ -1486,27 +1770,28 @@ const TimesheetsSystem = () => {
 
                 <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
                   <CardHeader>
-                    <CardTitle>Export Options</CardTitle>
+                    <CardTitle>System Status</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <Button onClick={generateComprehensiveCSV} className="w-full justify-start" variant="outline">
-                        <FileText className="w-4 h-4 mr-2" />
-                        CSV Export (Summary)
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Backend Connection</span>
+                        <Badge variant={isOnline ? "default" : "destructive"}>
+                          {isOnline ? 'Connected' : 'Offline'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Total Employees</span>
+                        <span className="font-semibold">{employees.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">This Month Hours</span>
+                        <span className="font-semibold">{monthlyTotals.totalHours.toFixed(1)}h</span>
+                      </div>
+                      <Button onClick={refreshData} className="w-full" variant="outline">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh Data
                       </Button>
-                      <div className="text-sm font-medium mb-2">Individual Reports</div>
-                      {employees.slice(0, 3).map(employee => (
-                        <Button
-                          key={employee.id}
-                          onClick={() => generateEmployeePDF(employee.id)}
-                          className="w-full justify-start"
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          {employee.name} (PDF)
-                        </Button>
-                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -1534,63 +1819,65 @@ const TimesheetsSystem = () => {
             </div>
           </TabsContent>
 
-          {/* Quick Entry Tab */}
-          <TabsContent value="quick-entry">
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardHeader>
-                <CardTitle>Quick Shift Entry</CardTitle>
-                <CardDescription>Add common shifts quickly</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {employees.map(employee => (
-                    <Card key={employee.id} className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{employee.name}</CardTitle>
-                        <CardDescription>{employee.department}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => quickAddShift(employee.id, new Date(), 'standard')}
-                            >
-                              9-5 Shift
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => quickAddShift(employee.id, new Date(), 'early')}
-                            >
-                              Early Shift
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => quickAddShift(employee.id, new Date(), 'late')}
-                            >
-                              Late Shift
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => quickAddShift(employee.id, new Date(), 'double')}
-                            >
-                              Double Shift
-                            </Button>
+          {/* Quick Shifts Tab */}
+          <TabsContent value="quick-shifts">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <QuickEntryPanel />
+              
+              <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
+                <CardHeader>
+                  <CardTitle>Quick Individual Shifts</CardTitle>
+                  <CardDescription>Add common shifts quickly for today</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4">
+                    {employees.map(employee => (
+                      <div key={employee.id} className={`p-4 rounded-lg border ${
+                        settings.darkMode ? 'border-slate-700' : 'border-slate-200'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 ${employee.color} rounded-full flex items-center justify-center text-white text-sm font-medium`}>
+                              {employee.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                              <div className="font-medium">{employee.name}</div>
+                              <div className="text-sm text-slate-500">{employee.department}</div>
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-500">
-                            Last entry: {calculateEmployeeTotals(employee.id).totalDaysWorked} days this month
+                          <div className="flex gap-2">
+                            {SHIFT_PRESETS.slice(0, 3).map(preset => (
+                              <TooltipProvider key={preset.name}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const today = new Date();
+                                        updateTimeEntry(employee.id, today, 'startTime', preset.start);
+                                        updateTimeEntry(employee.id, today, 'endTime', preset.end);
+                                        updateTimeEntry(employee.id, today, 'breakMinutes', preset.break);
+                                        toast.success(`Applied ${preset.name} to ${employee.name}`);
+                                      }}
+                                    >
+                                      {preset.name}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{preset.start} - {preset.end}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ))}
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Settings Tab */}
@@ -1612,9 +1899,7 @@ const TimesheetsSystem = () => {
                         id="auto-overtime"
                         checked={settings.autoOvertime}
                         onCheckedChange={(checked) => {
-                          const newSettings = { ...settings, autoOvertime: checked };
-                          setSettings(newSettings);
-                          saveSettings(newSettings);
+                          setSettings(prev => ({ ...prev, autoOvertime: checked }));
                         }}
                       />
                     </div>
@@ -1626,9 +1911,7 @@ const TimesheetsSystem = () => {
                         type="number"
                         value={settings.overtimeThreshold}
                         onChange={(e) => {
-                          const newSettings = { ...settings, overtimeThreshold: parseInt(e.target.value) || 8 };
-                          setSettings(newSettings);
-                          saveSettings(newSettings);
+                          setSettings(prev => ({ ...prev, overtimeThreshold: parseInt(e.target.value) || 8 }));
                         }}
                         className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
                         disabled={!settings.autoOvertime}
@@ -1643,11 +1926,37 @@ const TimesheetsSystem = () => {
                         step="0.1"
                         value={settings.holidayOvertimeRate}
                         onChange={(e) => {
-                          const newSettings = { ...settings, holidayOvertimeRate: parseFloat(e.target.value) || 2.0 };
-                          setSettings(newSettings);
-                          saveSettings(newSettings);
+                          setSettings(prev => ({ ...prev, holidayOvertimeRate: parseFloat(e.target.value) || 2.0 }));
                         }}
                         className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="enable-timer" className="font-semibold">Enable Timer Feature</Label>
+                        <div className="text-sm text-slate-500">Show start/stop timer buttons</div>
+                      </div>
+                      <Switch
+                        id="enable-timer"
+                        checked={settings.enableTimer}
+                        onCheckedChange={(checked) => {
+                          setSettings(prev => ({ ...prev, enableTimer: checked }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="auto-copy-previous" className="font-semibold">Auto Copy Previous Day</Label>
+                        <div className="text-sm text-slate-500">Suggest copying previous day's times</div>
+                      </div>
+                      <Switch
+                        id="auto-copy-previous"
+                        checked={settings.autoCopyPrevious}
+                        onCheckedChange={(checked) => {
+                          setSettings(prev => ({ ...prev, autoCopyPrevious: checked }));
+                        }}
                       />
                     </div>
 
@@ -1660,9 +1969,7 @@ const TimesheetsSystem = () => {
                         id="show-weekends"
                         checked={settings.showWeekends}
                         onCheckedChange={(checked) => {
-                          const newSettings = { ...settings, showWeekends: checked };
-                          setSettings(newSettings);
-                          saveSettings(newSettings);
+                          setSettings(prev => ({ ...prev, showWeekends: checked }));
                         }}
                       />
                     </div>
@@ -1676,9 +1983,7 @@ const TimesheetsSystem = () => {
                         id="dark-mode"
                         checked={settings.darkMode}
                         onCheckedChange={(checked) => {
-                          const newSettings = { ...settings, darkMode: checked };
-                          setSettings(newSettings);
-                          saveSettings(newSettings);
+                          setSettings(prev => ({ ...prev, darkMode: checked }));
                         }}
                       />
                     </div>
@@ -1688,67 +1993,53 @@ const TimesheetsSystem = () => {
 
               <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
                 <CardHeader>
-                  <CardTitle>Data Management</CardTitle>
-                  <CardDescription>Backup and restore your data</CardDescription>
+                  <CardTitle>System Information</CardTitle>
+                  <CardDescription>Backend connection and data status</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <Button 
-                      onClick={() => {
-                        const allData = {
-                          employees,
-                          timesheets,
-                          holidays,
-                          leaveDays,
-                          settings,
-                          exportDate: new Date().toISOString()
-                        };
-                        const dataStr = JSON.stringify(allData, null, 2);
-                        const blob = new Blob([dataStr], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `timesheets-backup-${new Date().toISOString().split('T')[0]}.json`;
-                        link.click();
-                        toast.success('Backup downloaded successfully');
-                      }}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export Backup
+                    <div className="flex justify-between items-center p-3 rounded-lg border">
+                      <span>Backend Status</span>
+                      <Badge variant={isOnline ? "default" : "destructive"}>
+                        {isOnline ? 'Connected' : 'Offline'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 rounded-lg border">
+                      <span>Total Employees</span>
+                      <span className="font-semibold">{employees.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 rounded-lg border">
+                      <span>Timesheet Entries</span>
+                      <span className="font-semibold">{timesheets.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 rounded-lg border">
+                      <span>Holidays</span>
+                      <span className="font-semibold">{holidays.length}</span>
+                    </div>
+                    
+                    <Button onClick={refreshData} className="w-full" variant="outline">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh All Data
                     </Button>
                     
                     <Button 
                       onClick={() => {
-                        // Clear all data
-                        if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-                          localStorage.clear();
-                          setEmployees(INITIAL_EMPLOYEES);
-                          setTimesheets({});
-                          setHolidays([]);
-                          setLeaveDays({});
-                          setSettings({
-                            autoOvertime: true,
-                            overtimeThreshold: 8,
-                            darkMode: false,
-                            showWeekends: true,
-                            holidayOvertimeRate: 2.0
-                          });
-                          toast.success('All data cleared successfully');
+                        if (confirm('This will reload all data from the server. Continue?')) {
+                          loadAllData();
                         }
                       }}
-                      className="w-full justify-start text-red-600 hover:text-red-700"
+                      className="w-full justify-start"
                       variant="outline"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Clear All Data
+                      <Database className="w-4 h-4 mr-2" />
+                      Reload from Server
                     </Button>
                   </div>
                   
                   <div className="text-xs text-slate-500">
-                    <p>Your data is stored locally in your browser.</p>
-                    <p>Export backups regularly to prevent data loss.</p>
+                    <p>Connected to: {API_BASE_URL}</p>
+                    <p>All data is synchronized with the FastAPI backend.</p>
+                    <p>Changes are saved automatically to the server.</p>
                   </div>
                 </CardContent>
               </Card>
