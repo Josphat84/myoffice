@@ -361,7 +361,8 @@ const testBackendConnection = async () => {
     return result;
   } catch (error) {
     console.error('🔧 Backend connection failed:', error);
-    return { status: 'error', error: error.message };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return { status: 'error', error: errorMessage };
   }
 };
 
