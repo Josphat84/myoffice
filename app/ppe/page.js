@@ -94,9 +94,9 @@ const PPE_TYPES = {
     gradient: 'from-amber-500 to-amber-600',
     description: 'High visibility clothing for surface operations'
   },
-  boots: { 
-    name: 'Safety Boots', 
-    shortName: 'Boots', 
+  gumboots: { 
+    name: 'Safety Gum Boots', 
+    shortName: 'GumBoots', 
     color: '#7c3aed', 
     icon: Zap,
     bgColor: 'bg-violet-50',
@@ -105,6 +105,18 @@ const PPE_TYPES = {
     gradient: 'from-violet-500 to-violet-600',
     description: 'Steel-toe foot protection'
   },
+  safety_shoes: {
+    name: 'Safety Shoes', 
+    shortName: 'Shoes',
+    color: '#2563eb',
+    icon: Pickaxe,
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-200',
+    gradient: 'from-blue-500 to-blue-600',
+    description: 'Protective footwear for various work environments'
+  },
+
   harness: { 
     name: 'Safety Harness', 
     shortName: 'Harness', 
@@ -126,8 +138,57 @@ const PPE_TYPES = {
     borderColor: 'border-teal-200',
     gradient: 'from-teal-500 to-teal-600',
     description: 'Respiratory protection from dust and chemicals'
+  },
+
+  Cap_lamp_belt: {
+    name: 'Cap Lamp Belt',
+    shortName: 'Lamp belt',
+    color: '#db2777',
+    icon: Zap,
+    bgColor: 'bg-pink-50',
+    textColor: 'text-pink-700',
+    borderColor: 'border-pink-200',
+    gradient: 'from-pink-500 to-pink-600',
+    description: 'Lighting for underground operations'
+  },
+
+  worksuit: {
+    name: 'Protective Work Suit ',
+    shortName: 'Work Suit',
+    color: '#f97316',
+    icon: Briefcase,
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-700',
+    borderColor: 'border-orange-200',
+    gradient: 'from-orange-500 to-orange-600',
+    description: 'Full body protection for various work environments'
+  },
+
+  rainsuit: {
+    name: 'Rain Suit',
+    shortName: 'Rain Suit',
+    color: '#14b8a6',
+    icon: Briefcase,
+    bgColor: 'bg-teal-50',
+    textColor: 'text-teal-700',
+    borderColor: 'border-teal-200',
+    gradient: 'from-teal-500 to-teal-600',
+    description: 'Waterproof protection for wet conditions'
+  },
+
+  overall:  {
+    name: 'Protective Overall',
+    shortName: 'Overall',
+    color: '#8b5cf6',
+    icon: Briefcase,
+    bgColor: 'bg-violet-50',
+    textColor: 'text-violet-700',
+    borderColor: 'border-violet-200',
+    gradient: 'from-violet-500 to-violet-600',
+    description: 'Full body protective clothing'
   }
-};
+}
+
 
 // Mine Locations
 const MINE_LOCATIONS = {
@@ -140,7 +201,7 @@ const MINE_LOCATIONS = {
   'All Areas': { color: 'bg-rose-100 text-rose-800 border-rose-200', icon: Gem }
 };
 
-const PPE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'OSFA'];
+const PPE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'OSFA', 38, 40, 42, 44, 46, 48, 50, 52, 54, 5, 6, 7, 8, 9, 10, 11];
 
 // Condition types
 const CONDITION_TYPES = {

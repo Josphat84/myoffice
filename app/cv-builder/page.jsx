@@ -11,9 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Separator } from '@/components/ui/separator';
 import { 
-  Plus, 
-  Trash2, 
+  Upload, 
   Download, 
   Eye, 
   Edit3,
@@ -24,24 +25,107 @@ import {
   Phone,
   MapPin,
   Award,
-  Upload,
   Linkedin,
-  Github,
-  RefreshCw,
   FileText,
-  Scan
+  Sparkles,
+  Zap,
+  Star,
+  Globe,
+  Settings,
+  Wand2,
+  Brain,
+  Cpu,
+  Palette,
+  Type,
+  Columns,
+  Image as ImageIcon,
+  Plus,
+  Trash2,
+  Copy,
+  Scissors,
+  Filter,
+  FileUp,
+  RefreshCw,
+  CheckCircle2,
+  ChevronRight,
+  LayoutGrid,
+  PaintBucket,
+  TextCursor,
+  AlignLeft,
+  Bold,
+  Italic,
+  List,
+  Hash,
+  Calendar,
+  Clock,
+  Building,
+  BookOpen,
+  Target,
+  TrendingUp,
+  Users,
+  Mail as MailIcon,
+  Phone as PhoneIcon,
+  MapPin as MapPinIcon,
+  ExternalLink,
+  Printer,
+  FilePlus,
+  Save,
+  UploadCloud,
+  EyeOff,
+  Eye as EyeIcon,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Settings2,
+  HelpCircle,
+  Info,
+  AlertCircle,
+  X,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  MoveVertical,
+  GripVertical,
+  MoreVertical,
+  Edit,
+  Trash,
+  Copy as CopyIcon,
+  Share2,
+  Lock,
+  Unlock,
+  ZoomIn,
+  ZoomOut,
+  Grid,
+  List as ListIcon,
+  Layout,
+  Moon,
+  Sun,
+  Monitor
 } from 'lucide-react';
 
-// Simple toast implementation
+// ========== UTILITY FUNCTIONS ==========
+const generateUniqueId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
 const useToast = () => {
   const showToast = (title, description, variant = 'default') => {
     const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-      variant === 'destructive' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+    toast.className = `fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 backdrop-blur-sm animate-in slide-in-from-right-4 duration-300 ${
+      variant === 'destructive' 
+        ? 'bg-red-500/90 text-white border border-red-600' 
+        : 'bg-green-500/90 text-white border border-green-600'
     }`;
     toast.innerHTML = `
-      <div class="font-semibold">${title}</div>
-      <div class="text-sm opacity-90">${description}</div>
+      <div class="flex items-center gap-3">
+        <div class="flex-shrink-0">
+          ${variant === 'destructive' ? '❌' : '✅'}
+        </div>
+        <div>
+          <div class="font-semibold">${title}</div>
+          <div class="text-sm opacity-90">${description}</div>
+        </div>
+      </div>
     `;
     document.body.appendChild(toast);
     
@@ -55,901 +139,1123 @@ const useToast = () => {
   return { toast: showToast };
 };
 
-// Generate unique IDs
-const generateUniqueId = () => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${performance.now().toString(36).replace('.', '')}`;
+// ========== BEAUTIFUL TEMPLATE SYSTEM ==========
+const TEMPLATES = {
+  EXECUTIVE_VELVET: {
+    id: 'executive_velvet',
+    name: 'Executive Velvet',
+    description: 'Luxurious dark theme with gold accents',
+    category: 'Premium',
+    icon: '👑',
+    colors: {
+      primary: '#0F172A',
+      secondary: '#F59E0B',
+      accent: '#1E293B',
+      text: '#FFFFFF',
+      background: '#0F172A'
+    }
+  },
+  MODERN_SILK: {
+    id: 'modern_silk',
+    name: 'Modern Silk',
+    description: 'Clean, elegant with silk-like texture',
+    category: 'Modern',
+    icon: '✨',
+    colors: {
+      primary: '#3B82F6',
+      secondary: '#10B981',
+      accent: '#F3F4F6',
+      text: '#1F2937',
+      background: '#FFFFFF'
+    }
+  },
+  MINIMAL_MARBLE: {
+    id: 'minimal_marble',
+    name: 'Minimal Marble',
+    description: 'Ultra-clean with marble-inspired design',
+    category: 'Minimal',
+    icon: '🏛️',
+    colors: {
+      primary: '#6B7280',
+      secondary: '#9CA3AF',
+      accent: '#F9FAFB',
+      text: '#111827',
+      background: '#FFFFFF'
+    }
+  },
+  CREATIVE_AMETHYST: {
+    id: 'creative_amethyst',
+    name: 'Creative Amethyst',
+    description: 'Bold and creative with purple accents',
+    category: 'Creative',
+    icon: '💎',
+    colors: {
+      primary: '#7C3AED',
+      secondary: '#A78BFA',
+      accent: '#F5F3FF',
+      text: '#1F2937',
+      background: '#FFFFFF'
+    }
+  },
+  PROFESSIONAL_OAK: {
+    id: 'professional_oak',
+    name: 'Professional Oak',
+    description: 'Traditional professional with wood-like tones',
+    category: 'Professional',
+    icon: '📜',
+    colors: {
+      primary: '#78350F',
+      secondary: '#D97706',
+      accent: '#FEF3C7',
+      text: '#1F2937',
+      background: '#FFFBEB'
+    }
+  }
 };
 
-// Enhanced CV Parser with proper file type handling
-const parseUploadedCV = async (file) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      console.log('Processing file:', file.name, file.type);
-      
-      let extractedText = '';
-      const fileName = file.name.toLowerCase();
+// ========== STUNNING TEMPLATE COMPONENTS ==========
+const TemplateExecutiveVelvet = ({ cvData }) => {
+  const { personalInfo, experience, education, skills, projects, certifications, contact } = cvData;
+  
+  return (
+    <div className="bg-[#0F172A] text-white min-h-[842px] max-w-[1100px] mx-auto shadow-2xl border border-gray-800 overflow-hidden">
+      {/* Header */}
+      <div className="relative p-12 bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A]">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#F59E0B] to-transparent"></div>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="mb-6">
+              <h1 className="text-5xl font-light mb-2 tracking-tight">
+                <span className="font-bold">{personalInfo.firstName}</span> {personalInfo.lastName}
+              </h1>
+              <div className="w-24 h-1 bg-[#F59E0B] mb-4"></div>
+              <p className="text-xl text-gray-300 tracking-wide">{personalInfo.title}</p>
+            </div>
+            
+            <div className="flex flex-wrap gap-6 mt-8">
+              {contact?.email && (
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-2 bg-[#1E293B] rounded-lg">
+                    <MailIcon className="h-4 w-4 text-[#F59E0B]" />
+                  </div>
+                  <span>{contact.email}</span>
+                </div>
+              )}
+              {contact?.phone && (
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-2 bg-[#1E293B] rounded-lg">
+                    <PhoneIcon className="h-4 w-4 text-[#F59E0B]" />
+                  </div>
+                  <span>{contact.phone}</span>
+                </div>
+              )}
+              {contact?.location && (
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-2 bg-[#1E293B] rounded-lg">
+                    <MapPinIcon className="h-4 w-4 text-[#F59E0B]" />
+                  </div>
+                  <span>{contact.location}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {personalInfo.photo && (
+            <div className="ml-8">
+              <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-[#F59E0B]/20 shadow-2xl">
+                <img src={personalInfo.photo} alt="Profile" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
-      // Handle different file types
-      if (fileName.endsWith('.pdf')) {
-        extractedText = await parsePDF(file);
-      } else if (fileName.endsWith('.docx')) {
-        extractedText = await parseDOCX(file);
-      } else if (fileName.endsWith('.doc')) {
-        extractedText = await parseDOC(file);
-      } else if (fileName.endsWith('.txt') || file.type === 'text/plain') {
-        extractedText = await parseTXT(file);
-      } else {
-        throw new Error('Unsupported file format. Please upload PDF, Word, or Text files.');
+      <div className="flex min-h-[700px]">
+        {/* Sidebar */}
+        <div className="w-[35%] bg-[#1E293B] p-10 border-r border-gray-800">
+          {/* Summary */}
+          {personalInfo.summary && (
+            <div className="mb-10">
+              <h3 className="text-sm font-semibold text-[#F59E0B] uppercase tracking-widest mb-4">Professional Profile</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">{personalInfo.summary}</p>
+            </div>
+          )}
+
+          {/* Skills */}
+          {skills.length > 0 && (
+            <div className="mb-10">
+              <h3 className="text-sm font-semibold text-[#F59E0B] uppercase tracking-widest mb-6">Core Competencies</h3>
+              <div className="space-y-4">
+                {skills.map((skill, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">{skill.name}</span>
+                      <span className="text-[#F59E0B] font-medium">{skill.level}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"
+                        style={{ width: `${skill.level}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Education */}
+          {education.length > 0 && (
+            <div className="mb-10">
+              <h3 className="text-sm font-semibold text-[#F59E0B] uppercase tracking-widest mb-6">Education</h3>
+              <div className="space-y-6">
+                {education.map((edu, index) => (
+                  <div key={index} className="space-y-1">
+                    <h4 className="font-semibold text-white">{edu.degree}</h4>
+                    <p className="text-sm text-[#F59E0B]">{edu.institution}</p>
+                    <p className="text-xs text-gray-400">{edu.startDate} - {edu.endDate}</p>
+                    {edu.gpa && (
+                      <p className="text-xs text-gray-300 mt-1">GPA: {edu.gpa}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certifications */}
+          {certifications.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-[#F59E0B] uppercase tracking-widest mb-6">Certifications</h3>
+              <div className="space-y-3">
+                {certifications.map((cert, index) => (
+                  <div key={index} className="flex items-center gap-3 text-sm text-gray-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></div>
+                    <span>{cert}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div className="w-[65%] p-10">
+          {/* Experience */}
+          {experience.length > 0 && (
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-10 h-1 bg-[#F59E0B]"></div>
+                <h2 className="text-xl font-bold text-white uppercase tracking-wide">Professional Experience</h2>
+              </div>
+              
+              <div className="space-y-10">
+                {experience.map((exp, index) => (
+                  <div key={index} className="relative pl-12">
+                    <div className="absolute left-0 top-2 w-8 h-8 rounded-full border-4 border-[#0F172A] bg-[#F59E0B] shadow-lg"></div>
+                    <div className="pb-8 border-l-2 border-gray-800 pl-8">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-1">{exp.position}</h3>
+                          <p className="text-[#F59E0B] font-semibold">{exp.company}</p>
+                        </div>
+                        <span className="text-sm text-gray-400 bg-gray-800 px-4 py-1.5 rounded-full">
+                          {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
+                        </span>
+                      </div>
+                      {exp.description && (
+                        <p className="text-gray-300 leading-relaxed">{exp.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Projects */}
+          {projects.length > 0 && (
+            <div>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-10 h-1 bg-[#F59E0B]"></div>
+                <h2 className="text-xl font-bold text-white uppercase tracking-wide">Key Projects</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                {projects.map((project, index) => (
+                  <div key={index} className="bg-[#1E293B] border border-gray-800 rounded-xl p-6">
+                    <h3 className="font-bold text-white mb-3">{project.name}</h3>
+                    <p className="text-sm text-gray-300">{project.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TemplateModernSilk = ({ cvData }) => {
+  const { personalInfo, experience, education, skills, projects, contact } = cvData;
+  
+  return (
+    <div className="bg-white min-h-[842px] max-w-[1100px] mx-auto shadow-2xl border border-gray-200 overflow-hidden rounded-3xl">
+      {/* Header with Gradient */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white p-12">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-6xl font-bold mb-4 tracking-tight">
+              {personalInfo.firstName} <span className="text-cyan-200">{personalInfo.lastName}</span>
+            </h1>
+            <p className="text-2xl font-light tracking-wide text-blue-100 mb-8">{personalInfo.title}</p>
+            
+            <div className="flex flex-wrap gap-8">
+              {contact?.email && (
+                <div className="flex items-center gap-3">
+                  <MailIcon className="h-5 w-5" />
+                  <span>{contact.email}</span>
+                </div>
+              )}
+              {contact?.phone && (
+                <div className="flex items-center gap-3">
+                  <PhoneIcon className="h-5 w-5" />
+                  <span>{contact.phone}</span>
+                </div>
+              )}
+              {contact?.location && (
+                <div className="flex items-center gap-3">
+                  <MapPinIcon className="h-5 w-5" />
+                  <span>{contact.location}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {personalInfo.photo && (
+            <div className="ml-8">
+              <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-white/30 shadow-2xl">
+                <img src={personalInfo.photo} alt="Profile" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="p-12">
+        <div className="grid grid-cols-3 gap-12">
+          {/* Left Column */}
+          <div className="col-span-2 space-y-12">
+            {/* Summary */}
+            {personalInfo.summary && (
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-8 rounded-2xl border border-blue-100">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Professional Summary</h2>
+                <p className="text-gray-700 leading-relaxed text-lg">{personalInfo.summary}</p>
+              </div>
+            )}
+
+            {/* Experience */}
+            {experience.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-blue-200">Work Experience</h2>
+                <div className="space-y-10">
+                  {experience.map((exp, index) => (
+                    <div key={index} className="group">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{exp.position}</h3>
+                          <p className="text-lg text-blue-600 font-semibold">{exp.company}</p>
+                        </div>
+                        <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+                          {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
+                        </div>
+                      </div>
+                      {exp.description && (
+                        <p className="text-gray-600 leading-relaxed pl-6 border-l-4 border-blue-200">
+                          {exp.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-12">
+            {/* Skills */}
+            {skills.length > 0 && (
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-blue-200">Expertise</h3>
+                <div className="space-y-5">
+                  {skills.map((skill, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700">{skill.name}</span>
+                        <span className="text-xs text-blue-600 font-bold">{skill.level}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-blue-600 to-cyan-500 h-2 rounded-full"
+                          style={{ width: `${skill.level}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Education */}
+            {education.length > 0 && (
+              <div className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-blue-200">Education</h3>
+                <div className="space-y-6">
+                  {education.map((edu, index) => (
+                    <div key={index} className="space-y-2">
+                      <h4 className="font-bold text-gray-900">{edu.degree}</h4>
+                      <p className="text-blue-600 font-semibold">{edu.institution}</p>
+                      <p className="text-sm text-gray-500">{edu.startDate} - {edu.current ? 'Present' : edu.endDate}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Projects */}
+            {projects.length > 0 && (
+              <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-8 rounded-2xl border border-cyan-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Notable Projects</h3>
+                <div className="space-y-4">
+                  {projects.map((project, index) => (
+                    <div key={index} className="space-y-2">
+                      <h4 className="font-semibold text-gray-900">{project.name}</h4>
+                      <p className="text-sm text-gray-600">{project.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ========== IMPROVED TEXT EXTRACTOR ==========
+class TextExtractor {
+  static extractSections(text) {
+    const sections = [];
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    const sectionPatterns = {
+      contact: /^(contact information|contact details|email|phone|address|location|linkedin|github|portfolio):?$/i,
+      summary: /^(summary|professional summary|profile|about me|about|objective|career objective|professional profile):?$/i,
+      experience: /^(work experience|professional experience|employment|career history|experience|work history|employment history):?$/i,
+      education: /^(education|academic background|qualifications|academic qualifications|education & training):?$/i,
+      skills: /^(skills|technical skills|core competencies|expertise|competencies|key skills|professional skills):?$/i,
+      projects: /^(projects|project experience|key projects|portfolio|notable projects|project work):?$/i,
+      certifications: /^(certifications|certificates|licenses|awards|honors|certifications & awards):?$/i,
+      languages: /^(languages|language proficiency|language skills):?$/i
+    };
+    
+    let currentSection = null;
+    let currentContent = [];
+    
+    for (const line of lines) {
+      let isSectionHeader = false;
+      
+      const normalizedLine = line.replace(/:$/, '').toLowerCase();
+      
+      for (const [section, pattern] of Object.entries(sectionPatterns)) {
+        if (pattern.test(normalizedLine)) {
+          if (currentSection) {
+            sections.push({
+              type: currentSection,
+              content: currentContent.join('\n').trim()
+            });
+          }
+          currentSection = section;
+          currentContent = [];
+          isSectionHeader = true;
+          break;
+        }
       }
-
-      console.log('Extracted text length:', extractedText.length);
-      console.log('First 500 chars:', extractedText.substring(0, 500));
-
-      const parsedData = advancedTextParser(extractedText);
-      resolve(parsedData);
-
-    } catch (error) {
-      console.error('CV parsing error:', error);
-      reject(error);
-    }
-  });
-};
-
-// PDF parsing
-const parsePDF = async (file) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const pdfParse = (await import('pdf-parse')).default;
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = new Uint8Array(arrayBuffer);
       
-      const data = await pdfParse(buffer);
-      resolve(data.text);
-    } catch (error) {
-      reject(new Error(`PDF parsing failed: ${error.message}`));
-    }
-  });
-};
-
-// DOCX parsing
-const parseDOCX = async (file) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const mammoth = (await import('mammoth')).default;
-      const arrayBuffer = await file.arrayBuffer();
+      if (!isSectionHeader && line === line.toUpperCase() && line.length > 3 && line.length < 50) {
+        for (const [section, pattern] of Object.entries(sectionPatterns)) {
+          if (pattern.test(line.toLowerCase())) {
+            if (currentSection) {
+              sections.push({
+                type: currentSection,
+                content: currentContent.join('\n').trim()
+              });
+            }
+            currentSection = section;
+            currentContent = [];
+            isSectionHeader = true;
+            break;
+          }
+        }
+      }
       
-      const result = await mammoth.extractRawText({ arrayBuffer });
-      resolve(result.value);
-    } catch (error) {
-      reject(new Error(`DOCX parsing failed: ${error.message}`));
+      if (!isSectionHeader && currentSection) {
+        if (line.length > 0 && !line.match(/^[-=*_]{3,}$/)) {
+          currentContent.push(line);
+        }
+      } else if (!currentSection && line.length > 0 && !isSectionHeader) {
+        if (!currentSection) currentSection = 'summary';
+        currentContent.push(line);
+      }
     }
-  });
-};
-
-// DOC file handling (basic fallback)
-const parseDOC = async (file) => {
-  return new Promise((resolve) => {
-    // .doc files are complex - provide guidance
-    resolve("DOC file detected. For better parsing, please save as PDF or DOCX, or copy-paste the content into a text file.");
-  });
-};
-
-// Text file parsing
-const parseTXT = async (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = () => reject(new Error('Failed to read text file'));
-    reader.readAsText(file);
-  });
-};
-
-// Advanced text parser with better pattern matching
-const advancedTextParser = (text) => {
-  // Clean and normalize text
-  const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const lines = cleanText.split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0);
-
-  console.log('Lines found:', lines.length);
-  console.log('First 10 lines:', lines.slice(0, 10));
-
-  const parsedData = {
-    personalInfo: {
-      firstName: '',
-      lastName: '',
+    
+    if (currentSection && currentContent.length > 0) {
+      sections.push({
+        type: currentSection,
+        content: currentContent.join('\n').trim()
+      });
+    }
+    
+    if (sections.length === 0 && lines.length > 0) {
+      const personalLines = [];
+      for (let i = 0; i < Math.min(10, lines.length); i++) {
+        if (!sectionPatterns.summary.test(lines[i].toLowerCase())) {
+          personalLines.push(lines[i]);
+        } else {
+          break;
+        }
+      }
+      if (personalLines.length > 0) {
+        sections.push({
+          type: 'summary',
+          content: personalLines.join('\n')
+        });
+      }
+    }
+    
+    return sections;
+  }
+  
+  static extractContactInfo(text) {
+    const contact = {
       email: '',
       phone: '',
       location: '',
-      summary: '',
-      title: '',
       linkedin: '',
-      github: ''
-    },
-    experience: [],
-    education: [],
-    skills: [],
-    languages: [],
-    projects: []
-  };
-
-  // Extract email - multiple patterns
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  const emailMatches = text.match(emailRegex);
-  if (emailMatches && emailMatches.length > 0) {
-    parsedData.personalInfo.email = emailMatches[0];
-    console.log('Found email:', parsedData.personalInfo.email);
-  }
-
-  // Extract phone - multiple international formats
-  const phoneRegex = /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
-  const phoneMatches = text.match(phoneRegex);
-  if (phoneMatches && phoneMatches.length > 0) {
-    parsedData.personalInfo.phone = phoneMatches[0];
-    console.log('Found phone:', parsedData.personalInfo.phone);
-  }
-
-  // Name extraction - look for title case words in first few lines
-  if (lines.length > 0) {
-    const potentialNameLines = lines.slice(0, 3);
-    for (const line of potentialNameLines) {
-      const words = line.split(/\s+/).filter(word => word.length > 1);
-      if (words.length >= 2 && words.length <= 4) {
-        // Check if line looks like a name (title case, no special characters)
-        const looksLikeName = words.every(word => 
-          /^[A-Z][a-z]*$/.test(word) || /^[A-Z]\.?$/.test(word)
-        );
-        
-        if (looksLikeName) {
-          parsedData.personalInfo.firstName = words[0];
-          parsedData.personalInfo.lastName = words.slice(1).join(' ');
-          console.log('Found name:', parsedData.personalInfo.firstName, parsedData.personalInfo.lastName);
+      portfolio: ''
+    };
+    
+    const emailRegex = /[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}/g;
+    const emailMatches = text.match(emailRegex);
+    if (emailMatches) {
+      const personalEmail = emailMatches.find(email => 
+        !email.includes('example.com') && 
+        !email.includes('test.com') &&
+        email.split('@')[0].length > 1
+      );
+      if (personalEmail) contact.email = personalEmail;
+    }
+    
+    const phonePatterns = [
+      /(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
+      /(\d{3})[-.\s]?(\d{3})[-.\s]?(\d{4})/g,
+      /(\+\d{1,3}\s?)?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g
+    ];
+    
+    for (const pattern of phonePatterns) {
+      const matches = text.match(pattern);
+      if (matches && matches.length > 0) {
+        const phone = matches[0].replace(/\D/g, '');
+        if (phone.length >= 10) {
+          const formatted = `(${phone.substring(0,3)}) ${phone.substring(3,6)}-${phone.substring(6,10)}`;
+          contact.phone = formatted;
           break;
         }
       }
     }
-  }
-
-  // Title extraction - look after name or in first 5 lines
-  if (lines.length > 1) {
-    for (let i = 1; i < Math.min(6, lines.length); i++) {
-      const line = lines[i];
-      if (line && line.length > 3 && line.length < 100 && 
-          !line.includes('@') && !/\d{10,}/.test(line)) {
-        parsedData.personalInfo.title = line;
-        console.log('Found title:', parsedData.personalInfo.title);
+    
+    const locationPatterns = [
+      /Location:\s*([^\n]+)/i,
+      /Address:\s*([^\n]+)/i,
+      /Based in\s*([^\n.,]+)/i,
+      /Lives in\s*([^\n.,]+)/i,
+      /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)(?:,\s*[A-Z]{2})?(?:\s+\d{5})?/,
+      /(?:from\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/,
+      /,\s*([A-Z][a-z]+\s*(?:[A-Z][a-z]+)?)(?:\s*[A-Z]{2})?\s*\d{5}/
+    ];
+    
+    for (const pattern of locationPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const location = match[1].trim();
+        if (location.length > 3 && location.length < 50 && !location.includes('@')) {
+          contact.location = location;
+          break;
+        }
+      }
+    }
+    
+    const linkedinPatterns = [
+      /linkedin\.com\/in\/[\w-]+/g,
+      /linkedin\.com\/company\/[\w-]+/g,
+      /https?:\/\/(?:www\.)?linkedin\.com\/[^\s]+/g,
+      /LinkedIn:\s*([^\s]+)/i
+    ];
+    
+    for (const pattern of linkedinPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        let linkedinUrl = match[0];
+        if (!linkedinUrl.startsWith('http')) {
+          linkedinUrl = 'https://' + linkedinUrl;
+        }
+        contact.linkedin = linkedinUrl;
         break;
       }
     }
+    
+    return contact;
   }
+}
 
-  // Location extraction
-  const locationRegex = /([A-Z][a-zA-Z\s]+,?\s*(?:[A-Z]{2,3}\s*)?\d{0,5})|(Remote|Hybrid|On-site)/gi;
-  const locationMatches = text.match(locationRegex);
-  if (locationMatches) {
-    // Filter out false positives
-    const validLocations = locationMatches.filter(loc => 
-      loc.length > 3 && 
-      !loc.match(/^[A-Z]$/) && 
-      !loc.includes('@')
-    );
-    if (validLocations.length > 0) {
-      parsedData.personalInfo.location = validLocations[0];
-      console.log('Found location:', parsedData.personalInfo.location);
-    }
-  }
-
-  // Summary extraction - first substantial paragraph
-  let summary = '';
+// ========== PARSING FUNCTIONS ==========
+const parseExperience = (content) => {
+  const experiences = [];
+  const lines = content.split('\n');
+  
+  let currentExp = null;
+  let bulletPoints = [];
+  
   for (const line of lines) {
-    if (line.length > 50 && line.length < 500 && 
-        !line.includes('@') && !/\d{10,}/.test(line) &&
-        !line.toLowerCase().includes('experience') &&
-        !line.toLowerCase().includes('education') &&
-        !line.toLowerCase().includes('skill')) {
-      summary = line;
-      break;
-    }
-  }
-  
-  if (!summary && lines.length > 0) {
-    // Fallback: use first meaningful line
-    for (const line of lines) {
-      if (line.length > 20 && line.length < 200) {
-        summary = line;
-        break;
-      }
-    }
-  }
-  
-  parsedData.personalInfo.summary = summary || 'Professional with extensive experience.';
-  console.log('Found summary:', parsedData.personalInfo.summary);
-
-  // Skills extraction with comprehensive list
-  const skillKeywords = [
-    // Programming Languages
-    'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin',
-    'HTML', 'CSS', 'SQL', 'NoSQL', 'GraphQL',
+    const trimmedLine = line.trim();
     
-    // Frameworks & Libraries
-    'React', 'Angular', 'Vue', 'Node.js', 'Express', 'Django', 'Flask', 'Spring', 'Laravel', 'Ruby on Rails',
-    'jQuery', 'Bootstrap', 'Tailwind', 'Sass', 'Less',
+    const jobPatterns = [
+      /^(.+?)\s+(?:at|@)\s+(.+?)\s+\(?(.+?)\)?$/i,
+      /^(.+?),\s+(.+?)\s+-\s+(.+)$/i,
+      /^(.+?)\s+-\s+(.+?)\s+\((.+?)\)$/i,
+      /^(.+?)\s+-\s+(.+?)\s+(.+)$/i,
+    ];
     
-    // Tools & Platforms
-    'Git', 'Docker', 'Kubernetes', 'AWS', 'Azure', 'GCP', 'Firebase', 'MongoDB', 'PostgreSQL', 'MySQL',
-    'Redis', 'Jenkins', 'CI/CD', 'REST API', 'GraphQL', 'Microservices',
-    
-    // Soft Skills
-    'Communication', 'Leadership', 'Problem Solving', 'Project Management', 'Teamwork', 'Collaboration',
-    'Agile', 'Scrum', 'Kanban', 'Time Management', 'Critical Thinking', 'Creativity'
-  ];
-
-  const foundSkills = [];
-  const textLower = text.toLowerCase();
-  
-  skillKeywords.forEach(skill => {
-    if (textLower.includes(skill.toLowerCase())) {
-      foundSkills.push({ 
-        name: skill, 
-        level: Math.floor(Math.random() * 25) + 75 // 75-100%
-      });
-    }
-  });
-
-  // If no skills found, add some intelligent defaults based on context
-  if (foundSkills.length === 0) {
-    if (textLower.includes('developer') || textLower.includes('engineer')) {
-      foundSkills.push(
-        { name: 'Problem Solving', level: 85 },
-        { name: 'Technical Skills', level: 80 },
-        { name: 'Team Collaboration', level: 75 }
-      );
-    } else {
-      foundSkills.push(
-        { name: 'Communication', level: 80 },
-        { name: 'Problem Solving', level: 75 },
-        { name: 'Project Management', level: 70 }
-      );
-    }
-  }
-
-  parsedData.skills = foundSkills;
-  console.log('Found skills:', foundSkills.map(s => s.name));
-
-  // Extract experience sections (basic)
-  const experienceKeywords = ['experience', 'work history', 'employment', 'professional background'];
-  let inExperienceSection = false;
-  let currentExperience = null;
-
-  for (const line of lines) {
-    const lowerLine = line.toLowerCase();
-    
-    // Start of experience section
-    if (experienceKeywords.some(keyword => lowerLine.includes(keyword))) {
-      inExperienceSection = true;
-      continue;
-    }
-
-    if (inExperienceSection) {
-      // Look for company patterns
-      if (line.length > 2 && line.length < 100 && 
-          !line.includes('@') && !/\d{10,}/.test(line)) {
-        
-        // If we have a current experience, save it
-        if (currentExperience && currentExperience.company) {
-          parsedData.experience.push(currentExperience);
+    let matched = false;
+    for (const pattern of jobPatterns) {
+      const match = trimmedLine.match(pattern);
+      if (match && match[1] && match[2]) {
+        if (currentExp) {
+          currentExp.description = bulletPoints.join('\n');
+          experiences.push(currentExp);
+          bulletPoints = [];
         }
         
-        // Start new experience
-        currentExperience = {
+        let position = match[1].trim();
+        let company = match[2].trim();
+        let dates = match[3] ? match[3].trim() : '';
+        
+        if (!dates) {
+          const dateMatch = trimmedLine.match(/(\d{4})\s*[-–]\s*(\d{4}|Present|Current|Now)/i);
+          if (dateMatch) {
+            dates = `${dateMatch[1]} - ${dateMatch[2]}`;
+          }
+        }
+        
+        currentExp = {
           id: generateUniqueId(),
-          company: line,
-          position: '',
-          startDate: '',
-          endDate: '',
-          current: false,
+          company: company,
+          position: position,
+          startDate: dates.split(' - ')[0] || '',
+          endDate: dates.includes(' - ') ? dates.split(' - ')[1] : '',
+          current: dates.includes('Present') || dates.includes('Current') || dates.includes('Now'),
           description: ''
         };
+        matched = true;
+        break;
       }
-      
-      // Look for position patterns (often follows company)
-      if (currentExperience && !currentExperience.position && line.length > 5) {
-        currentExperience.position = line;
+    }
+    
+    if (!matched && trimmedLine.length > 0) {
+      if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.match(/^\d+\./)) {
+        bulletPoints.push(trimmedLine.replace(/^[•\-]\s*|\d+\.\s*/, ''));
+      } else if (currentExp && trimmedLine.length > 10) {
+        bulletPoints.push(trimmedLine);
       }
     }
   }
-
-  // Add the last experience if exists
-  if (currentExperience && currentExperience.company) {
-    parsedData.experience.push(currentExperience);
+  
+  if (currentExp) {
+    currentExp.description = bulletPoints.join('\n');
+    experiences.push(currentExp);
   }
-
-  console.log('Found experiences:', parsedData.experience.length);
-
-  return parsedData;
+  
+  if (experiences.length === 0 && lines.length > 0) {
+    experiences.push({
+      id: generateUniqueId(),
+      company: 'Various Companies',
+      position: 'Professional Experience',
+      startDate: '',
+      endDate: '',
+      current: false,
+      description: content
+    });
+  }
+  
+  return experiences;
 };
 
-// Enhanced PDF Generation with Magazine-Level Design
-const generatePDF = async (cvData, theme) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const { jsPDF } = await import('jspdf');
-      
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Magazine-inspired color scheme
-      const primaryColor = [59, 130, 246]; // Blue
-      const secondaryColor = [139, 92, 246]; // Purple
-      const accentColor = [16, 185, 129]; // Emerald
-      const darkColor = [30, 41, 59]; // Slate-800
-      const lightColor = [248, 250, 252]; // Slate-50
-      const grayColor = [100, 116, 139]; // Slate-500
-
-      // Helper function to add section with modern design
-      const addModernSection = (title, contentY, contentCallback) => {
-        // Section header with accent bar
-        pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        pdf.rect(20, contentY - 8, 4, 16, 'F');
+const parseEducation = (content) => {
+  const educations = [];
+  const lines = content.split('\n');
+  
+  let currentEdu = null;
+  let collectingInfo = false;
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    const educationPatterns = [
+      /^(.+?),\s+(.+?)\s+-\s+(.+)$/i,
+      /^(.+?)\s+at\s+(.+?)\s+\(?(.+?)\)?$/i,
+      /^(.+?)\s+(?:from|at)\s+(.+)$/i,
+    ];
+    
+    let matched = false;
+    for (const pattern of educationPatterns) {
+      const match = trimmedLine.match(pattern);
+      if (match) {
+        if (currentEdu) {
+          educations.push(currentEdu);
+        }
         
-        pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(title.toUpperCase(), 30, contentY + 2);
+        let degree = match[1].trim();
+        let institution = match[2].trim();
+        let dates = match[3] ? match[3].trim() : '';
         
-        // Subtle underline
-        pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        pdf.setLineWidth(0.5);
-        pdf.line(30, contentY + 4, pageWidth - 20, contentY + 4);
+        if (!dates) {
+          const dateMatch = trimmedLine.match(/(\d{4})\s*[-–]\s*(\d{4}|Present|Current)/i);
+          if (dateMatch) {
+            dates = `${dateMatch[1]} - ${dateMatch[2]}`;
+          }
+        }
         
-        return contentCallback(contentY + 12);
-      };
-
-      // Add subtle background pattern
-      pdf.setFillColor(lightColor[0], lightColor[1], lightColor[2]);
-      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-
-      // Modern Header with gradient effect
-      const headerHeight = 45;
-      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      pdf.rect(0, 0, pageWidth, headerHeight, 'F');
-      
-      // Add subtle pattern to header
-      pdf.setFillColor(255, 255, 255, 0.1);
-      for (let i = 0; i < pageWidth; i += 8) {
-        pdf.rect(i, 0, 4, headerHeight, 'F');
+        let gpa = '';
+        const gpaMatch = trimmedLine.match(/GPA[:]?\s*(\d\.\d\d?)/i);
+        if (gpaMatch) {
+          gpa = gpaMatch[1];
+        }
+        
+        currentEdu = {
+          id: generateUniqueId(),
+          institution: institution,
+          degree: degree,
+          field: '',
+          startDate: dates.split(' - ')[0] || '',
+          endDate: dates.includes(' - ') ? dates.split(' - ')[1] : '',
+          current: dates.includes('Present') || dates.includes('Current'),
+          gpa: gpa
+        };
+        collectingInfo = true;
+        matched = true;
+        break;
       }
-
-      // Name and title in header
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(28);
-      pdf.setFont('helvetica', 'bold');
-      
-      const nameText = `${cvData.personalInfo.firstName} ${cvData.personalInfo.lastName}`;
-      const nameWidth = pdf.getTextWidth(nameText);
-      const nameX = (pageWidth - nameWidth) / 2;
-      
-      pdf.text(nameText, nameX, 20);
-      
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'normal');
-      const titleText = cvData.personalInfo.title || 'Professional';
-      const titleWidth = pdf.getTextWidth(titleText);
-      const titleX = (pageWidth - titleWidth) / 2;
-      pdf.text(titleText, titleX, 30);
-
-      // Profile photo with modern styling
-      if (cvData.personalInfo.photo) {
-        try {
-          const photoSize = 32;
-          const photoX = pageWidth - 45;
-          const photoY = 6;
-          
-          // Circular photo with border and shadow effect
-          pdf.setFillColor(255, 255, 255);
-          pdf.circle(photoX + photoSize/2, photoY + photoSize/2, photoSize/2 + 1, 'F');
-          pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          pdf.setLineWidth(1.5);
-          pdf.circle(photoX + photoSize/2, photoY + photoSize/2, photoSize/2 + 1, 'S');
-          
-          pdf.addImage(cvData.personalInfo.photo, 'JPEG', photoX, photoY, photoSize, photoSize, 'circle');
-        } catch (imgError) {
-          console.warn('Could not add image to PDF:', imgError);
+    }
+    
+    if (!matched && collectingInfo && trimmedLine.length > 0) {
+      const gpaMatch = trimmedLine.match(/GPA[:]?\s*(\d\.\d\d?)/i);
+      if (gpaMatch && !currentEdu.gpa) {
+        currentEdu.gpa = gpaMatch[1];
+      } else if (trimmedLine.match(/^[A-Z][a-z]+/)) {
+        if (!currentEdu.field && trimmedLine.length < 50) {
+          currentEdu.field = trimmedLine;
         }
       }
-
-      let yPosition = 55;
-
-      // Contact Information - Modern badge style
-      const contactItems = [];
-      if (cvData.personalInfo.email) contactItems.push({ text: cvData.personalInfo.email, icon: '✉️' });
-      if (cvData.personalInfo.phone) contactItems.push({ text: cvData.personalInfo.phone, icon: '📞' });
-      if (cvData.personalInfo.location) contactItems.push({ text: cvData.personalInfo.location, icon: '📍' });
-      if (cvData.personalInfo.linkedin) contactItems.push({ text: 'LinkedIn', icon: '💼', url: cvData.personalInfo.linkedin });
-      if (cvData.personalInfo.github) contactItems.push({ text: 'GitHub', icon: '⚡', url: cvData.personalInfo.github });
-
-      if (contactItems.length > 0) {
-        pdf.setFontSize(9);
-        pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-        
-        const badgeHeight = 6;
-        const badgePadding = 8;
-        let badgeX = 20;
-        
-        contactItems.forEach((item, index) => {
-          const badgeText = `${item.icon} ${item.text}`;
-          const badgeWidth = pdf.getTextWidth(badgeText) + badgePadding * 2;
-          
-          // Check if we need to wrap to next line
-          if (badgeX + badgeWidth > pageWidth - 20) {
-            badgeX = 20;
-            yPosition += badgeHeight + 4;
-          }
-          
-          // Badge background
-          pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2], 0.1);
-          pdf.roundedRect(badgeX, yPosition, badgeWidth, badgeHeight, 3, 3, 'F');
-          
-          // Badge border
-          pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2], 0.3);
-          pdf.setLineWidth(0.3);
-          pdf.roundedRect(badgeX, yPosition, badgeWidth, badgeHeight, 3, 3, 'S');
-          
-          // Badge text
-          pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-          pdf.text(badgeText, badgeX + badgePadding, yPosition + 4);
-          
-          badgeX += badgeWidth + 6;
-        });
-        
-        yPosition += badgeHeight + 16;
-      }
-
-      // Professional Summary with modern card design
-      if (cvData.personalInfo.summary) {
-        yPosition = addModernSection('Professional Profile', yPosition, (startY) => {
-          // Summary card with subtle background
-          pdf.setFillColor(255, 255, 255);
-          pdf.setDrawColor(grayColor[0], grayColor[1], grayColor[2], 0.2);
-          pdf.setLineWidth(0.5);
-          pdf.roundedRect(20, startY, pageWidth - 40, 30, 3, 3, 'FD');
-          
-          pdf.setFontSize(10);
-          pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-          pdf.setFont('helvetica', 'normal');
-          
-          const splitSummary = pdf.splitTextToSize(cvData.personalInfo.summary, pageWidth - 60);
-          pdf.text(splitSummary, 30, startY + 8);
-          
-          return startY + 35;
-        });
-      }
-
-      // Two-column layout for main content
-      const col1X = 20;
-      const col2X = pageWidth / 2 + 10;
-      const colWidth = (pageWidth - 50) / 2;
-      let col1Y = yPosition;
-      let col2Y = yPosition;
-
-      // Experience Section
-      if (cvData.experience.length > 0) {
-        col1Y = addModernSection('Professional Experience', col1Y, (startY) => {
-          let currentY = startY;
-          
-          cvData.experience.forEach((exp, index) => {
-            if (exp.company && currentY < pageHeight - 50) {
-              // Add page break if needed
-              if (currentY > pageHeight - 80 && index > 0) {
-                pdf.addPage();
-                currentY = 30;
-              }
-
-              // Experience card
-              pdf.setFillColor(255, 255, 255, 0.8);
-              pdf.setDrawColor(grayColor[0], grayColor[1], grayColor[2], 0.1);
-              pdf.roundedRect(col1X, currentY, colWidth, 35, 2, 2, 'FD');
-
-              // Position and Company
-              pdf.setFontSize(11);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-              pdf.text(exp.position || 'Position', col1X + 8, currentY + 8);
-              
-              pdf.setFontSize(9);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-              pdf.text(exp.company, col1X + 8, currentY + 14);
-              
-              // Dates with modern styling
-              pdf.setFontSize(8);
-              pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-              const dateText = exp.startDate ? `${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}` : '';
-              pdf.text(dateText, col1X + 8, currentY + 20);
-              
-              // Description with better typography
-              if (exp.description) {
-                pdf.setFontSize(8);
-                pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-                const splitDesc = pdf.splitTextToSize(exp.description, colWidth - 16);
-                pdf.text(splitDesc, col1X + 8, currentY + 26);
-                currentY += splitDesc.length * 3 + 10;
-              } else {
-                currentY += 20;
-              }
-              
-              currentY += 25;
-              
-              // Add subtle separator between experiences
-              if (index < cvData.experience.length - 1) {
-                pdf.setDrawColor(grayColor[0], grayColor[1], grayColor[2], 0.2);
-                pdf.setLineWidth(0.3);
-                pdf.line(col1X + 10, currentY - 5, col1X + colWidth - 10, currentY - 5);
-                currentY += 8;
-              }
-            }
-          });
-          
-          return Math.max(currentY, col1Y);
-        });
-      }
-
-      // Education Section
-      if (cvData.education.length > 0) {
-        col2Y = addModernSection('Education', col2Y, (startY) => {
-          let currentY = startY;
-          
-          cvData.education.forEach((edu, index) => {
-            if (edu.institution && currentY < pageHeight - 40) {
-              // Education card
-              pdf.setFillColor(255, 255, 255, 0.8);
-              pdf.setDrawColor(grayColor[0], grayColor[1], grayColor[2], 0.1);
-              pdf.roundedRect(col2X, currentY, colWidth, 28, 2, 2, 'FD');
-
-              // Degree and Institution
-              pdf.setFontSize(10);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-              pdf.text(edu.degree || 'Degree', col2X + 8, currentY + 8);
-              
-              pdf.setFontSize(8);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-              pdf.text(edu.institution, col2X + 8, currentY + 14);
-              
-              // Field and GPA
-              pdf.setFontSize(7);
-              pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-              let details = [];
-              if (edu.field) details.push(edu.field);
-              if (edu.gpa) details.push(`GPA: ${edu.gpa}`);
-              
-              if (details.length > 0) {
-                pdf.text(details.join(' • '), col2X + 8, currentY + 20);
-              }
-              
-              currentY += 35;
-            }
-          });
-          
-          return Math.max(currentY, col2Y);
-        });
-      }
-
-      // Skills Section with modern progress bars
-      if (cvData.skills.length > 0) {
-        const skillsStartY = Math.max(col1Y, col2Y) + 10;
-        
-        col1Y = addModernSection('Technical Skills', skillsStartY, (startY) => {
-          let currentY = startY;
-          
-          // Skills in a modern grid layout
-          const skillsPerColumn = Math.ceil(cvData.skills.length / 2);
-          const skillItemHeight = 12;
-          
-          cvData.skills.forEach((skill, index) => {
-            if (skill.name) {
-              const col = index < skillsPerColumn ? 0 : 1;
-              const xPos = col === 0 ? col1X : col1X + colWidth / 2 + 5;
-              const row = col === 0 ? index : index - skillsPerColumn;
-              
-              // Skill name
-              pdf.setFontSize(9);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-              pdf.text(skill.name, xPos, currentY + (row * skillItemHeight));
-              
-              // Progress bar background
-              pdf.setFillColor(grayColor[0], grayColor[1], grayColor[2], 0.2);
-              pdf.roundedRect(xPos + 35, currentY + (row * skillItemHeight) - 3, 40, 4, 2, 2, 'F');
-              
-              // Progress bar fill
-              pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-              const progressWidth = (skill.level / 100) * 40;
-              pdf.roundedRect(xPos + 35, currentY + (row * skillItemHeight) - 3, progressWidth, 4, 2, 2, 'F');
-              
-              // Percentage
-              pdf.setFontSize(7);
-              pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-              pdf.text(`${skill.level}%`, xPos + 78, currentY + (row * skillItemHeight));
-            }
-          });
-          
-          return currentY + (skillsPerColumn * skillItemHeight) + 10;
-        });
-      }
-
-      // Languages Section
-      if (cvData.languages.length > 0) {
-        col2Y = addModernSection('Languages', skillsStartY, (startY) => {
-          let currentY = startY;
-          
-          cvData.languages.forEach((lang, index) => {
-            if (lang.language) {
-              pdf.setFontSize(9);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-              pdf.text(lang.language, col2X, currentY + (index * 6));
-              
-              pdf.setFontSize(8);
-              pdf.setFont('helvetica', 'normal');
-              pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-              const proficiencyX = col2X + 30;
-              pdf.text(lang.proficiency, proficiencyX, currentY + (index * 6));
-            }
-          });
-          
-          return currentY + (cvData.languages.length * 6) + 10;
-        });
-      }
-
-      // Modern Footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-      pdf.setFont('helvetica', 'italic');
-      
-      const footerText = 'Generated with Professional CV Builder • Modern Design Template';
-      const footerWidth = pdf.getTextWidth(footerText);
-      const footerX = (pageWidth - footerWidth) / 2;
-      
-      pdf.text(footerText, footerX, pageHeight - 15);
-
-      // Add page numbers if multiple pages
-      const pageCount = pdf.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-        pdf.text(`Page ${i} of ${pageCount}`, pageWidth - 25, pageHeight - 15);
-      }
-
-      resolve(pdf);
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      reject(error);
+    } else if (!matched && !collectingInfo && trimmedLine.length > 5) {
+      educations.push({
+        id: generateUniqueId(),
+        institution: trimmedLine,
+        degree: '',
+        field: '',
+        startDate: '',
+        endDate: '',
+        current: false,
+        gpa: ''
+      });
     }
-  });
+  }
+  
+  if (currentEdu) {
+    educations.push(currentEdu);
+  }
+  
+  return educations;
 };
 
-// CV Preview Component
-const CVPreview = ({ cvData, theme }) => (
-  <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 max-w-4xl mx-auto">
-    <div className="rounded-xl p-6 text-white mb-6" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}>
-      <div className="flex items-start gap-4">
-        {cvData.personalInfo.photo && (
-          <img src={cvData.personalInfo.photo} alt="Profile" className="w-20 h-20 rounded-xl object-cover border-2 border-white/30" />
-        )}
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold mb-2">{cvData.personalInfo.firstName} {cvData.personalInfo.lastName}</h1>
-          <p className="text-xl font-semibold mb-3 opacity-90">{cvData.personalInfo.title}</p>
-          <p className="opacity-80 leading-relaxed">{cvData.personalInfo.summary}</p>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-white/30">
-        {cvData.personalInfo.email && <div className="flex items-center gap-2 text-sm"><Mail className="w-4 h-4" />{cvData.personalInfo.email}</div>}
-        {cvData.personalInfo.phone && <div className="flex items-center gap-2 text-sm"><Phone className="w-4 h-4" />{cvData.personalInfo.phone}</div>}
-        {cvData.personalInfo.location && <div className="flex items-center gap-2 text-sm"><MapPin className="w-4 h-4" />{cvData.personalInfo.location}</div>}
-      </div>
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2 space-y-6">
-        {cvData.experience.some(exp => exp.company) && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b-2 pb-2" style={{ borderColor: theme.primary }}>Professional Experience</h2>
-            <div className="space-y-4">
-              {cvData.experience.map((exp) => exp.company && (
-                <div key={exp.id} className="border-l-4 pl-4" style={{ borderColor: theme.primary }}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900">{exp.position}</h3>
-                      <p className="font-semibold" style={{ color: theme.primary }}>{exp.company}</p>
-                    </div>
-                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                      {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">{exp.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {cvData.education.some(edu => edu.institution) && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b-2 pb-2" style={{ borderColor: theme.accent }}>Education</h2>
-            <div className="space-y-4">
-              {cvData.education.map((edu) => edu.institution && (
-                <div key={edu.id} className="border-l-4 pl-4" style={{ borderColor: theme.accent }}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900">{edu.degree}</h3>
-                      <p className="font-semibold" style={{ color: theme.accent }}>{edu.institution}</p>
-                      {edu.field && <p className="text-gray-600 text-sm">{edu.field}</p>}
-                      {edu.gpa && <p className="text-gray-500 text-sm mt-1">GPA: {edu.gpa}</p>}
-                    </div>
-                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                      {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-      <div className="space-y-6">
-        {cvData.skills.some(skill => skill.name) && (
-          <section>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Skills</h3>
-            <div className="space-y-3">
-              {cvData.skills.map((skill, index) => skill.name && (
-                <div key={index} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-gray-700">{skill.name}</span>
-                    <span className="text-gray-500">{skill.level}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${skill.level}%`, backgroundColor: theme.primary }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {cvData.languages.some(lang => lang.language) && (
-          <section>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Languages</h3>
-            <div className="space-y-2">
-              {cvData.languages.map((lang, index) => lang.language && (
-                <div key={index} className="flex justify-between items-center">
-                  <span className="text-gray-700">{lang.language}</span>
-                  <Badge variant="secondary" style={{ backgroundColor: `${theme.accent}20`, color: theme.accent }}>
-                    {lang.proficiency}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-    </div>
-  </div>
-);
+const parseSkills = (content) => {
+  const skills = [];
+  
+  const skillLines = content.split(/[,;|•\n\t]+/);
+  
+  for (const line of skillLines) {
+    const skill = line.trim();
+    if (skill.length > 2 && skill.length < 50) {
+      const cleanSkill = skill
+        .replace(/^\d+\.\s*/, '')
+        .replace(/^[•\-]\s*/, '')
+        .replace(/\(.*?\)/g, '')
+        .trim();
+      
+      if (cleanSkill.length > 2 && !cleanSkill.match(/^[0-9]+$/)) {
+        let level = 75;
+        const lowerSkill = cleanSkill.toLowerCase();
+        
+        if (lowerSkill.includes('expert') || lowerSkill.includes('advanced') || lowerSkill.includes('master')) {
+          level = 90;
+        } else if (lowerSkill.includes('intermediate') || lowerSkill.includes('proficient')) {
+          level = 70;
+        } else if (lowerSkill.includes('beginner') || lowerSkill.includes('basic') || lowerSkill.includes('novice')) {
+          level = 50;
+        } else if (lowerSkill.includes('familiar')) {
+          level = 40;
+        }
+        
+        const skillName = cleanSkill
+          .replace(/\s*(expert|advanced|intermediate|proficient|beginner|basic|novice|familiar)\s*/gi, '')
+          .trim();
+        
+        if (skillName.length > 0) {
+          skills.push({
+            id: generateUniqueId(),
+            name: skillName,
+            level: level
+          });
+        }
+      }
+    }
+  }
+  
+  const uniqueSkills = [];
+  const seen = new Set();
+  for (const skill of skills) {
+    if (!seen.has(skill.name.toLowerCase())) {
+      seen.add(skill.name.toLowerCase());
+      uniqueSkills.push(skill);
+    }
+  }
+  
+  return uniqueSkills.slice(0, 20);
+};
 
-export default function CVBuilderPage() {
-  const [activeTab, setActiveTab] = useState('editor');
+const parseProjects = (content) => {
+  const projects = [];
+  const lines = content.split('\n');
+  
+  let currentProject = null;
+  let descriptionLines = [];
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    if (trimmedLine.length > 5 && trimmedLine.length < 100 && 
+        !trimmedLine.startsWith('•') && !trimmedLine.startsWith('-') &&
+        !trimmedLine.match(/^\d+\./) && !trimmedLine.match(/^[a-z]/)) {
+      
+      if (currentProject) {
+        currentProject.description = descriptionLines.join(' ').trim();
+        projects.push(currentProject);
+        descriptionLines = [];
+      }
+      
+      currentProject = {
+        id: generateUniqueId(),
+        name: trimmedLine.replace(/[:.]$/, ''),
+        description: ''
+      };
+    } else if (currentProject && trimmedLine.length > 0) {
+      descriptionLines.push(trimmedLine);
+    }
+  }
+  
+  if (currentProject) {
+    currentProject.description = descriptionLines.join(' ').trim();
+    projects.push(currentProject);
+  }
+  
+  return projects.slice(0, 10);
+};
+
+// ========== MAIN COMPONENT ==========
+export default function CVFactory() {
+  const [activeTab, setActiveTab] = useState('upload');
+  const [activeTemplate, setActiveTemplate] = useState('executive_velvet');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [isParsingCV, setIsParsingCV] = useState(false);
-  const [theme] = useState({
-    primary: '#3B82F6',
-    secondary: '#8B5CF6',
-    accent: '#10B981'
-  });
-
+  const [isGeneratingWord, setIsGeneratingWord] = useState(false);
+  const [uploadedText, setUploadedText] = useState('');
+  const [extractedSections, setExtractedSections] = useState([]);
+  
   const [cvData, setCvData] = useState({
     personalInfo: {
       firstName: '',
       lastName: '',
+      title: '',
+      summary: '',
+      photo: null
+    },
+    contact: {
       email: '',
       phone: '',
       location: '',
-      summary: '',
-      title: '',
       linkedin: '',
-      github: '',
-      photo: null
+      portfolio: ''
     },
     experience: [],
     education: [],
     skills: [],
-    languages: [],
-    projects: []
+    projects: [],
+    certifications: [],
+    languages: []
   });
 
-  const fileInputRef = useRef();
-  const cvUploadRef = useRef();
+  const [editorMode, setEditorMode] = useState('visual');
+  const [textEditorContent, setTextEditorContent] = useState('');
+  
+  const fileInputRef = useRef(null);
+  const textAreaRef = useRef(null);
+  const printRef = useRef(null);
   const { toast } = useToast();
 
-  // Enhanced CV upload handler
-  const handleCVUpload = async (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    console.log('Starting file processing:', file.name);
-
-    setIsParsingCV(true);
+    setIsProcessing(true);
+    
     try {
-      const parsedData = await parseUploadedCV(file);
-      console.log('Parsing completed:', parsedData);
+      let text = '';
       
-      // Clear the file input
-      event.target.value = '';
+      if (file.type === 'application/pdf') {
+        toast('PDF Detected', 'For PDF files, please copy and paste the text manually', 'destructive');
+        setIsProcessing(false);
+        return;
+      } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+        text = await readFileAsText(file);
+      } else if (file.type.includes('msword') || file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+        try {
+          text = await readFileAsText(file);
+        } catch (error) {
+          toast('File Format', 'For Word documents, please copy and paste the text manually', 'destructive');
+          setIsProcessing(false);
+          return;
+        }
+      } else {
+        toast('Unsupported Format', 'Please upload TXT or copy/paste your CV text', 'destructive');
+        setIsProcessing(false);
+        return;
+      }
       
-      // Update state with parsed data
+      setUploadedText(text);
+      setTextEditorContent(text);
+      
+      const contactInfo = TextExtractor.extractContactInfo(text);
       setCvData(prev => ({
         ...prev,
-        personalInfo: { ...prev.personalInfo, ...parsedData.personalInfo },
-        experience: [...prev.experience, ...(parsedData.experience || [])],
-        education: [...prev.education, ...(parsedData.education || [])],
-        skills: parsedData.skills.length > 0 ? parsedData.skills : prev.skills,
-        languages: [...prev.languages, ...(parsedData.languages || [])],
-        projects: [...prev.projects, ...(parsedData.projects || [])]
+        contact: { ...prev.contact, ...contactInfo }
       }));
-
-      toast('✅ CV Imported Successfully!', 'Your CV has been parsed and imported. Please review and edit the information.');
-    } catch (error) {
-      console.error('CV parsing error:', error);
-      toast('❌ Import Failed', error.message || 'Please try a different file format or check the file content.', 'destructive');
-    } finally {
-      setIsParsingCV(false);
-    }
-  };
-
-  // Handle photo upload
-  const handlePhotoUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (file.type.includes('image')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      
+      const sections = TextExtractor.extractSections(text);
+      setExtractedSections(sections);
+      
+      const summarySection = sections.find(s => s.type === 'summary');
+      if (summarySection) {
         setCvData(prev => ({
           ...prev,
-          personalInfo: {
-            ...prev.personalInfo,
-            photo: e.target.result
-          }
+          personalInfo: { ...prev.personalInfo, summary: summarySection.content }
         }));
-        toast('Photo Uploaded', 'Profile photo added successfully.');
-      };
-      reader.readAsDataURL(file);
+      }
+      
+      toast('File Uploaded', `${sections.length} sections detected. Use extraction tools to parse.`);
+      
+      setActiveTab('editor');
+      setEditorMode('text');
+      
+    } catch (error) {
+      console.error('Error reading file:', error);
+      toast('Upload Failed', 'Could not read the file. Try copying and pasting the text.', 'destructive');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  // Download PDF
-  const downloadPDF = async () => {
-    if (!cvData.personalInfo.firstName || !cvData.personalInfo.lastName) {
-      toast('Missing Information', 'Please fill in your first and last name.', 'destructive');
+  const readFileAsText = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsText(file);
+    });
+  };
+
+  const extractSection = (sectionType) => {
+    if (!textEditorContent.trim()) {
+      toast('No Content', 'Please paste or upload your CV text first', 'destructive');
       return;
     }
-
-    setIsGeneratingPDF(true);
-    try {
-      const pdf = await generatePDF(cvData, theme);
-      pdf.save(`${cvData.personalInfo.firstName}_${cvData.personalInfo.lastName}_CV.pdf`);
-      
-      toast('✅ CV Downloaded!', 'Your professional CV has been saved as PDF.');
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      toast('❌ Download Failed', 'Please try again. If the problem persists, check the console.', 'destructive');
-    } finally {
-      setIsGeneratingPDF(false);
+    
+    const sections = TextExtractor.extractSections(textEditorContent);
+    
+    let targetContent = '';
+    for (const section of sections) {
+      if (section.type === sectionType) {
+        targetContent = section.content;
+        break;
+      }
     }
+    
+    if (!targetContent && sectionType === 'summary') {
+      const lines = textEditorContent.split('\n').slice(0, 10).join('\n');
+      targetContent = lines;
+    }
+    
+    if (!targetContent.trim()) {
+      toast('No Content Found', `Could not find ${sectionType} section`, 'destructive');
+      return;
+    }
+    
+    switch (sectionType) {
+      case 'summary':
+        setCvData(prev => ({
+          ...prev,
+          personalInfo: { ...prev.personalInfo, summary: targetContent }
+        }));
+        break;
+        
+      case 'contact':
+        const contactInfo = TextExtractor.extractContactInfo(targetContent);
+        setCvData(prev => ({
+          ...prev,
+          contact: { ...prev.contact, ...contactInfo }
+        }));
+        break;
+        
+      case 'experience':
+        const experiences = parseExperience(targetContent);
+        if (experiences.length > 0) {
+          setCvData(prev => ({
+            ...prev,
+            experience: experiences
+          }));
+        }
+        break;
+        
+      case 'education':
+        const educations = parseEducation(targetContent);
+        if (educations.length > 0) {
+          setCvData(prev => ({
+            ...prev,
+            education: educations
+          }));
+        }
+        break;
+        
+      case 'skills':
+        const skills = parseSkills(targetContent);
+        if (skills.length > 0) {
+          setCvData(prev => ({
+            ...prev,
+            skills: skills
+          }));
+        }
+        break;
+        
+      case 'projects':
+        const projects = parseProjects(targetContent);
+        if (projects.length > 0) {
+          setCvData(prev => ({
+            ...prev,
+            projects: projects
+          }));
+        }
+        break;
+        
+      case 'certifications':
+        const certLines = targetContent.split('\n')
+          .filter(line => line.trim().length > 5)
+          .map(line => line.replace(/^[•\-]\s*|\d+\.\s*/, '').trim());
+        if (certLines.length > 0) {
+          setCvData(prev => ({
+            ...prev,
+            certifications: certLines
+          }));
+        }
+        break;
+        
+      case 'languages':
+        const languageLines = targetContent.split('\n')
+          .filter(line => line.trim().length > 2)
+          .map(line => line.replace(/^[•\-]\s*/, '').trim());
+        if (languageLines.length > 0) {
+          setCvData(prev => ({
+            ...prev,
+            languages: languageLines
+          }));
+        }
+        break;
+    }
+    
+    const itemCount = targetContent.split('\n').filter(line => line.trim().length > 0).length;
+    toast('Section Extracted', `${sectionType} section added with ${itemCount} items`);
   };
 
-  // Add new sections with unique IDs
+  const updatePersonalInfo = (field, value) => {
+    setCvData(prev => ({
+      ...prev,
+      personalInfo: { ...prev.personalInfo, [field]: value }
+    }));
+  };
+
+  const updateContact = (field, value) => {
+    setCvData(prev => ({
+      ...prev,
+      contact: { ...prev.contact, [field]: value }
+    }));
+  };
+
+  const updateExperience = (id, field, value) => {
+    setCvData(prev => ({
+      ...prev,
+      experience: prev.experience.map(exp => 
+        exp.id === id ? { ...exp, [field]: value } : exp
+      )
+    }));
+  };
+
+  const updateEducation = (id, field, value) => {
+    setCvData(prev => ({
+      ...prev,
+      education: prev.education.map(edu => 
+        edu.id === id ? { ...edu, [field]: value } : edu
+      )
+    }));
+  };
+
+  const updateSkill = (id, field, value) => {
+    setCvData(prev => ({
+      ...prev,
+      skills: prev.skills.map(skill => 
+        skill.id === id ? { ...skill, [field]: value } : skill
+      )
+    }));
+  };
+
+  const updateProject = (id, field, value) => {
+    setCvData(prev => ({
+      ...prev,
+      projects: prev.projects.map(project => 
+        project.id === id ? { ...project, [field]: value } : project
+      )
+    }));
+  };
+
   const addExperience = () => {
     setCvData(prev => ({
       ...prev,
@@ -992,69 +1298,29 @@ export default function CVBuilderPage() {
       ...prev,
       skills: [
         ...prev.skills,
-        { name: '', level: 50 }
+        {
+          id: generateUniqueId(),
+          name: '',
+          level: 75
+        }
       ]
     }));
   };
 
-  const addLanguage = () => {
+  const addProject = () => {
     setCvData(prev => ({
       ...prev,
-      languages: [
-        ...prev.languages,
-        { language: '', proficiency: 'Beginner' }
+      projects: [
+        ...prev.projects,
+        {
+          id: generateUniqueId(),
+          name: '',
+          description: ''
+        }
       ]
     }));
   };
 
-  // Update functions
-  const updatePersonalInfo = (field, value) => {
-    setCvData(prev => ({
-      ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        [field]: value
-      }
-    }));
-  };
-
-  const updateExperience = (id, field, value) => {
-    setCvData(prev => ({
-      ...prev,
-      experience: prev.experience.map(exp => 
-        exp.id === id ? { ...exp, [field]: value } : exp
-      )
-    }));
-  };
-
-  const updateEducation = (id, field, value) => {
-    setCvData(prev => ({
-      ...prev,
-      education: prev.education.map(edu => 
-        edu.id === id ? { ...edu, [field]: value } : edu
-      )
-    }));
-  };
-
-  const updateSkill = (index, field, value) => {
-    setCvData(prev => ({
-      ...prev,
-      skills: prev.skills.map((skill, i) => 
-        i === index ? { ...skill, [field]: value } : skill
-      )
-    }));
-  };
-
-  const updateLanguage = (index, field, value) => {
-    setCvData(prev => ({
-      ...prev,
-      languages: prev.languages.map((lang, i) => 
-        i === index ? { ...lang, [field]: value } : lang
-      )
-    }));
-  };
-
-  // Remove functions
   const removeExperience = (id) => {
     setCvData(prev => ({
       ...prev,
@@ -1069,577 +1335,983 @@ export default function CVBuilderPage() {
     }));
   };
 
-  const removeSkill = (index) => {
+  const removeSkill = (id) => {
     setCvData(prev => ({
       ...prev,
-      skills: prev.skills.filter((_, i) => i !== index)
+      skills: prev.skills.filter(skill => skill.id !== id)
     }));
   };
 
-  const removeLanguage = (index) => {
+  const removeProject = (id) => {
     setCvData(prev => ({
       ...prev,
-      languages: prev.languages.filter((_, i) => i !== index)
+      projects: prev.projects.filter(project => project.id !== id)
     }));
   };
+
+  const downloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const element = printRef.current;
+      
+      const canvas = await html2canvas(element, {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        removeContainer: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      while (heightLeft > pageHeight) {
+        position = heightLeft - pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      const fileName = `${cvData.personalInfo.firstName || 'CV'}_${cvData.personalInfo.lastName || 'Document'}.pdf`;
+      pdf.save(fileName);
+      
+      toast('PDF Downloaded', 'Your elegant CV has been saved as high-quality PDF');
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast('PDF Generation Failed', 'Please try again', 'destructive');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const downloadWord = async () => {
+    setIsGeneratingWord(true);
+    try {
+      const template = TEMPLATES[activeTemplate];
+      
+      const wordHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${cvData.personalInfo.firstName} ${cvData.personalInfo.lastName} - CV</title>
+<style>
+  body {
+    font-family: 'Calibri', Arial, sans-serif;
+    margin: 40px;
+    line-height: 1.6;
+    color: #333;
+  }
+  h1 {
+    color: ${template?.colors.primary || '#2C3E50'};
+    font-size: 28px;
+    margin-bottom: 5px;
+    border-bottom: 3px solid ${template?.colors.secondary || '#00A79D'};
+    padding-bottom: 10px;
+  }
+  h2 {
+    color: ${template?.colors.secondary || '#00A79D'};
+    font-size: 20px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid ${template?.colors.accent || '#F8F8F8'};
+    padding-bottom: 5px;
+  }
+  .contact-info {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+  }
+  .experience-item, .education-item {
+    margin-bottom: 20px;
+  }
+  .company, .institution {
+    font-weight: bold;
+    color: ${template?.colors.secondary || '#00A79D'};
+  }
+  .date {
+    color: #666;
+    font-style: italic;
+    font-size: 14px;
+  }
+  .summary {
+    font-style: italic;
+    color: #555;
+    margin: 15px 0;
+  }
+</style>
+</head>
+<body>
+  <div class="cv-container">
+    <h1>${cvData.personalInfo.firstName || 'Your'} ${cvData.personalInfo.lastName || 'Name'}</h1>
+    <h2>${cvData.personalInfo.title || 'Professional Title'}</h2>
+    
+    <div class="contact-info">
+      ${cvData.contact.email ? `<div><strong>Email:</strong> ${cvData.contact.email}</div>` : ''}
+      ${cvData.contact.phone ? `<div><strong>Phone:</strong> ${cvData.contact.phone}</div>` : ''}
+      ${cvData.contact.location ? `<div><strong>Location:</strong> ${cvData.contact.location}</div>` : ''}
+      ${cvData.contact.linkedin ? `<div><strong>LinkedIn:</strong> ${cvData.contact.linkedin}</div>` : ''}
+    </div>
+    
+    ${cvData.personalInfo.summary ? `
+      <div>
+        <h2>Professional Summary</h2>
+        <p class="summary">${cvData.personalInfo.summary}</p>
+      </div>
+    ` : ''}
+    
+    ${cvData.experience.length > 0 ? `
+      <div>
+        <h2>Professional Experience</h2>
+        ${cvData.experience.map(exp => `
+          <div class="experience-item">
+            <h3>${exp.position}</h3>
+            <p><span class="company">${exp.company}</span> | <span class="date">${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}</span></p>
+            ${exp.description ? `<p>${exp.description}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+    
+    ${cvData.education.length > 0 ? `
+      <div>
+        <h2>Education</h2>
+        ${cvData.education.map(edu => `
+          <div class="education-item">
+            <h3>${edu.degree}</h3>
+            <p><span class="institution">${edu.institution}</span> | <span class="date">${edu.startDate} - ${edu.current ? 'Present' : edu.endDate}</span></p>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+    
+    ${cvData.skills.length > 0 ? `
+      <div>
+        <h2>Skills</h2>
+        <p>${cvData.skills.map(skill => skill.name).join(', ')}</p>
+      </div>
+    ` : ''}
+    
+    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
+      <p>Generated with CV Factory • ${new Date().toLocaleDateString()}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([wordHTML], { 
+        type: 'application/msword'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${cvData.personalInfo.firstName || 'CV'}_${cvData.personalInfo.lastName || 'Document'}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast('Word Document Downloaded', 'Your CV has been saved in Word format');
+      
+    } catch (error) {
+      console.error('Word generation error:', error);
+      toast('Word Generation Failed', 'Please try again', 'destructive');
+    } finally {
+      setIsGeneratingWord(false);
+    }
+  };
+
+  const renderTemplate = () => {
+    const templates = {
+      executive_velvet: TemplateExecutiveVelvet,
+      modern_silk: TemplateModernSilk,
+      minimal_marble: TemplateExecutiveVelvet,
+      creative_amethyst: TemplateModernSilk,
+      professional_oak: TemplateExecutiveVelvet
+    };
+    
+    const TemplateComponent = templates[activeTemplate] || TemplateExecutiveVelvet;
+    return <TemplateComponent cvData={cvData} />;
+  };
+
+  const renderTemplateCard = (template) => (
+    <div
+      key={template.id}
+      className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+        activeTemplate === template.id 
+          ? 'border-blue-500 ring-2 ring-blue-500/20 scale-[1.02]' 
+          : 'border-gray-200 hover:border-blue-300 hover:scale-[1.02]'
+      }`}
+      onClick={() => setActiveTemplate(template.id)}
+    >
+      <div className="p-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="text-3xl">{template.icon}</div>
+          <div className="flex-1">
+            <h3 className="font-bold text-gray-900">{template.name}</h3>
+            <p className="text-sm text-gray-500">{template.category}</p>
+          </div>
+          {activeTemplate === template.id && (
+            <Badge className="bg-blue-500">Selected</Badge>
+          )}
+        </div>
+        
+        <div className="flex gap-2 mb-4">
+          {Object.values(template.colors).map((color, i) => (
+            <div
+              key={i}
+              className="w-8 h-8 rounded-lg border"
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+          ))}
+        </div>
+        
+        <p className="text-sm text-gray-600">{template.description}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Professional CV Builder
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Upload your resume (PDF, Word, Text), edit it, and download a stunning PDF CV
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
+      {/* Navigation */}
+      <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600">
+                <Wand2 className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  CV Factory
+                </h1>
+                <p className="text-xs text-gray-600">Transform any CV into elegance</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <Button
+                variant={activeTab === 'upload' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('upload')}
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Upload
+              </Button>
+              <Button
+                variant={activeTab === 'editor' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('editor')}
+                className="gap-2"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit
+              </Button>
+              <Button
+                variant={activeTab === 'preview' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('preview')}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Preview
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={downloadPDF}
+                disabled={isGeneratingPDF}
+                className="gap-2 bg-green-500 hover:bg-green-600"
+              >
+                {isGeneratingPDF ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    PDF
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadWord}
+                disabled={isGeneratingWord}
+                className="gap-2"
+              >
+                {isGeneratingWord ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4" />
+                    Word
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto bg-white/80 border border-gray-200 p-1 rounded-2xl">
-            <TabsTrigger value="editor" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg">
-              <Edit3 className="h-4 w-4" />
-              <span className="font-semibold">Editor</span>
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg">
-              <Eye className="h-4 w-4" />
-              <span className="font-semibold">Preview</span>
-            </TabsTrigger>
-          </TabsList>
+      <div className="container mx-auto px-4 py-8">
+        {/* Upload Tab */}
+        {activeTab === 'upload' && (
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-0 shadow-2xl">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Upload className="h-8 w-8" />
+                  Upload Your CV
+                </CardTitle>
+                <CardDescription className="text-blue-100">
+                  Upload any CV format and we'll help you transform it into an elegant masterpiece
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-12">
+                <div className="text-center mb-8">
+                  <div className="inline-flex flex-col items-center gap-4">
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100">
+                      <FileUp className="h-16 w-16 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">Drop your CV here</h3>
+                      <p className="text-gray-600">Supported formats: TXT, PDF, DOC, DOCX, RTF</p>
+                    </div>
+                  </div>
+                </div>
 
-          <TabsContent value="editor" className="space-y-8">
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-              {/* Sidebar */}
-              <div className="xl:col-span-1 space-y-6">
-                {/* CV Upload Card */}
-                <Card className="border-blue-200 bg-blue-50/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Scan className="h-5 w-5 text-blue-600" />
-                      Import CV
-                    </CardTitle>
-                    <CardDescription>
-                      Upload PDF, Word, or Text files
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                <div className="space-y-6">
+                  <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-500 transition-colors">
                     <input
                       type="file"
-                      ref={cvUploadRef}
-                      onChange={handleCVUpload}
-                      accept=".pdf,.doc,.docx,.txt"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      accept=".txt,.pdf,.doc,.docx,.rtf"
                       className="hidden"
                     />
-                    <Button 
-                      onClick={() => cvUploadRef.current?.click()}
-                      disabled={isParsingCV}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
                     >
-                      {isParsingCV ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Parsing CV...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Upload CV File
-                        </>
-                      )}
+                      <div className="flex flex-col items-center gap-4">
+                        <UploadCloud className="h-12 w-12 text-gray-400" />
+                        <div>
+                          <p className="text-lg font-semibold text-gray-700">Click to browse files</p>
+                          <p className="text-sm text-gray-500">or drag and drop</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {isProcessing && (
+                      <div className="mt-6">
+                        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-blue-500" />
+                        <p className="mt-2 text-gray-600">Processing your file...</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl text-center">
+                      <div className="text-2xl font-bold text-blue-600">1</div>
+                      <div className="text-sm font-semibold text-gray-700">Upload</div>
+                      <p className="text-xs text-gray-600 mt-1">Upload any CV file</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl text-center">
+                      <div className="text-2xl font-bold text-purple-600">2</div>
+                      <div className="text-sm font-semibold text-gray-700">Extract</div>
+                      <p className="text-xs text-gray-600 mt-1">Manually extract sections</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl text-center">
+                      <div className="text-2xl font-bold text-green-600">3</div>
+                      <div className="text-sm font-semibold text-gray-700">Transform</div>
+                      <p className="text-xs text-gray-600 mt-1">Apply elegant template</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Editor Tab */}
+        {activeTab === 'editor' && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Left Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              <Card className="border-0 shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                  <CardTitle className="text-lg">Extraction Tools</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Text Editor Mode</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={editorMode === 'text' ? 'default' : 'outline'}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setEditorMode('text')}
+                      >
+                        <AlignLeft className="h-4 w-4 mr-2" />
+                        Text
+                      </Button>
+                      <Button
+                        variant={editorMode === 'visual' ? 'default' : 'outline'}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setEditorMode('visual')}
+                      >
+                        <Layout className="h-4 w-4 mr-2" />
+                        Visual
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Extract Sections</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['summary', 'contact', 'experience', 'education', 'skills', 'projects', 'certifications', 'languages'].map((section) => (
+                        <Button
+                          key={section}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => extractSection(section)}
+                          className="capitalize"
+                        >
+                          {section}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Quick Actions</Label>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setActiveTab('preview')}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
                     </Button>
-                    <p className="text-xs text-gray-500 text-center">
-                      Supports: PDF, DOC, DOCX, TXT
-                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => {
+                        setUploadedText('');
+                        setTextEditorContent('');
+                        setExtractedSections([]);
+                        toast('Editor Cleared', 'Ready for new content');
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear All
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {extractedSections.length > 0 && (
+                <Card className="border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                    <CardTitle className="text-lg">Detected Sections</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      {extractedSections.map((section, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => extractSection(section.type)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="capitalize">
+                              {section.type}
+                            </Badge>
+                            <span className="text-sm text-gray-600">
+                              {Math.min(section.content.split('\n').length, 10)} items
+                            </span>
+                          </div>
+                          <Button size="sm" variant="ghost">
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
+              )}
+              
+              <Card className="border-0 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-lg">Template Selection</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {Object.values(TEMPLATES).slice(0, 3).map(renderTemplateCard)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Export Card */}
-                <Card className="border-green-200 bg-green-50/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Download className="h-5 w-5 text-green-600" />
-                      Export CV
+            {/* Main Editor */}
+            <div className="lg:col-span-3 space-y-8">
+              {editorMode === 'text' ? (
+                <Card className="border-0 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                    <CardTitle className="flex items-center gap-2">
+                      <AlignLeft className="h-5 w-5" />
+                      Text Editor
                     </CardTitle>
                     <CardDescription>
-                      Download your CV as a beautiful PDF
+                      Paste your CV text here and use extraction tools to the left
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <Button 
-                      onClick={downloadPDF}
-                      disabled={isGeneratingPDF}
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      size="lg"
-                    >
-                      {isGeneratingPDF ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Generating PDF...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-4 w-4 mr-2" />
-                          Download PDF
-                        </>
-                      )}
-                    </Button>
+                  <CardContent className="p-6">
+                    <Textarea
+                      ref={textAreaRef}
+                      value={textEditorContent}
+                      onChange={(e) => setTextEditorContent(e.target.value)}
+                      placeholder={`Example CV format:
+
+JOHN DOE
+Senior Software Engineer
+john.doe@email.com | (123) 456-7890 | San Francisco, CA
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 5+ years in full-stack development...
+
+WORK EXPERIENCE
+Senior Software Engineer at Tech Corp (Jan 2020 - Present)
+• Led team of 5 developers on major project
+• Implemented microservices architecture improving performance by 40%
+• Developed REST APIs used by 10,000+ users
+
+EDUCATION
+Bachelor of Science in Computer Science
+Stanford University (2014 - 2018)
+GPA: 3.8
+
+SKILLS
+JavaScript, React, Node.js, Python, AWS, Docker, PostgreSQL`}
+                      className="min-h-[600px] font-mono text-sm"
+                    />
+                    
+                    <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <Brain className="h-4 w-4" />
+                        <span>Use extraction tools to the left to parse sections</span>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-              </div>
-
-              {/* Main Editor */}
-              <div className="xl:col-span-3 space-y-6">
-                {/* Personal Information Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <User className="h-6 w-6 text-blue-600" />
-                      Personal Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Photo Upload */}
-                    <div className="flex items-center gap-6">
-                      <div className="flex-shrink-0">
-                        {cvData.personalInfo.photo ? (
-                          <img 
-                            src={cvData.personalInfo.photo} 
-                            alt="Profile" 
-                            className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+              ) : (
+                <>
+                  <Card className="border-0 shadow-xl">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Personal Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label>First Name</Label>
+                          <Input
+                            value={cvData.personalInfo.firstName}
+                            onChange={(e) => updatePersonalInfo('firstName', e.target.value)}
+                            placeholder="John"
                           />
-                        ) : (
-                          <div className="w-20 h-20 rounded-full bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center">
-                            <User className="h-8 w-8 text-gray-400" />
-                          </div>
-                        )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Last Name</Label>
+                          <Input
+                            value={cvData.personalInfo.lastName}
+                            onChange={(e) => updatePersonalInfo('lastName', e.target.value)}
+                            placeholder="Doe"
+                          />
+                        </div>
                       </div>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handlePhotoUpload}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      <Button 
-                        onClick={() => fileInputRef.current?.click()}
-                        variant="outline" 
-                        size="sm"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        {cvData.personalInfo.photo ? 'Change Photo' : 'Upload Photo'}
-                      </Button>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>First Name *</Label>
+                        <Label>Professional Title</Label>
                         <Input
-                          value={cvData.personalInfo.firstName}
-                          onChange={(e) => updatePersonalInfo('firstName', e.target.value)}
-                          placeholder="John"
+                          value={cvData.personalInfo.title}
+                          onChange={(e) => updatePersonalInfo('title', e.target.value)}
+                          placeholder="Senior Software Engineer"
                         />
                       </div>
+
                       <div className="space-y-2">
-                        <Label>Last Name *</Label>
-                        <Input
-                          value={cvData.personalInfo.lastName}
-                          onChange={(e) => updatePersonalInfo('lastName', e.target.value)}
-                          placeholder="Doe"
+                        <Label>Professional Summary</Label>
+                        <Textarea
+                          value={cvData.personalInfo.summary}
+                          onChange={(e) => updatePersonalInfo('summary', e.target.value)}
+                          placeholder="Describe your professional background..."
+                          rows={4}
                         />
                       </div>
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    <div className="space-y-2">
-                      <Label>Professional Title</Label>
-                      <Input
-                        value={cvData.personalInfo.title}
-                        onChange={(e) => updatePersonalInfo('title', e.target.value)}
-                        placeholder="Senior Software Engineer"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Professional Summary</Label>
-                      <Textarea
-                        value={cvData.personalInfo.summary}
-                        onChange={(e) => updatePersonalInfo('summary', e.target.value)}
-                        placeholder="Describe your professional background, skills, and career objectives..."
-                        rows={4}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input
-                          type="email"
-                          value={cvData.personalInfo.email}
-                          onChange={(e) => updatePersonalInfo('email', e.target.value)}
-                          placeholder="john@example.com"
-                        />
+                  <Card className="border-0 shadow-xl">
+                    <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail className="h-5 w-5" />
+                        Contact Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label>Email</Label>
+                          <Input
+                            type="email"
+                            value={cvData.contact.email}
+                            onChange={(e) => updateContact('email', e.target.value)}
+                            placeholder="john@example.com"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Phone</Label>
+                          <Input
+                            value={cvData.contact.phone}
+                            onChange={(e) => updateContact('phone', e.target.value)}
+                            placeholder="+1 (555) 123-4567"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Phone</Label>
-                        <Input
-                          value={cvData.personalInfo.phone}
-                          onChange={(e) => updatePersonalInfo('phone', e.target.value)}
-                          placeholder="+1 (555) 123-4567"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Location</Label>
-                        <Input
-                          value={cvData.personalInfo.location}
-                          onChange={(e) => updatePersonalInfo('location', e.target.value)}
-                          placeholder="New York, NY"
-                        />
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label>Location</Label>
+                          <Input
+                            value={cvData.contact.location}
+                            onChange={(e) => updateContact('location', e.target.value)}
+                            placeholder="New York, NY"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>LinkedIn</Label>
+                          <Input
+                            value={cvData.contact.linkedin}
+                            onChange={(e) => updateContact('linkedin', e.target.value)}
+                            placeholder="linkedin.com/in/username"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>
-                          <Linkedin className="h-4 w-4 inline mr-2 text-blue-700" />
-                          LinkedIn
-                        </Label>
-                        <Input
-                          value={cvData.personalInfo.linkedin}
-                          onChange={(e) => updatePersonalInfo('linkedin', e.target.value)}
-                          placeholder="https://linkedin.com/in/username"
-                        />
-                      </div>
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    <div className="space-y-2">
-                      <Label>
-                        <Github className="h-4 w-4 inline mr-2 text-gray-700" />
-                        GitHub
-                      </Label>
-                      <Input
-                        value={cvData.personalInfo.github}
-                        onChange={(e) => updatePersonalInfo('github', e.target.value)}
-                        placeholder="https://github.com/username"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Experience Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xl">
-                        <Briefcase className="h-6 w-6 text-orange-600" />
-                        Work Experience
+                  <Card className="border-0 shadow-xl">
+                    <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Briefcase className="h-5 w-5" />
+                          Work Experience
+                        </CardTitle>
+                        <Button onClick={addExperience} size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Experience
+                        </Button>
                       </div>
-                      <Button onClick={addExperience}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Experience
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {cvData.experience.map((exp) => (
-                      <div key={exp.id} className="space-y-4 p-4 border border-orange-200 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-semibold text-lg text-orange-900">
-                            Experience {cvData.experience.findIndex(e => e.id === exp.id) + 1}
-                          </h4>
-                          {cvData.experience.length > 1 && (
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                      {cvData.experience.map((exp, index) => (
+                        <div key={exp.id} className="p-6 border border-gray-200 rounded-xl bg-white space-y-4">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-semibold text-gray-900">Experience #{index + 1}</h4>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => removeExperience(exp.id)}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Company</Label>
-                            <Input
-                              value={exp.company}
-                              onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                              placeholder="Google"
-                            />
                           </div>
-                          <div className="space-y-2">
-                            <Label>Position</Label>
-                            <Input
-                              value={exp.position}
-                              onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
-                              placeholder="Senior Developer"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Start Date</Label>
-                            <Input
-                              type="month"
-                              value={exp.startDate}
-                              onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>End Date</Label>
-                            <div className="flex items-center gap-4">
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Company</Label>
                               <Input
-                                type="month"
+                                value={exp.company}
+                                onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
+                                placeholder="Company Name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Position</Label>
+                              <Input
+                                value={exp.position}
+                                onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
+                                placeholder="Your Position"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Start Date</Label>
+                              <Input
+                                value={exp.startDate}
+                                onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
+                                placeholder="Jan 2020"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>End Date</Label>
+                              <Input
                                 value={exp.endDate}
                                 onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
                                 disabled={exp.current}
+                                placeholder="Present"
                               />
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={exp.current}
-                                  onCheckedChange={(checked) => updateExperience(exp.id, 'current', checked)}
-                                />
-                                <Label className="text-sm">Current</Label>
-                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <Label>Description</Label>
-                          <Textarea
-                            value={exp.description}
-                            onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                            placeholder="Describe your responsibilities and achievements..."
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                {/* Education Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xl">
-                        <GraduationCap className="h-6 w-6 text-green-600" />
-                        Education
-                      </div>
-                      <Button onClick={addEducation}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Education
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {cvData.education.map((edu) => (
-                      <div key={edu.id} className="space-y-4 p-4 border border-green-200 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-semibold text-lg text-green-900">
-                            Education {cvData.education.findIndex(e => e.id === edu.id) + 1}
-                          </h4>
-                          {cvData.education.length > 1 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeEducation(edu.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Institution</Label>
-                            <Input
-                              value={edu.institution}
-                              onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)}
-                              placeholder="University of Technology"
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={exp.current}
+                              onCheckedChange={(checked) => updateExperience(exp.id, 'current', checked)}
                             />
+                            <Label>Currently working here</Label>
                           </div>
+
                           <div className="space-y-2">
-                            <Label>Degree</Label>
-                            <Input
-                              value={edu.degree}
-                              onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                              placeholder="Bachelor of Science"
+                            <Label>Description</Label>
+                            <Textarea
+                              value={exp.description}
+                              onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
+                              placeholder="Describe your responsibilities and achievements..."
+                              rows={3}
                             />
                           </div>
                         </div>
+                      ))}
+                    </CardContent>
+                  </Card>
 
-                        <div className="space-y-2">
-                          <Label>Field of Study</Label>
-                          <Input
-                            value={edu.field}
-                            onChange={(e) => updateEducation(edu.id, 'field', e.target.value)}
-                            placeholder="Computer Science"
-                          />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card className="border-0 shadow-xl">
+                      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5" />
+                            Education
+                          </CardTitle>
+                          <Button onClick={addEducation} size="sm">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add
+                          </Button>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Start Date</Label>
-                            <Input
-                              type="month"
-                              value={edu.startDate}
-                              onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>End Date</Label>
-                            <div className="flex items-center gap-4">
+                      </CardHeader>
+                      <CardContent className="p-6 space-y-6">
+                        {cvData.education.map((edu, index) => (
+                          <div key={edu.id} className="p-4 border border-gray-200 rounded-lg bg-white space-y-3">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-semibold text-gray-900">Education #{index + 1}</h4>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeEducation(edu.id)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="space-y-3">
                               <Input
-                                type="month"
-                                value={edu.endDate}
-                                onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-                                disabled={edu.current}
+                                value={edu.institution}
+                                onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)}
+                                placeholder="University Name"
                               />
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={edu.current}
-                                  onCheckedChange={(checked) => updateEducation(edu.id, 'current', checked)}
+                              <Input
+                                value={edu.degree}
+                                onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                                placeholder="Bachelor of Science"
+                              />
+                              <div className="grid grid-cols-2 gap-3">
+                                <Input
+                                  value={edu.startDate}
+                                  onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                                  placeholder="2016"
                                 />
-                                <Label className="text-sm">Current</Label>
+                                <Input
+                                  value={edu.endDate}
+                                  onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                                  placeholder="2020"
+                                />
                               </div>
+                              <Input
+                                value={edu.gpa}
+                                onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
+                                placeholder="GPA: 3.8"
+                              />
                             </div>
                           </div>
-                        </div>
+                        ))}
+                      </CardContent>
+                    </Card>
 
-                        <div className="space-y-2">
-                          <Label>GPA</Label>
-                          <Input
-                            value={edu.gpa}
-                            onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
-                            placeholder="3.8"
-                          />
+                    <Card className="border-0 shadow-xl">
+                      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="flex items-center gap-2">
+                            <Award className="h-5 w-5" />
+                            Skills
+                          </CardTitle>
+                          <Button onClick={addSkill} size="sm">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add
+                          </Button>
                         </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                {/* Skills Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xl">
-                        <Award className="h-6 w-6 text-purple-600" />
-                        Skills
-                      </div>
-                      <Button onClick={addSkill}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Skill
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {cvData.skills.map((skill, index) => (
-                      <div key={index} className="flex items-center gap-4 p-4 border border-purple-200 rounded-lg">
-                        <div className="flex-1 grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Skill Name</Label>
+                      </CardHeader>
+                      <CardContent className="p-6 space-y-4">
+                        {cvData.skills.map((skill, index) => (
+                          <div key={skill.id} className="flex items-center gap-4 p-3 border border-gray-200 rounded-lg bg-white">
                             <Input
                               value={skill.name}
-                              onChange={(e) => updateSkill(index, 'name', e.target.value)}
-                              placeholder="React, Python, Project Management"
+                              onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
+                              placeholder="Skill name"
+                              className="flex-1"
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Proficiency Level</Label>
-                            <div className="flex items-center gap-4">
-                              <Input
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={skill.level}
-                                onChange={(e) => updateSkill(index, 'level', parseInt(e.target.value))}
-                                className="w-full"
+                            <div className="flex items-center gap-3">
+                              <Slider
+                                value={[skill.level]}
+                                onValueChange={([value]) => updateSkill(skill.id, 'level', value)}
+                                max={100}
+                                step={5}
+                                className="w-24"
                               />
                               <span className="text-sm font-medium w-12">{skill.level}%</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeSkill(skill.id)}
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                        </div>
-                        {cvData.skills.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeSkill(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
-                {/* Languages Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xl">
-                        <MapPin className="h-6 w-6 text-blue-600" />
-                        Languages
-                      </div>
-                      <Button onClick={addLanguage}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Language
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {cvData.languages.map((lang, index) => (
-                      <div key={index} className="flex items-center gap-4 p-4 border border-blue-200 rounded-lg">
-                        <div className="flex-1 grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Language</Label>
-                            <Input
-                              value={lang.language}
-                              onChange={(e) => updateLanguage(index, 'language', e.target.value)}
-                              placeholder="English, Spanish, French..."
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Proficiency</Label>
-                            <Select value={lang.proficiency} onValueChange={(value) => updateLanguage(index, 'proficiency', value)}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Beginner">Beginner</SelectItem>
-                                <SelectItem value="Intermediate">Intermediate</SelectItem>
-                                <SelectItem value="Advanced">Advanced</SelectItem>
-                                <SelectItem value="Native">Native</SelectItem>
-                                <SelectItem value="Fluent">Fluent</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+        {/* Preview Tab */}
+        {activeTab === 'preview' && (
+          <div className="space-y-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Preview</h2>
+                <p className="text-gray-600">See your transformed CV in elegant templates</p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-4">
+                <Select value={activeTemplate} onValueChange={setActiveTemplate}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(TEMPLATES).map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{template.icon}</span>
+                          <span>{template.name}</span>
                         </div>
-                        {cvData.languages.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeLanguage(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      </SelectItem>
                     ))}
-                  </CardContent>
-                </Card>
+                  </SelectContent>
+                </Select>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={downloadPDF}
+                    disabled={isGeneratingPDF}
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                  >
+                    {isGeneratingPDF ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    onClick={downloadWord}
+                    disabled={isGeneratingWord}
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                  >
+                    {isGeneratingWord ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Download Word
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="preview" className="space-y-8">
-            <div className="flex justify-center">
-              <CVPreview cvData={cvData} theme={theme} />
+            {/* Template Selection */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {Object.values(TEMPLATES).map(renderTemplateCard)}
             </div>
-          </TabsContent>
-        </Tabs>
+
+            {/* CV Preview */}
+            <div className="relative">
+              <div ref={printRef} className="scale-90 origin-top">
+                {renderTemplate()}
+              </div>
+              
+              <div className="absolute top-4 right-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-200">
+                  <Sparkles className="h-4 w-4" />
+                  Premium Template Preview
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
