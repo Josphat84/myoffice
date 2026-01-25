@@ -1,4 +1,4 @@
-// pages/employees/index.js 
+// pages/employees/page.js 
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
