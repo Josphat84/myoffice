@@ -365,7 +365,7 @@ const fetchBreakdowns = async (filters = {}) => {
 };
 
 // Function to calculate metrics from breakdowns data
-const calculateMetricsFromBreakdowns = (breakdowns) => {
+const calculateMetricsFromBreakdowns = (breakdowns: any[]) => {
   if (!breakdowns || !Array.isArray(breakdowns)) {
     return {
       total_breakdowns: 0,
