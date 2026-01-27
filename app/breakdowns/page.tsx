@@ -2085,7 +2085,7 @@ const StatisticsDashboard = ({
       rangeStart.setDate(rangeEnd.getDate() - 30); // Default to last 30 days
     }
     
-    const daysDiff = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24));
+    const daysDiff = Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
     const dailyBreakdowns: ChartDataItem[] = [];
     const weeklyTrend: ChartDataItem[] = [];
     
