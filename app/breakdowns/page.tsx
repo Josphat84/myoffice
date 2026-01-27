@@ -227,7 +227,7 @@ const LOCATIONS = [
 ];
 
 // Helper Functions
-const timeToMinutes = (timeStr) => {
+const timeToMinutes = (timeStr: string) => {
   if (!timeStr) return 0;
   try {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -237,7 +237,7 @@ const timeToMinutes = (timeStr) => {
   }
 };
 
-const minutesToDisplay = (minutes) => {
+const minutesToDisplay = (minutes: number) => {
   if (!minutes && minutes !== 0) return { minutes: 0, hours: 0, display: '0m', decimal: 0.0 };
   
   const hours = Math.floor(minutes / 60);
@@ -259,7 +259,7 @@ const minutesToDisplay = (minutes) => {
   };
 };
 
-const formatDate = (dateString) => {
+const formatDate = (dateString: string | null | undefined) => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
@@ -269,7 +269,7 @@ const formatDate = (dateString) => {
   });
 };
 
-const formatDateTime = (dateString, timeString) => {
+const formatDateTime = (dateString: string | null | undefined, timeString: string | null | undefined) => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   const formattedDate = date.toLocaleDateString('en-US', {
@@ -286,7 +286,7 @@ const formatDateTime = (dateString, timeString) => {
 };
 
 // Enhanced function to calculate downtime from start and end times
-const calculateDowntime = (breakdownStart, breakdownEnd, workStart, workEnd) => {
+const calculateDowntime = (breakdownStart: string, breakdownEnd: string, workStart: string, workEnd: string): number => {
   if (!breakdownStart || !breakdownEnd) return 0;
   
   try {
