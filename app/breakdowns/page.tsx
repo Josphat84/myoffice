@@ -398,7 +398,7 @@ const calculateMetricsFromBreakdowns = (breakdowns: any[]) => {
   // Calculate total cost from spares
   const total_cost = breakdowns.reduce((total, b) => {
     if (b.spares_used && Array.isArray(b.spares_used)) {
-      const spareCost = b.spares_used.reduce((sum, spare) => {
+      const spareCost = b.spares_used.reduce((sum: number, spare: any) => {
         return sum + (parseFloat(spare.total_cost) || 0);
       }, 0);
       return total + spareCost;
