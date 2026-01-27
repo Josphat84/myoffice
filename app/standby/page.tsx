@@ -1752,10 +1752,10 @@ const EmployeeStandbyScheduler = () => {
 
           {/* Demo Mode Alert */}
           {!backendAvailable && (
-            <Alert variant="warning" className="mb-6 animate-in fade-in duration-300">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Demo Mode Active</AlertTitle>
-              <AlertDescription>
+            <Alert className="mb-6 animate-in fade-in duration-300 bg-yellow-50 border-yellow-200">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertTitle className="text-yellow-800">Demo Mode Active</AlertTitle>
+              <AlertDescription className="text-yellow-700">
                 Standby schedules are being managed locally. To enable full API integration, ensure the backend server is running at {API_BASE_URL}
               </AlertDescription>
             </Alert>
