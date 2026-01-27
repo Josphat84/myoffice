@@ -302,7 +302,7 @@ const calculateDowntime = (breakdownStart: string, breakdownEnd: string, workSta
 };
 
 // Enhanced function to calculate time difference between two times
-const calculateTimeDifference = (startTime, endTime) => {
+const calculateTimeDifference = (startTime: string, endTime: string): number => {
   if (!startTime || !endTime) return 0;
   
   try {
@@ -317,7 +317,7 @@ const calculateTimeDifference = (startTime, endTime) => {
 };
 
 // Calculate total downtime for all breakdowns
-const calculateTotalDowntime = (breakdowns) => {
+const calculateTotalDowntime = (breakdowns: any[]) => {
   if (!breakdowns || !Array.isArray(breakdowns)) return 0;
   
   return breakdowns.reduce((total, breakdown) => {
@@ -337,7 +337,7 @@ const fetchBreakdowns = async (filters = {}) => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== 'all') {
-        params.append(key, value);
+        params.append(key, String(value));
       }
     });
 
