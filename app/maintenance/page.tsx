@@ -2724,7 +2724,7 @@ export default function MaintenancePage() {
               <div className="flex flex-wrap gap-2 mb-4">
                 {Object.entries(filters).map(([key, value]) => (
                   <Badge key={key} variant="secondary" className="gap-1">
-                    {key}: {value}
+                    {key}: {String(value)}
                     <button
                       onClick={() => {
                         const newFilters = { ...filters };
