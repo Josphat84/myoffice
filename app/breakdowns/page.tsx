@@ -3450,19 +3450,25 @@ const BreakdownsPage = () => {
     result.sort((a, b) => {
       let aVal = a[sortField as keyof Breakdown];
       let bVal = b[sortField as keyof Breakdown];
-      
+
       // Handle dates
       if (sortField === 'breakdown_date') {
-        aVal = new Date(aVal as string);
-        bVal = new Date(bVal as string);
+        const aDate = new Date(aVal as string);
+        const bDate = new Date(bVal as string);
+        if (aDate < bDate) return sortDirection === 'asc' ? -1 : 1;
+        if (aDate > bDate) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
       }
-      
+
       // Handle numeric values (downtime, cost)
       if (sortField === 'downtime_minutes' || sortField === 'total_cost') {
-        aVal = parseFloat(aVal as string) || 0;
-        bVal = parseFloat(bVal as string) || 0;
+        const aNum = parseFloat(aVal as string) || 0;
+        const bNum = parseFloat(bVal as string) || 0;
+        if (aNum < bNum) return sortDirection === 'asc' ? -1 : 1;
+        if (aNum > bNum) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
       }
-      
+
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
       return 0;
