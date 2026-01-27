@@ -2709,10 +2709,24 @@ const BreakdownFormModal = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        ...initialData,
-        breakdown_date: initialData.breakdown_date 
-          ? new Date(initialData.breakdown_date).toISOString().split('T')[0] 
+        machine_id: initialData.machine_id || '',
+        machine_name: initialData.machine_name || '',
+        breakdown_description: initialData.breakdown_description || '',
+        artisan_name: initialData.artisan_name || '',
+        breakdown_date: initialData.breakdown_date
+          ? new Date(initialData.breakdown_date).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
+        location: initialData.location || '',
+        department: initialData.department || '',
+        breakdown_type: initialData.breakdown_type || 'mechanical',
+        work_done: initialData.work_done || '',
+        artisan_recommendations: initialData.artisan_recommendations || '',
+        status: initialData.status || 'logged',
+        priority: initialData.priority || 'medium',
+        breakdown_start: initialData.breakdown_start ?? '',
+        breakdown_end: initialData.breakdown_end ?? '',
+        work_start: initialData.work_start ?? '',
+        work_end: initialData.work_end ?? '',
         spares_used: Array.isArray(initialData.spares_used) ? initialData.spares_used : []
       });
     } else {
