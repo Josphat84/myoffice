@@ -125,7 +125,6 @@ import {
   Globe,
   Landmark,
   Store,
-  Basket,
   Palette,
   Brush,
   Pencil,
