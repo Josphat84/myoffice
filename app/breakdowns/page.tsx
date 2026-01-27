@@ -3469,8 +3469,11 @@ const BreakdownsPage = () => {
         return 0;
       }
 
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      // Handle string comparisons with undefined fallback
+      const aStr = aVal ?? '';
+      const bStr = bVal ?? '';
+      if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1;
+      if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
     
@@ -3615,6 +3618,10 @@ const BreakdownsPage = () => {
   // Print functionality
   const printBreakdowns = () => {
     const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      console.error('Failed to open print window');
+      return;
+    }
     printWindow.document.write(`
       <html>
         <head>
