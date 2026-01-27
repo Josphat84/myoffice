@@ -620,9 +620,7 @@ const createBreakdown = async (breakdownData: BreakdownFormData): Promise<any> =
       spares_used: breakdownData.spares_used || []
     };
     
-    if (cleanData.breakdown_date && cleanData.breakdown_date instanceof Date) {
-      cleanData.breakdown_date = cleanData.breakdown_date.toISOString().split('T')[0];
-    }
+    // breakdown_date is already a string from form, no conversion needed
     
     if (!Array.isArray(cleanData.spares_used)) {
       try {
@@ -686,8 +684,13 @@ const updateBreakdown = async (breakdownId: string, breakdownData: BreakdownForm
       spares_used: breakdownData.spares_used || []
     };
     
-    if (cleanData.breakdown_date && cleanData.breakdown_date instanceof Date) {
-      cleanData.breakdown_date = cleanData.breakdown_date.toISOString().split('T')[0];
+    if (
+      cleanData.breakdown_date &&
+      typeof cleanData.breakdown_date === 'object' &&
+      cleanData.breakdown_date !== null &&
+      (cleanData.breakdown_date as Object) instanceof Date
+    ) {
+      cleanData.breakdown_date = (cleanData.breakdown_date as Date).toISOString().split('T')[0];
     }
     
     if (!Array.isArray(cleanData.spares_used)) {
