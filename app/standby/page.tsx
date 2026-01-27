@@ -1827,7 +1827,7 @@ const EmployeeStandbyScheduler = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {positions.map(pos => (
-                          <SelectItem key={pos} value={pos === 'All Positions' ? 'all' : pos.toLowerCase()}>
+                          <SelectItem key={pos} value={pos === 'All Positions' ? 'all' : (pos || '').toLowerCase()}>
                             {pos}
                           </SelectItem>
                         ))}
