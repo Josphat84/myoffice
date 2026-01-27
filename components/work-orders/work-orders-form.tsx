@@ -47,6 +47,30 @@ import {
   Layers
 } from "lucide-react";
 
+// Simple toast hook for notifications
+const useToast = () => {
+  const showToast = (title: string, description?: string, type: 'success' | 'error' | 'info' = 'info') => {
+    // Using alert as a fallback - you can replace this with a proper toast library
+    if (type === 'error') {
+      alert(`❌ ${title}: ${description || ''}`);
+    } else if (type === 'success') {
+      alert(`✅ ${title}: ${description || ''}`);
+    } else {
+      alert(`ℹ️ ${title}: ${description || ''}`);
+    }
+  };
+
+  return {
+    toast: ({ title, description, variant }: { title: string; description?: string; variant?: 'destructive' | 'default' }) => {
+      showToast(
+        title, 
+        description, 
+        variant === 'destructive' ? 'error' : 'success'
+      );
+    }
+  };
+};
+
 // Types - Updated to match backend
 interface JobType {
   operational: boolean;
@@ -1062,6 +1086,7 @@ export function WorkOrderForm({ onBack, onSave }: WorkOrderFormProps) {
   const [activeTab, setActiveTab] = useState("basic");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const { toast } = useToast();
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({
@@ -1166,7 +1191,11 @@ export function WorkOrderForm({ onBack, onSave }: WorkOrderFormProps) {
     e.preventDefault();
     
     if (!formData.jobRequestDetails || !formData.requestedBy) {
-      toast.error('Please fill in required fields: Job Request Details and Requested By');
+      toast({
+        title: "Validation Error",
+        description: "Please fill in required fields: Job Request Details and Requested By",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -1184,9 +1213,15 @@ export function WorkOrderForm({ onBack, onSave }: WorkOrderFormProps) {
       console.log('✅ Submission response:', response);
       
       if (response.savedLocally) {
-        toast.success('Work order saved locally (backend unavailable)');
+        toast({
+          title: "Saved Locally",
+          description: "Work order saved locally (backend unavailable)",
+        });
       } else {
-        toast.success('Work order saved successfully to database!');
+        toast({
+          title: "Success",
+          description: "Work order saved successfully to database!",
+        });
       }
       
       // Call the onSave prop to notify parent component
@@ -1202,14 +1237,29 @@ export function WorkOrderForm({ onBack, onSave }: WorkOrderFormProps) {
       
       if (error instanceof Error) {
         if (error.message.includes('saved locally')) {
-          toast.success('Work order saved locally for now.');
+          toast({
+            title: "Saved Locally",
+            description: "Work order saved locally for now.",
+          });
         } else if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
-          toast.error('Network error: Cannot connect to server. Work order saved locally.');
+          toast({
+            title: "Network Error",
+            description: "Cannot connect to server. Work order saved locally.",
+            variant: "destructive",
+          });
         } else {
-          toast.error(`Error: ${error.message}`);
+          toast({
+            title: "Error",
+            description: `Error: ${error.message}`,
+            variant: "destructive",
+          });
         }
       } else {
-        toast.error('Unknown error occurred while saving work order');
+        toast({
+          title: "Error",
+          description: "Unknown error occurred while saving work order",
+          variant: "destructive",
+        });
       }
       
       // Final fallback and notify parent
@@ -1219,7 +1269,7 @@ export function WorkOrderForm({ onBack, onSave }: WorkOrderFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, onSave]);
+  }, [formData, onSave, toast]);
 
   const saveDraft = useCallback(() => {
     const savedDrafts = JSON.parse(localStorage.getItem('workOrderDrafts') || '[]');
@@ -1231,15 +1281,23 @@ export function WorkOrderForm({ onBack, onSave }: WorkOrderFormProps) {
     };
     savedDrafts.push(draft);
     localStorage.setItem('workOrderDrafts', JSON.stringify(savedDrafts));
-    toast.success('Work order draft saved successfully!');
-  }, [formData]);
+    
+    toast({
+      title: "Success",
+      description: "Work order draft saved successfully!",
+    });
+  }, [formData, toast]);
 
   const resetForm = useCallback(() => {
     if (confirm('Are you sure you want to reset the form? All data will be lost.')) {
       setFormData(INITIAL_FORM_DATA);
-      toast.info('Work order form reset successfully');
+      
+      toast({
+        title: "Form Reset",
+        description: "Work order form reset successfully",
+      });
     }
-  }, []);
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-4 print:p-0 font-sans">
