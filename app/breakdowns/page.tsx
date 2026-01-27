@@ -1,4 +1,4 @@
-// app/breakdowns/page.jsx
+// app/breakdowns/page.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const getApiBase = () => {
+const getApiBase = (): string => {
   const endpoints = [
     process.env.NEXT_PUBLIC_API_URL,
     'http://localhost:8000',
@@ -59,7 +59,7 @@ const API_BASE = getApiBase();
 const BREAKDOWN_API = `${API_BASE}/api/breakdowns`;
 
 // Utility function to test if backend is available
-const isBackendAvailable = async () => {
+const isBackendAvailable = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${BREAKDOWN_API}/health/check`, {
       method: 'GET',
@@ -74,8 +74,134 @@ const isBackendAvailable = async () => {
   }
 };
 
+// Type Definitions
+interface StatusType {
+  name: string;
+  color: string;
+  icon: any;
+  gradient: string;
+  bgColor: string;
+  textColor: string;
+  iconColor: string;
+}
+
+interface PriorityType {
+  name: string;
+  color: string;
+  icon: any;
+  gradient: string;
+  bgColor: string;
+  textColor: string;
+  iconColor: string;
+}
+
+interface BreakdownType {
+  name: string;
+  color: string;
+  icon: any;
+  gradient: string;
+  bgColor: string;
+  textColor: string;
+  iconColor: string;
+}
+
+interface SparePart {
+  name: string;
+  quantity: number;
+  part_number?: string;
+  unit_price: number;
+  total_cost: number;
+}
+
+interface Breakdown {
+  id?: string;
+  breakdown_uid?: string;
+  machine_id: string;
+  machine_name: string;
+  machine_description?: string;
+  artisan_name: string;
+  department: string;
+  location: string;
+  breakdown_date: string;
+  breakdown_type: string;
+  work_done?: string;
+  artisan_recommendations?: string;
+  status: string;
+  priority: string;
+  breakdown_start?: string;
+  breakdown_end?: string;
+  work_start?: string;
+  work_end?: string;
+  response_time_minutes?: number;
+  repair_time_minutes?: number;
+  downtime_minutes?: number;
+  net_downtime_minutes?: number;
+  total_spare_cost?: number;
+  created_at?: string;
+  updated_at?: string;
+  breakdown_description?: string;
+  spares_used?: SparePart[] | string;
+}
+
+interface BreakdownFormData {
+  machine_id: string;
+  machine_name: string;
+  breakdown_description: string;
+  machine_description?: string;
+  artisan_name: string;
+  breakdown_date: string;
+  location: string;
+  department: string;
+  breakdown_type: string;
+  work_done: string;
+  artisan_recommendations: string;
+  status: string;
+  priority: string;
+  breakdown_start: string;
+  breakdown_end: string;
+  work_start: string;
+  work_end: string;
+  spares_used: SparePart[];
+}
+
+interface Filters {
+  status: string;
+  breakdown_type: string;
+  priority: string;
+  department: string;
+  location: string;
+}
+
+interface Metrics {
+  total_breakdowns: number;
+  active_breakdowns: number;
+  avg_resolution_hours: number;
+  total_cost: number;
+  trend_total: number;
+  critical_priority: number;
+  week_breakdowns: number;
+  open_breakdowns: number;
+  total_downtime_hours: number;
+  avg_downtime_hours: number;
+  efficiency_score: number;
+  resolved_this_week: number;
+}
+
+interface TimeDisplay {
+  minutes: number;
+  hours: number;
+  display: string;
+  decimal: number;
+}
+
+interface ChartDataItem {
+  label: string;
+  value: number;
+  color?: string;
+}
+
 // Enhanced Configuration constants
-const STATUS_TYPES = {
+const STATUS_TYPES: Record<string, StatusType> = {
   logged: { 
     name: 'Logged', 
     color: 'bg-blue-50 text-blue-700 border-blue-200', 
@@ -123,7 +249,7 @@ const STATUS_TYPES = {
   }
 };
 
-const PRIORITY_TYPES = {
+const PRIORITY_TYPES: Record<string, PriorityType> = {
   critical: { 
     name: 'Critical', 
     color: 'bg-rose-50 text-rose-700 border-rose-200', 
@@ -162,7 +288,7 @@ const PRIORITY_TYPES = {
   }
 };
 
-const BREAKDOWN_TYPES = {
+const BREAKDOWN_TYPES: Record<string, BreakdownType> = {
   mechanical: { 
     name: 'Mechanical', 
     color: 'bg-slate-50 text-slate-700 border-slate-200', 
@@ -219,15 +345,15 @@ const BREAKDOWN_TYPES = {
   }
 };
 
-const DEPARTMENTS = ['Maintenance', 'Production', 'Engineering', 'Quality', 'Safety', 'Operations'];
-const LOCATIONS = [
+const DEPARTMENTS: string[] = ['Maintenance', 'Production', 'Engineering', 'Quality', 'Safety', 'Operations'];
+const LOCATIONS: string[] = [
   'Production Line A', 'Production Line B', 'Warehouse', 'Workshop', 
   'Boiler Room', 'Compressor Room', 'Electrical Room', 'Yard',
   'Main Plant', 'Storage Area', 'Loading Bay', 'Office Complex'
 ];
 
 // Helper Functions
-const timeToMinutes = (timeStr: string) => {
+const timeToMinutes = (timeStr: string): number => {
   if (!timeStr) return 0;
   try {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -237,7 +363,7 @@ const timeToMinutes = (timeStr: string) => {
   }
 };
 
-const minutesToDisplay = (minutes: number) => {
+const minutesToDisplay = (minutes: number): TimeDisplay => {
   if (!minutes && minutes !== 0) return { minutes: 0, hours: 0, display: '0m', decimal: 0.0 };
   
   const hours = Math.floor(minutes / 60);
@@ -259,7 +385,7 @@ const minutesToDisplay = (minutes: number) => {
   };
 };
 
-const formatDate = (dateString: string | null | undefined) => {
+const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
@@ -269,7 +395,7 @@ const formatDate = (dateString: string | null | undefined) => {
   });
 };
 
-const formatDateTime = (dateString: string | null | undefined, timeString: string | null | undefined) => {
+const formatDateTime = (dateString: string | null | undefined, timeString: string | null | undefined): string => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   const formattedDate = date.toLocaleDateString('en-US', {
@@ -286,7 +412,7 @@ const formatDateTime = (dateString: string | null | undefined, timeString: strin
 };
 
 // Enhanced function to calculate downtime from start and end times
-const calculateDowntime = (breakdownStart: string, breakdownEnd: string, workStart: string, workEnd: string): number => {
+const calculateDowntime = (breakdownStart: string | undefined, breakdownEnd: string | undefined, workStart: string | undefined, workEnd: string | undefined): number => {
   if (!breakdownStart || !breakdownEnd) return 0;
   
   try {
@@ -302,7 +428,7 @@ const calculateDowntime = (breakdownStart: string, breakdownEnd: string, workSta
 };
 
 // Enhanced function to calculate time difference between two times
-const calculateTimeDifference = (startTime: string, endTime: string): number => {
+const calculateTimeDifference = (startTime: string | undefined, endTime: string | undefined): number => {
   if (!startTime || !endTime) return 0;
   
   try {
@@ -317,7 +443,7 @@ const calculateTimeDifference = (startTime: string, endTime: string): number => 
 };
 
 // Calculate total downtime for all breakdowns
-const calculateTotalDowntime = (breakdowns: any[]) => {
+const calculateTotalDowntime = (breakdowns: Breakdown[]): number => {
   if (!breakdowns || !Array.isArray(breakdowns)) return 0;
   
   return breakdowns.reduce((total, breakdown) => {
@@ -332,7 +458,7 @@ const calculateTotalDowntime = (breakdowns: any[]) => {
 };
 
 // API Functions - FIXED for UUID
-const fetchBreakdowns = async (filters = {}) => {
+const fetchBreakdowns = async (filters: Record<string, string> = {}): Promise<Breakdown[]> => {
   try {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -365,7 +491,7 @@ const fetchBreakdowns = async (filters = {}) => {
 };
 
 // Function to calculate metrics from breakdowns data
-const calculateMetricsFromBreakdowns = (breakdowns: any[]) => {
+const calculateMetricsFromBreakdowns = (breakdowns: Breakdown[]): Metrics => {
   if (!breakdowns || !Array.isArray(breakdowns)) {
     return {
       total_breakdowns: 0,
@@ -398,8 +524,8 @@ const calculateMetricsFromBreakdowns = (breakdowns: any[]) => {
   // Calculate total cost from spares
   const total_cost = breakdowns.reduce((total, b) => {
     if (b.spares_used && Array.isArray(b.spares_used)) {
-      const spareCost = b.spares_used.reduce((sum: number, spare: any) => {
-        return sum + (parseFloat(spare.total_cost) || 0);
+      const spareCost = (b.spares_used as SparePart[]).reduce((sum: number, spare: SparePart) => {
+        return sum + (parseFloat(spare.total_cost.toString()) || 0);
       }, 0);
       return total + spareCost;
     }
@@ -471,7 +597,7 @@ const calculateMetricsFromBreakdowns = (breakdowns: any[]) => {
 };
 
 // FIXED: Use correct endpoint for UUID
-const createBreakdown = async (breakdownData) => {
+const createBreakdown = async (breakdownData: BreakdownFormData): Promise<any> => {
   try {
     const cleanData = { 
       machine_id: breakdownData.machine_id || '',
@@ -510,7 +636,7 @@ const createBreakdown = async (breakdownData) => {
       }
     }
     
-    cleanData.spares_used = cleanData.spares_used.map(spare => ({
+    cleanData.spares_used = cleanData.spares_used.map((spare: any) => ({
       name: spare.name || '',
       quantity: spare.quantity || 1,
       part_number: spare.part_number || '',
@@ -537,7 +663,7 @@ const createBreakdown = async (breakdownData) => {
 };
 
 // FIXED: Use correct endpoint for UUID - Use breakdown_uid instead of id
-const updateBreakdown = async (breakdownId, breakdownData) => {
+const updateBreakdown = async (breakdownId: string, breakdownData: BreakdownFormData): Promise<any> => {
   try {
     const cleanData = { 
       machine_id: breakdownData.machine_id || '',
@@ -576,7 +702,7 @@ const updateBreakdown = async (breakdownId, breakdownData) => {
       }
     }
     
-    cleanData.spares_used = cleanData.spares_used.map(spare => ({
+    cleanData.spares_used = cleanData.spares_used.map((spare: any) => ({
       name: spare.name || '',
       quantity: spare.quantity || 1,
       part_number: spare.part_number || '',
@@ -604,7 +730,7 @@ const updateBreakdown = async (breakdownId, breakdownData) => {
 };
 
 // FIXED: Use correct endpoint for UUID
-const deleteBreakdown = async (breakdownId) => {
+const deleteBreakdown = async (breakdownId: string): Promise<any> => {
   try {
     const response = await fetch(`${BREAKDOWN_API}/breakdown_uid/${breakdownId}`, { 
       method: 'DELETE' 
@@ -624,57 +750,57 @@ const deleteBreakdown = async (breakdownId) => {
 
 // Shadcn-inspired Typography Components
 const Typography = {
-  H1: ({ children, className = '' }) => (
+  H1: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <h1 className={`text-3xl font-bold tracking-tight text-gray-900 ${className}`}>
       {children}
     </h1>
   ),
-  H2: ({ children, className = '' }) => (
+  H2: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <h2 className={`text-2xl font-semibold tracking-tight text-gray-900 ${className}`}>
       {children}
     </h2>
   ),
-  H3: ({ children, className = '' }) => (
+  H3: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <h3 className={`text-xl font-semibold tracking-tight text-gray-900 ${className}`}>
       {children}
     </h3>
   ),
-  H4: ({ children, className = '' }) => (
+  H4: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <h4 className={`text-lg font-semibold text-gray-900 ${className}`}>
       {children}
     </h4>
   ),
-  H5: ({ children, className = '' }) => (
+  H5: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <h5 className={`text-base font-semibold text-gray-900 ${className}`}>
       {children}
     </h5>
   ),
-  H6: ({ children, className = '' }) => (
+  H6: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <h6 className={`text-sm font-semibold text-gray-900 ${className}`}>
       {children}
     </h6>
   ),
-  Lead: ({ children, className = '' }) => (
+  Lead: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <p className={`text-lg text-gray-600 ${className}`}>
       {children}
     </p>
   ),
-  P: ({ children, className = '' }) => (
+  P: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <p className={`text-sm text-gray-700 leading-relaxed ${className}`}>
       {children}
     </p>
   ),
-  Small: ({ children, className = '' }) => (
+  Small: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <p className={`text-xs text-gray-500 ${className}`}>
       {children}
     </p>
   ),
-  Muted: ({ children, className = '' }) => (
+  Muted: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <p className={`text-xs text-gray-400 ${className}`}>
       {children}
     </p>
   ),
-  Blockquote: ({ children, className = '' }) => (
+  Blockquote: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
     <blockquote className={`border-l-2 border-gray-200 pl-3 italic text-gray-600 ${className}`}>
       {children}
     </blockquote>
@@ -682,7 +808,7 @@ const Typography = {
 };
 
 // Enhanced Badge Components with shadcn styling
-const StatusBadge = ({ status, size = 'sm' }) => {
+const StatusBadge = ({ status, size = 'sm' }: { status: string; size?: 'xs' | 'sm' }) => {
   const statusConfig = STATUS_TYPES[status] || STATUS_TYPES.logged;
   const Icon = statusConfig.icon;
   const sizeClasses = size === 'xs' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm';
@@ -695,7 +821,7 @@ const StatusBadge = ({ status, size = 'sm' }) => {
   );
 };
 
-const PriorityBadge = ({ priority, size = 'sm' }) => {
+const PriorityBadge = ({ priority, size = 'sm' }: { priority: string; size?: 'xs' | 'sm' }) => {
   const priorityConfig = PRIORITY_TYPES[priority] || PRIORITY_TYPES.medium;
   const Icon = priorityConfig.icon;
   const sizeClasses = size === 'xs' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm';
@@ -708,7 +834,7 @@ const PriorityBadge = ({ priority, size = 'sm' }) => {
   );
 };
 
-const TypeBadge = ({ type, size = 'sm' }) => {
+const TypeBadge = ({ type, size = 'sm' }: { type: string; size?: 'xs' | 'sm' }) => {
   const typeConfig = BREAKDOWN_TYPES[type] || BREAKDOWN_TYPES.other;
   const Icon = typeConfig.icon;
   const sizeClasses = size === 'xs' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm';
@@ -722,7 +848,25 @@ const TypeBadge = ({ type, size = 'sm' }) => {
 };
 
 // Enhanced Metric Card Component with shadcn styling
-const MetricCard = ({ title, value, icon: Icon, color, description, loading, trend, change }) => {
+const MetricCard = ({ 
+  title, 
+  value, 
+  icon: Icon, 
+  color, 
+  description, 
+  loading, 
+  trend, 
+  change 
+}: { 
+  title: string; 
+  value: string | number; 
+  icon: any; 
+  color: string; 
+  description?: string; 
+  loading?: boolean; 
+  trend?: number; 
+  change?: number;
+}) => {
   if (loading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4 animate-pulse">
@@ -771,7 +915,7 @@ const MetricCard = ({ title, value, icon: Icon, color, description, loading, tre
 };
 
 // Enhanced Dashboard Metrics Component
-const DashboardMetrics = ({ breakdowns, loading }) => {
+const DashboardMetrics = ({ breakdowns, loading }: { breakdowns: Breakdown[]; loading: boolean }) => {
   const metrics = useMemo(() => {
     if (!breakdowns || !Array.isArray(breakdowns)) {
       return {
@@ -858,7 +1002,21 @@ const DashboardMetrics = ({ breakdowns, loading }) => {
 };
 
 // Date Range Picker Component
-const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChange, onApply, loading }) => {
+const DateRangePicker = ({ 
+  startDate, 
+  endDate, 
+  onStartDateChange, 
+  onEndDateChange, 
+  onApply, 
+  loading 
+}: { 
+  startDate: string; 
+  endDate: string; 
+  onStartDateChange: (date: string) => void; 
+  onEndDateChange: (date: string) => void; 
+  onApply?: () => void; 
+  loading: boolean;
+}) => {
   const [tempStartDate, setTempStartDate] = useState(startDate);
   const [tempEndDate, setTempEndDate] = useState(endDate);
 
@@ -867,7 +1025,7 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
     setTempEndDate(endDate);
   }, [startDate, endDate]);
 
-  const handleQuickSelect = (days) => {
+  const handleQuickSelect = (days: number) => {
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - days);
@@ -951,6 +1109,19 @@ const FilterBar = ({
   onEndDateChange,
   showDateRange,
   onToggleDateRange 
+}: { 
+  filters: Filters; 
+  onFilterChange: (name: string, value: string) => void; 
+  onRefresh: () => void; 
+  loading: boolean; 
+  searchTerm: string; 
+  onSearchChange: (value: string) => void;
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (date: string) => void;
+  onEndDateChange: (date: string) => void;
+  showDateRange: boolean;
+  onToggleDateRange: () => void;
 }) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -975,7 +1146,7 @@ const FilterBar = ({
           </div>
           
           <button
-            onClick={() => onToggleDateRange && onToggleDateRange()}
+            onClick={() => onToggleDateRange()}
             className={`px-3 py-2 border ${showDateRange ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-gray-300 text-gray-700'} rounded-md font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-sm`}
           >
             <Calendar className="h-3.5 w-3.5" />
@@ -1030,7 +1201,7 @@ const FilterBar = ({
                   {label}
                 </label>
                 <select
-                  value={filters[name]}
+                  value={filters[name as keyof Filters]}
                   onChange={(e) => onFilterChange(name, e.target.value)}
                   className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 >
@@ -1054,15 +1225,27 @@ const FilterBar = ({
 };
 
 // Enhanced Breakdown Card Component (Grid View)
-const BreakdownCard = ({ breakdown, onView, onEdit, onDelete }) => {
+const BreakdownCard = ({ 
+  breakdown, 
+  onView, 
+  onEdit, 
+  onDelete 
+}: { 
+  breakdown: Breakdown; 
+  onView: (breakdown: Breakdown) => void; 
+  onEdit: (breakdown: Breakdown) => void; 
+  onDelete: (breakdown: Breakdown) => void;
+}) => {
   // Calculate downtime from start and end times
   const downtime = minutesToDisplay(
     calculateDowntime(breakdown.breakdown_start, breakdown.breakdown_end, breakdown.work_start, breakdown.work_end)
   );
   
-  const totalSparesCost = breakdown.spares_used?.reduce((total, spare) => {
-    return total + (parseFloat(spare.total_cost) || 0);
-  }, 0) || 0;
+  const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
+    ? breakdown.spares_used.reduce((total: number, spare: any) => {
+        return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
+      }, 0) 
+    : 0;
   
   const statusConfig = STATUS_TYPES[breakdown.status] || STATUS_TYPES.logged;
   const priorityConfig = PRIORITY_TYPES[breakdown.priority] || PRIORITY_TYPES.medium;
@@ -1158,18 +1341,34 @@ const BreakdownCard = ({ breakdown, onView, onEdit, onDelete }) => {
 };
 
 // Enhanced Breakdown Table Component (List View)
-const BreakdownTable = ({ breakdowns, onView, onEdit, onDelete, sortField, sortDirection, onSort }) => {
-  const [selectedRows, setSelectedRows] = useState(new Set());
+const BreakdownTable = ({ 
+  breakdowns, 
+  onView, 
+  onEdit, 
+  onDelete, 
+  sortField, 
+  sortDirection, 
+  onSort 
+}: { 
+  breakdowns: Breakdown[]; 
+  onView: (breakdown: Breakdown) => void; 
+  onEdit: (breakdown: Breakdown) => void; 
+  onDelete: (breakdown: Breakdown) => void; 
+  sortField: string; 
+  sortDirection: string; 
+  onSort: (field: string) => void;
+}) => {
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
-  const handleSelectAll = (checked) => {
+  const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRows(new Set(breakdowns.map(b => b.id || b.breakdown_uid)));
+      setSelectedRows(new Set(breakdowns.map(b => (b.id || b.breakdown_uid) as string)));
     } else {
       setSelectedRows(new Set());
     }
   };
 
-  const handleSelectRow = (id, checked) => {
+  const handleSelectRow = (id: string, checked: boolean) => {
     const newSelected = new Set(selectedRows);
     if (checked) {
       newSelected.add(id);
@@ -1179,7 +1378,19 @@ const BreakdownTable = ({ breakdowns, onView, onEdit, onDelete, sortField, sortD
     setSelectedRows(newSelected);
   };
 
-  const SortableHeader = ({ field, label, currentSort, currentDirection, onSort }) => {
+  const SortableHeader = ({ 
+    field, 
+    label, 
+    currentSort, 
+    currentDirection, 
+    onSort 
+  }: { 
+    field: string; 
+    label: string; 
+    currentSort: string; 
+    currentDirection: string; 
+    onSort: (field: string) => void;
+  }) => {
     const isActive = currentSort === field;
     return (
       <th
@@ -1289,11 +1500,13 @@ const BreakdownTable = ({ breakdowns, onView, onEdit, onDelete, sortField, sortD
                 calculateDowntime(breakdown.breakdown_start, breakdown.breakdown_end, breakdown.work_start, breakdown.work_end)
               );
               
-              const totalSparesCost = breakdown.spares_used?.reduce((total, spare) => {
-                return total + (parseFloat(spare.total_cost) || 0);
-              }, 0) || 0;
+              const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
+                ? breakdown.spares_used.reduce((total: number, spare: any) => {
+                    return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
+                  }, 0) 
+                : 0;
 
-              const breakdownId = breakdown.id || breakdown.breakdown_uid;
+              const breakdownId = (breakdown.id || breakdown.breakdown_uid) as string;
 
               return (
                 <tr key={breakdownId} className="hover:bg-gray-50 transition-colors">
@@ -1371,8 +1584,18 @@ const BreakdownTable = ({ breakdowns, onView, onEdit, onDelete, sortField, sortD
 };
 
 // Enhanced Pie Chart Component
-const PieChartComponent = ({ title, data, loading, colors }) => {
-  const [selectedSegment, setSelectedSegment] = useState(null);
+const PieChartComponent = ({ 
+  title, 
+  data, 
+  loading, 
+  colors 
+}: { 
+  title: string; 
+  data: ChartDataItem[]; 
+  loading: boolean; 
+  colors: string[];
+}) => {
+  const [selectedSegment, setSelectedSegment] = useState<number | null>(null);
   
   if (loading) {
     return (
@@ -1484,8 +1707,20 @@ const PieChartComponent = ({ title, data, loading, colors }) => {
 };
 
 // Enhanced Line Chart Component with Date Range
-const LineChartComponent = ({ title, data, loading, color = 'blue', period = '7d' }) => {
-  const [hoverIndex, setHoverIndex] = useState(null);
+const LineChartComponent = ({ 
+  title, 
+  data, 
+  loading, 
+  color = 'blue', 
+  period = '7d' 
+}: { 
+  title: string; 
+  data: ChartDataItem[]; 
+  loading: boolean; 
+  color?: string; 
+  period?: string;
+}) => {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   
   if (loading) {
     return (
@@ -1523,8 +1758,8 @@ const LineChartComponent = ({ title, data, loading, color = 'blue', period = '7d
   const height = 200;
   const padding = 40;
   
-  const xScale = (index) => padding + (index * (width - 2 * padding) / (data.length - 1));
-  const yScale = (value) => height - padding - ((value - minValue) * (height - 2 * padding) / range);
+  const xScale = (index: number) => padding + (index * (width - 2 * padding) / (data.length - 1));
+  const yScale = (value: number) => height - padding - ((value - minValue) * (height - 2 * padding) / range);
   
   const points = data.map((item, index) => ({
     x: xScale(index),
@@ -1665,7 +1900,17 @@ const LineChartComponent = ({ title, data, loading, color = 'blue', period = '7d
 };
 
 // Enhanced Real-Time Bar Graph Component
-const RealTimeBarGraph = ({ title, data, loading, color = 'blue' }) => {
+const RealTimeBarGraph = ({ 
+  title, 
+  data, 
+  loading, 
+  color = 'blue' 
+}: { 
+  title: string; 
+  data: ChartDataItem[]; 
+  loading: boolean; 
+  color?: string;
+}) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -1760,7 +2005,19 @@ const RealTimeBarGraph = ({ title, data, loading, color = 'blue' }) => {
 };
 
 // Statistics Dashboard Component with Date Range
-const StatisticsDashboard = ({ breakdowns, loading, startDate, endDate, onDateRangeChange }) => {
+const StatisticsDashboard = ({ 
+  breakdowns, 
+  loading, 
+  startDate, 
+  endDate, 
+  onDateRangeChange 
+}: { 
+  breakdowns: Breakdown[]; 
+  loading: boolean; 
+  startDate: string; 
+  endDate: string; 
+  onDateRangeChange: () => void;
+}) => {
   const metrics = useMemo(() => {
     return calculateMetricsFromBreakdowns(breakdowns);
   }, [breakdowns]);
@@ -1826,8 +2083,8 @@ const StatisticsDashboard = ({ breakdowns, loading, startDate, endDate, onDateRa
     }
     
     const daysDiff = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24));
-    const dailyBreakdowns = [];
-    const weeklyTrend = [];
+    const dailyBreakdowns: ChartDataItem[] = [];
+    const weeklyTrend: ChartDataItem[] = [];
     
     // Daily breakdowns
     for (let i = 0; i <= daysDiff; i++) {
@@ -1960,7 +2217,7 @@ const StatisticsDashboard = ({ breakdowns, loading, startDate, endDate, onDateRa
         <div className="flex items-center justify-between mb-4">
           <Typography.H5 className="text-gray-900">Select Date Range for Statistics</Typography.H5>
           <button
-            onClick={() => onDateRangeChange && onDateRangeChange()}
+            onClick={() => onDateRangeChange()}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
           >
             Change Date Range
@@ -2123,16 +2380,30 @@ const StatisticsDashboard = ({ breakdowns, loading, startDate, endDate, onDateRa
 };
 
 // Enhanced Breakdown Details Modal Component
-const BreakdownDetailsModal = ({ breakdown, isOpen, onClose, onEdit, onDelete }) => {
+const BreakdownDetailsModal = ({ 
+  breakdown, 
+  isOpen, 
+  onClose, 
+  onEdit, 
+  onDelete 
+}: { 
+  breakdown: Breakdown | null; 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onEdit: (breakdown: Breakdown) => void; 
+  onDelete: (breakdown: Breakdown) => void;
+}) => {
   if (!isOpen || !breakdown) return null;
 
   const downtime = minutesToDisplay(
     calculateDowntime(breakdown.breakdown_start, breakdown.breakdown_end, breakdown.work_start, breakdown.work_end)
   );
   
-  const totalSparesCost = breakdown.spares_used?.reduce((total, spare) => {
-    return total + (parseFloat(spare.total_cost) || 0);
-  }, 0) || 0;
+  const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
+    ? breakdown.spares_used.reduce((total: number, spare: any) => {
+        return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
+      }, 0) 
+    : 0;
 
   const statusConfig = STATUS_TYPES[breakdown.status] || STATUS_TYPES.logged;
   const priorityConfig = PRIORITY_TYPES[breakdown.priority] || PRIORITY_TYPES.medium;
@@ -2287,7 +2558,7 @@ const BreakdownDetailsModal = ({ breakdown, isOpen, onClose, onEdit, onDelete })
               </div>
 
               {/* Spares Used */}
-              {breakdown.spares_used && breakdown.spares_used.length > 0 && (
+              {breakdown.spares_used && Array.isArray(breakdown.spares_used) && breakdown.spares_used.length > 0 && (
                 <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-5">
                   <div className="flex items-center justify-between mb-4">
                     <Typography.H4 className="text-gray-900">Spares Used</Typography.H4>
@@ -2296,7 +2567,7 @@ const BreakdownDetailsModal = ({ breakdown, isOpen, onClose, onEdit, onDelete })
                     </div>
                   </div>
                   <div className="space-y-3">
-                    {breakdown.spares_used.map((spare, index) => (
+                    {breakdown.spares_used.map((spare: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-amber-200">
                         <div>
                           <Typography.P className="font-medium">{spare.name}</Typography.P>
@@ -2388,8 +2659,20 @@ const BreakdownDetailsModal = ({ breakdown, isOpen, onClose, onEdit, onDelete })
 };
 
 // Enhanced Create/Edit Breakdown Modal
-const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'create' }) => {
-  const [formData, setFormData] = useState({
+const BreakdownFormModal = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  initialData, 
+  mode = 'create' 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onSubmit: (formData: BreakdownFormData) => Promise<void>; 
+  initialData: Breakdown | null; 
+  mode?: 'create' | 'edit';
+}) => {
+  const [formData, setFormData] = useState<BreakdownFormData>({
     machine_id: '',
     machine_name: '',
     breakdown_description: '',
@@ -2417,7 +2700,7 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
   });
   
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('basic');
 
   useEffect(() => {
@@ -2426,7 +2709,8 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
         ...initialData,
         breakdown_date: initialData.breakdown_date 
           ? new Date(initialData.breakdown_date).toISOString().split('T')[0] 
-          : new Date().toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        spares_used: Array.isArray(initialData.spares_used) ? initialData.spares_used : []
       });
     } else {
       // Reset form for create mode
@@ -2452,8 +2736,8 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
     }
   }, [initialData]);
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
     if (!formData.machine_name.trim()) newErrors.machine_name = 'Machine name is required';
     if (!formData.breakdown_description.trim()) newErrors.breakdown_description = 'Description is required';
     if (!formData.artisan_name.trim()) newErrors.artisan_name = 'Artisan name is required';
@@ -2473,7 +2757,7 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -2482,7 +2766,7 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
     try {
       await onSubmit(formData);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
       setErrors({ submit: error.message || 'Failed to save breakdown' });
     } finally {
@@ -2497,7 +2781,7 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
     }
     
     const totalCost = spareForm.quantity * spareForm.unit_price;
-    const newSpare = {
+    const newSpare: SparePart = {
       ...spareForm,
       total_cost: totalCost
     };
@@ -2517,7 +2801,7 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
     setErrors({ ...errors, spare: '' });
   };
 
-  const removeSpare = (index) => {
+  const removeSpare = (index: number) => {
     setFormData(prev => ({
       ...prev,
       spares_used: prev.spares_used.filter((_, i) => i !== index)
@@ -3048,8 +3332,8 @@ const BreakdownFormModal = ({ isOpen, onClose, onSubmit, initialData, mode = 'cr
 
 // Main Breakdowns Page Component
 const BreakdownsPage = () => {
-  const [breakdowns, setBreakdowns] = useState([]);
-  const [filteredBreakdowns, setFilteredBreakdowns] = useState([]);
+  const [breakdowns, setBreakdowns] = useState<Breakdown[]>([]);
+  const [filteredBreakdowns, setFilteredBreakdowns] = useState<Breakdown[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -3058,7 +3342,7 @@ const BreakdownsPage = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'statistics'
   
   // Filter states
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     status: 'all',
     breakdown_type: 'all',
     priority: 'all',
@@ -3081,8 +3365,8 @@ const BreakdownsPage = () => {
   // Modal states
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
-  const [selectedBreakdown, setSelectedBreakdown] = useState(null);
-  const [formMode, setFormMode] = useState('create');
+  const [selectedBreakdown, setSelectedBreakdown] = useState<Breakdown | null>(null);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   
   // Backend availability
   const [backendAvailable, setBackendAvailable] = useState(true);
@@ -3104,7 +3388,7 @@ const BreakdownsPage = () => {
       }
       
       // Build query with date range
-      const queryFilters = { ...filters };
+      const queryFilters: Record<string, string> = { ...filters };
       if (startDate && endDate) {
         queryFilters.start_date = startDate;
         queryFilters.end_date = endDate;
@@ -3130,7 +3414,7 @@ const BreakdownsPage = () => {
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== 'all') {
-        result = result.filter(breakdown => breakdown[key] === value);
+        result = result.filter(breakdown => breakdown[key as keyof Breakdown] === value);
       }
     });
     
@@ -3147,19 +3431,19 @@ const BreakdownsPage = () => {
     
     // Apply sorting
     result.sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
+      let aVal = a[sortField as keyof Breakdown];
+      let bVal = b[sortField as keyof Breakdown];
       
       // Handle dates
       if (sortField === 'breakdown_date') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+        aVal = new Date(aVal as string);
+        bVal = new Date(bVal as string);
       }
       
       // Handle numeric values (downtime, cost)
       if (sortField === 'downtime_minutes' || sortField === 'total_cost') {
-        aVal = parseFloat(aVal) || 0;
-        bVal = parseFloat(bVal) || 0;
+        aVal = parseFloat(aVal as string) || 0;
+        bVal = parseFloat(bVal as string) || 0;
       }
       
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -3175,14 +3459,14 @@ const BreakdownsPage = () => {
     loadBreakdowns();
   }, [loadBreakdowns]);
 
-  const handleFilterChange = (filterName, value) => {
+  const handleFilterChange = (filterName: string, value: string) => {
     setFilters(prev => ({
       ...prev,
       [filterName]: value
     }));
   };
 
-  const handleSort = (field) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -3191,24 +3475,24 @@ const BreakdownsPage = () => {
     }
   };
 
-  const handleView = (breakdown) => {
+  const handleView = (breakdown: Breakdown) => {
     setSelectedBreakdown(breakdown);
     setDetailsModalOpen(true);
   };
 
-  const handleEdit = (breakdown) => {
+  const handleEdit = (breakdown: Breakdown) => {
     setSelectedBreakdown(breakdown);
     setFormMode('edit');
     setFormModalOpen(true);
   };
 
-  const handleDelete = async (breakdown) => {
+  const handleDelete = async (breakdown: Breakdown) => {
     // FIXED: Use breakdown_uid for UUID
     const breakdownId = breakdown.breakdown_uid || breakdown.id;
     
     if (window.confirm(`Are you sure you want to delete breakdown for "${breakdown.machine_name}"?`)) {
       try {
-        await deleteBreakdown(breakdownId);
+        await deleteBreakdown(breakdownId as string);
         await loadBreakdowns();
       } catch (err) {
         console.error('Failed to delete breakdown:', err);
@@ -3223,13 +3507,14 @@ const BreakdownsPage = () => {
     setFormModalOpen(true);
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async (formData: BreakdownFormData) => {
     try {
       if (formMode === 'create') {
         await createBreakdown(formData);
       } else {
         // FIXED: Use breakdown_uid for UUID
-        const breakdownId = selectedBreakdown.breakdown_uid || selectedBreakdown.id;
+        const breakdownId = selectedBreakdown?.breakdown_uid || selectedBreakdown?.id;
+        if (!breakdownId) throw new Error('Breakdown ID not found');
         await updateBreakdown(breakdownId, formData);
       }
       await loadBreakdowns();
@@ -3265,9 +3550,11 @@ const BreakdownsPage = () => {
           calculateDowntime(breakdown.breakdown_start, breakdown.breakdown_end, breakdown.work_start, breakdown.work_end)
         );
         
-        const totalSparesCost = breakdown.spares_used?.reduce((total, spare) => {
-          return total + (parseFloat(spare.total_cost) || 0);
-        }, 0) || 0;
+        const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
+          ? breakdown.spares_used.reduce((total: number, spare: any) => {
+              return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
+            }, 0) 
+          : 0;
 
         const row = [
           `"${breakdown.machine_name || ''}"`,
@@ -3339,9 +3626,11 @@ const BreakdownsPage = () => {
                   calculateDowntime(breakdown.breakdown_start, breakdown.breakdown_end, breakdown.work_start, breakdown.work_end)
                 );
                 
-                const totalSparesCost = breakdown.spares_used?.reduce((total, spare) => {
-                  return total + (parseFloat(spare.total_cost) || 0);
-                }, 0) || 0;
+                const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
+                  ? breakdown.spares_used.reduce((total: number, spare: any) => {
+                      return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
+                    }, 0) 
+                  : 0;
 
                 return `
                   <tr>
