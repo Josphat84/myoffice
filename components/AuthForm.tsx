@@ -1,6 +1,4 @@
-//Sign up login form component
-//components/AuthForm.jsx 
-
+// components/AuthForm.jsx
 'use client';
 
 import { useState } from 'react';
@@ -80,7 +78,7 @@ export default function AuthForm() {
       // Redirect to dashboard/home
       window.location.href = '/';
       
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
@@ -163,7 +161,7 @@ export default function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 disabled:opacity-50"
         >
           {loading ? (
             <span className="flex items-center justify-center">
@@ -182,7 +180,7 @@ export default function AuthForm() {
           <button
             type="button"
             onClick={toggleMode}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-indigo-600 hover:underline"
           >
             {mode === 'login' 
               ? "Don't have an account? Sign up" 
