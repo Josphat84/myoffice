@@ -1,60 +1,44 @@
 // app/page.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from "next/link";
 import { 
   Users, 
   ToolCase, 
-  Building, 
-  ArrowRight, 
-  BarChart3, 
-  Phone, 
-  Mail, 
   Shield, 
-  Zap, 
   CheckCircle,
-  TrendingUp,
-  Cpu,
-  Settings,
-  FileText,
+  ArrowRight,
   Menu,
   X,
-  Twitter,
-  Facebook,
-  Linkedin,
-  Github,
   LogIn,
   UserPlus,
-  HardHat, 
-  Clock, 
-  Gauge, 
-  Wrench, 
-  Folder, 
-  CalendarCheck, 
-  Drill,      
-  FileBadge,  
-  Award,      
-  Calendar,
+  Clock,
   Calculator,
-  FilePieChart,
-  Briefcase,
+  Package,
+  ClipboardCheck,
+  CalendarDays,
+  AlertTriangle,
+  Clock as ClockIcon,
+  Fan,
+  Eye,
+  ChevronDown,
+  Mail,
+  Phone,
+  BarChart3,
+  FileText,
   MessageSquare,
-  Package, // Added for Inventory
-  ClipboardCheck, // Added for Maintenance
-  CalendarDays // Added for Leave
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import AuthForm from "@/components/AuthForm";
 
-// Define types for our data structures
-type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange' | 'pink';
-
-interface StatItem {
-  label: string;
-  value: string | number;
-  icon: React.ComponentType<any>;
-  color: string;
-  subtitle?: string;
-}
+type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange' | 'pink' | 'red';
 
 interface ModuleItem {
   icon: React.ComponentType<any>;
@@ -62,1073 +46,923 @@ interface ModuleItem {
   description: string;
   color: ColorType;
   checks: string[];
-  link?: string;
-  stats: string;
+  link: string;
   buttonText: string;
-}
-
-async function getSystemStats() {
-  try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com';
-    
-    // Fetch actual overtime data
-    const overtimeResponse = await fetch(`${API_BASE}/api/overtime`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let overtimeStats = {
-      pendingOvertime: 0,
-      approvedOvertime: 0,
-      totalOvertimeHours: 0,
-      monthlyOvertime: 0
-    };
-
-    if (overtimeResponse.ok) {
-      overtimeStats = await overtimeResponse.json();
-    }
-
-    // Fetch employees count
-    const employeesResponse = await fetch(`${API_BASE}/api/employees`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let employeeCount = 0;
-    if (employeesResponse.ok) {
-      const employees = await employeesResponse.json();
-      employeeCount = employees.length;
-    }
-
-    // Fetch equipment count
-    const equipmentResponse = await fetch(`${API_BASE}/api/equipment`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let equipmentCount = 0;
-    if (equipmentResponse.ok) {
-      const equipment = await equipmentResponse.json();
-      equipmentCount = equipment.length;
-    }
-
-    // Fetch inventory stats
-    const inventoryResponse = await fetch(`${API_BASE}/api/inventory/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let inventoryStats = {
-      totalItems: 0,
-      lowStock: 0,
-      outOfStock: 0,
-      totalValue: 0
-    };
-
-    if (inventoryResponse.ok) {
-      inventoryStats = await inventoryResponse.json();
-    }
-
-    // Fetch standby stats
-    const standbyResponse = await fetch(`${API_BASE}/api/standby/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let standbyStats = {
-      total: 0,
-      active: 0,
-      scheduled: 0,
-      completed: 0
-    };
-
-    if (standbyResponse.ok) {
-      standbyStats = await standbyResponse.json();
-    }
-
-    // Fetch maintenance stats
-    const maintenanceResponse = await fetch(`${API_BASE}/api/maintenance/stats/summary`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let maintenanceStats = {
-      open: 0,
-      in_progress: 0,
-      critical: 0,
-      completed: 0
-    };
-
-    if (maintenanceResponse.ok) {
-      const maintenanceData = await maintenanceResponse.json();
-      maintenanceStats = {
-        open: maintenanceData.open || 0,
-        in_progress: maintenanceData.in_progress || 0,
-        critical: maintenanceData.critical || 0,
-        completed: maintenanceData.completed || 0
-      };
-    }
-
-    // Fetch leave stats
-    const leaveResponse = await fetch(`${API_BASE}/api/leave/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let leaveStats = {
-      pendingRequests: 0,
-      approvedRequests: 0,
-      currentMonthRequests: 0,
-      totalRequests: 0
-    };
-
-    if (leaveResponse.ok) {
-      const leaveData = await leaveResponse.json();
-      leaveStats = {
-        pendingRequests: leaveData.pendingRequests || 0,
-        approvedRequests: leaveData.approvedRequests || 0,
-        currentMonthRequests: leaveData.currentMonthRequests || 0,
-        totalRequests: leaveData.totalRequests || 0
-      };
-    }
-
-    // Fetch PPE stats
-    const ppeResponse = await fetch(`${API_BASE}/api/ppe/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let ppeStats = {
-      assignedItems: 0,
-      expiredItems: 0,
-      dueForInspection: 0,
-      totalIssues: 0
-    };
-
-    if (ppeResponse.ok) {
-      const ppeData = await ppeResponse.json();
-      ppeStats = {
-        assignedItems: ppeData.assignedItems || 0,
-        expiredItems: ppeData.expiredItems || 0,
-        dueForInspection: ppeData.dueForInspection || 0,
-        totalIssues: ppeData.totalIssues || 0
-      };
-    }
-
-    // Fetch documents stats
-    const documentsResponse = await fetch(`${API_BASE}/api/documents/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let documentsStats = {
-      totalDocuments: 0,
-      recentUploads: 0,
-      categories: 0
-    };
-
-    if (documentsResponse.ok) {
-      documentsStats = await documentsResponse.json();
-    }
-
-    // Fetch notice board stats
-    const noticesResponse = await fetch(`${API_BASE}/api/notices/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let noticesStats = {
-      activeNotices: 0,
-      totalNotices: 0,
-      urgentNotices: 0
-    };
-
-    if (noticesResponse.ok) {
-      noticesStats = await noticesResponse.json();
-    }
-
-    // Fetch other system stats
-    const systemResponse = await fetch(`${API_BASE}/api/system/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store'
-    });
-
-    let systemStats = {
-      operationalRate: 0,
-      operationalEquipment: 0,
-      departments: 0,
-      safetyIncidents: 0,
-      openWorkOrders: 0,
-      scheduledMaintenance: 0,
-      monthlyReports: 0,
-    };
-
-    if (systemResponse.ok) {
-      systemStats = await systemResponse.json();
-    }
-
-    return {
-      ...systemStats,
-      employeeCount,
-      equipmentCount,
-      pendingOvertime: overtimeStats.pendingOvertime,
-      approvedOvertime: overtimeStats.approvedOvertime,
-      totalOvertimeHours: overtimeStats.totalOvertimeHours,
-      monthlyOvertime: overtimeStats.monthlyOvertime,
-      totalInventoryItems: inventoryStats.totalItems,
-      lowStockItems: inventoryStats.lowStock,
-      outOfStockItems: inventoryStats.outOfStock,
-      inventoryValue: inventoryStats.totalValue,
-      totalStandbyRosters: standbyStats.total,
-      activeStandbyRosters: standbyStats.active,
-      scheduledStandbyRosters: standbyStats.scheduled,
-      // New modules stats
-      maintenanceOpenRequests: maintenanceStats.open,
-      maintenanceInProgress: maintenanceStats.in_progress,
-      maintenanceCritical: maintenanceStats.critical,
-      leavePending: leaveStats.pendingRequests,
-      leaveApproved: leaveStats.approvedRequests,
-      leaveUpcoming: leaveStats.currentMonthRequests,
-      ppeActive: ppeStats.assignedItems,
-      ppeExpired: ppeStats.expiredItems,
-      ppeExpiringSoon: ppeStats.dueForInspection,
-      // Documents and Notices stats
-      totalDocuments: documentsStats.totalDocuments,
-      recentDocuments: documentsStats.recentUploads,
-      activeNotices: noticesStats.activeNotices,
-      urgentNotices: noticesStats.urgentNotices
-    };
-
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    // Fallback data
-    return {
-      employeeCount: 125,
-      equipmentCount: 78,
-      operationalRate: 86,
-      operationalEquipment: 67,
-      departments: 8,
-      safetyIncidents: 1,
-      openWorkOrders: 15,
-      scheduledMaintenance: 8,
-      pendingOvertime: 5,
-      approvedOvertime: 12,
-      totalOvertimeHours: 245,
-      monthlyOvertime: 89,
-      monthlyReports: 23,
-      totalInventoryItems: 156,
-      lowStockItems: 12,
-      outOfStockItems: 3,
-      inventoryValue: 28500,
-      totalStandbyRosters: 8,
-      activeStandbyRosters: 3,
-      scheduledStandbyRosters: 5,
-      // New modules fallback data
-      maintenanceOpenRequests: 8,
-      maintenanceInProgress: 12,
-      maintenanceCritical: 3,
-      leavePending: 5,
-      leaveApproved: 15,
-      leaveUpcoming: 7,
-      ppeActive: 45,
-      ppeExpired: 8,
-      ppeExpiringSoon: 12,
-      // Documents and Notices fallback data
-      totalDocuments: 156,
-      recentDocuments: 12,
-      activeNotices: 8,
-      urgentNotices: 3
-    };
-  }
+  featured?: boolean;
 }
 
 // Mobile Navigation Component
-function MobileNav() {
+function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogout: () => void; user: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const navCategories = [
+    {
+      name: "Core Management",
+      links: [
+        { href: "/employees", label: "Personnel", icon: Users },
+        { href: "/equipment", label: "Assets", icon: ToolCase },
+        { href: "/inventory", label: "Inventory", icon: Package },
+        { href: "/overtime", label: "Overtime", icon: Calculator },
+        { href: "/leave", label: "Leave", icon: CalendarDays },
+        { href: "/ppe", label: "PPE", icon: Shield },
+      ]
+    },
+    {
+      name: "Operations",
+      links: [
+        { href: "/maintenance", label: "Maintenance", icon: ClipboardCheck },
+        { href: "/standby", label: "Standby", icon: Clock },
+        { href: "/breakdowns", label: "Breakdowns", icon: AlertTriangle },
+        { href: "/spares", label: "Spares", icon: Package },
+        { href: "/compressors", label: "Compressors", icon: Fan },
+      ]
+    },
+    {
+      name: "Analytics & Reports",
+      links: [
+        { href: "/timesheets", label: "Timesheets", icon: ClockIcon },
+        { href: "/reports", label: "Reports", icon: BarChart3 },
+        { href: "/visualization", label: "Visualization", icon: Eye },
+        { href: "/documents", label: "Documents", icon: FileText },
+        { href: "/noticeboard", label: "Notice Board", icon: MessageSquare },
+      ]
+    }
+  ];
+
   return (
-    <div className="md:hidden">
-      <details className="dropdown dropdown-end">
-        <summary className="btn btn-ghost btn-circle text-foreground">
-          <Menu className="h-6 w-6" />
-        </summary>
-        <ul className="dropdown-content menu p-4 shadow-xl bg-card border border-border rounded-lg w-52 mt-4 space-y-2 text-foreground">
-          <li><Link href="/" className="hover:text-primary font-semibold">Home</Link></li>
-          <li><Link href="/employees" className="hover:text-primary">Personnel</Link></li>
-          <li><Link href="/equipment" className="hover:text-primary">Assets</Link></li>
-          <li><Link href="/overtime" className="hover:text-primary">Overtime</Link></li>
-          <li><Link href="/reports" className="hover:text-primary">Reports</Link></li>
-          <li><Link href="/inventory" className="hover:text-primary">Inventory</Link></li>
-          <li><Link href="/standby" className="hover:text-primary">Standby</Link></li>
-          <li><Link href="/maintenance" className="hover:text-primary">Maintenance</Link></li>
-          <li><Link href="/leave" className="hover:text-primary">Leave</Link></li>
-          <li><Link href="/ppe" className="hover:text-primary">PPE</Link></li>
-          <li><Link href="/documents" className="hover:text-primary">Documents</Link></li>
-          <li><Link href="/noticeboard" className="hover:text-primary">Notice Board</Link></li>
-          <li className="border-t border-border my-2"></li>
-          <li><Link href="/login" className="flex items-center gap-2 hover:text-primary">
-            <LogIn className="h-4 w-4" />
-            Login
-          </Link></li>
-          <li><Link href="/signup" className="flex items-center gap-2 hover:text-primary">
-            <UserPlus className="h-4 w-4" />
-            Sign Up
-          </Link></li>
-        </ul>
-      </details>
+    <div className="lg:hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+      >
+        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 top-16 z-50">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+            onClick={() => setIsOpen(false)} 
+          />
+          <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="flex flex-col h-full">
+              <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                {navCategories.map((category) => (
+                  <div key={category.name}>
+                    <h3 className="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wider text-gray-500">
+                      {category.name}
+                    </h3>
+                    <div className="space-y-1">
+                      {category.links.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 hover:text-gray-900 transition-colors"
+                        >
+                          <link.icon className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">{link.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="p-6 border-t bg-gray-50">
+                {isLoggedIn ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                      <Avatar>
+                        <AvatarFallback className="bg-indigo-100 text-indigo-600">
+                          {user?.name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        onLogout();
+                        setIsOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-700">
+                      <Link href="/signup" onClick={() => setIsOpen(false)}>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Sign Up
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/login" onClick={() => setIsOpen(false)}>
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Sign In
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default async function Home() {
-  const stats = await getSystemStats();
+// Navigation Link Component
+function NavLink({ href, icon: Icon, label }: { href: string; icon: any; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 hover:text-gray-900 transition-colors"
+    >
+      <Icon className="h-4 w-4 text-gray-500" />
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm">{label}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-gray-400" />
+    </Link>
+  );
+}
 
-  // Stats items with actual data including new modules
-  const statItems: StatItem[] = [
-    {
-      label: "Total Personnel",
-      value: stats.employeeCount,
-      icon: Users,
-      color: "text-indigo-600 dark:text-indigo-400",
+// Helper function for colors
+function getColorClasses(color: ColorType) {
+  const colorMap = {
+    indigo: {
+      bg: 'bg-indigo-600',
+      hover: 'hover:bg-indigo-700',
+      light: 'bg-indigo-50',
+      text: 'text-indigo-600',
     },
-    {
-      label: "Total Assets",
-      value: stats.equipmentCount,
-      icon: ToolCase,
-      color: "text-cyan-600 dark:text-cyan-400",
+    cyan: {
+      bg: 'bg-cyan-600',
+      hover: 'hover:bg-cyan-700',
+      light: 'bg-cyan-50',
+      text: 'text-cyan-600',
     },
-    {
-      label: "Open Maintenance",
-      value: stats.maintenanceOpenRequests,
-      icon: ClipboardCheck,
-      color: "text-orange-600 dark:text-orange-400",
-      subtitle: `${stats.maintenanceCritical} critical`
+    green: {
+      bg: 'bg-green-600',
+      hover: 'hover:bg-green-700',
+      light: 'bg-green-50',
+      text: 'text-green-600',
     },
-    {
-      label: "Pending Leave",
-      value: stats.leavePending,
-      icon: CalendarDays,
-      color: "text-pink-600 dark:text-pink-400",
-      subtitle: `${stats.leaveUpcoming} upcoming`
+    amber: {
+      bg: 'bg-amber-600',
+      hover: 'hover:bg-amber-700',
+      light: 'bg-amber-50',
+      text: 'text-amber-600',
     },
-  ];
+    blue: {
+      bg: 'bg-blue-600',
+      hover: 'hover:bg-blue-700',
+      light: 'bg-blue-50',
+      text: 'text-blue-600',
+    },
+    purple: {
+      bg: 'bg-purple-600',
+      hover: 'hover:bg-purple-700',
+      light: 'bg-purple-50',
+      text: 'text-purple-600',
+    },
+    orange: {
+      bg: 'bg-orange-600',
+      hover: 'hover:bg-orange-700',
+      light: 'bg-orange-50',
+      text: 'text-orange-600',
+    },
+    pink: {
+      bg: 'bg-pink-600',
+      hover: 'hover:bg-pink-700',
+      light: 'bg-pink-50',
+      text: 'text-pink-600',
+    },
+    red: {
+      bg: 'bg-red-600',
+      hover: 'hover:bg-red-700',
+      light: 'bg-red-50',
+      text: 'text-red-600',
+    },
+  };
+  return colorMap[color] || colorMap.indigo;
+}
 
-  // Core Management Modules - Now including Maintenance, Leave, and PPE
-  const coreModules: ModuleItem[] = [
+// Main Page Component
+export default function HomePage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+    }
+    setLoading(false);
+  }, []);
+
+  const handleAuthSuccess = (userData: any) => {
+    setIsLoggedIn(true);
+    setUser(userData);
+    window.location.reload();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUser(null);
+    window.location.reload();
+  };
+
+  // All modules organized by category
+  const allModules: ModuleItem[] = [
+    // Core Management
     { 
       icon: Users, 
-      title: "Personnel", 
-      description: "Comprehensive employee profiles and team management with department structure and role management.", 
+      title: "Personnel Management", 
+      description: "Manage employee profiles, department structure, and team coordination.", 
       color: "indigo", 
-      checks: ["Department Structure", "Role Management", "Contact Info", "Reporting"],
+      checks: ["Employee Profiles", "Department Hierarchy", "Contact Management"],
       link: "/employees",
-      stats: `${stats.employeeCount} Active`,
-      buttonText: "Manage Personnel"
+      buttonText: "Manage Team",
+      featured: true
     },
     { 
       icon: ToolCase, 
-      title: "Assets", 
-      description: "Track equipment, maintenance, and utilization analytics across all company assets.", 
+      title: "Asset Management", 
+      description: "Track equipment lifecycle, maintenance schedules, and utilization.", 
       color: "cyan", 
-      checks: ["Maintenance Tracking", "Utilization Analytics", "Assignment Log", "Status Monitoring"],
+      checks: ["Equipment Tracking", "Maintenance History", "Utilization Analytics"],
       link: "/equipment",
-      stats: `${stats.equipmentCount} Assets`,
-      buttonText: "Manage Assets"
+      buttonText: "View Assets",
+      featured: true
     },
+    
+    // Operations
     { 
       icon: Package, 
-      title: "Inventory", 
-      description: "Track stock levels, manage supplies, and monitor inventory value with automated reordering.", 
+      title: "Inventory & Spares", 
+      description: "Manage inventory with automated reordering and stock optimization.", 
       color: "green", 
-      checks: ["Stock Tracking", "Supplier Management", "Reorder Alerts", "Cost Analysis"],
+      checks: ["Stock Levels", "Reorder Points", "Supplier Management"],
       link: "/inventory",
-      stats: `${stats.totalInventoryItems} Items`,
       buttonText: "Manage Inventory"
     },
     { 
       icon: Clock, 
       title: "Standby Roster", 
-      description: "Manage on-call schedules, emergency response teams, and shift coverage across departments.", 
+      description: "Manage on-call schedules, emergency response teams, and shift coverage.", 
       color: "orange", 
-      checks: ["Shift Management", "Emergency Response", "Contact Coordination", "Coverage Planning"],
+      checks: ["Shift Scheduling", "Contact Lists", "Emergency Response"],
       link: "/standby",
-      stats: `${stats.activeStandbyRosters} Active`,
-      buttonText: "Manage Standby"
+      buttonText: "Schedule Standby"
     },
     { 
       icon: Calculator, 
-      title: "Overtime", 
-      description: "Track, approve, and manage employee overtime requests with automated calculations and compliance tracking.", 
+      title: "Overtime Management", 
+      description: "Track, approve, and manage overtime requests.", 
       color: "purple", 
-      checks: ["Request Approval", "Payroll Integration", "Compliance Tracking", "Reporting"],
+      checks: ["Request Approval", "Payroll Integration", "Compliance Tracking"],
       link: "/overtime",
-      stats: `${stats.pendingOvertime} Pending`,
       buttonText: "Manage Overtime"
     },
-    // New modules added to core management
+    
+    // Maintenance
     { 
       icon: ClipboardCheck, 
-      title: "Maintenance", 
-      description: "Track work orders, assign technicians, and monitor maintenance activities across all equipment.", 
+      title: "Maintenance System", 
+      description: "Comprehensive maintenance management with work order tracking.", 
       color: "orange", 
-      checks: ["Work Order Tracking", "Technician Assignment", "Preventive Maintenance", "Cost Tracking"],
+      checks: ["Work Orders", "Preventive Maintenance", "Technician Assignment"],
       link: "/maintenance",
-      stats: `${stats.maintenanceOpenRequests} Open`,
-      buttonText: "Manage Maintenance"
+      buttonText: "Track Maintenance"
     },
+    { 
+      icon: AlertTriangle, 
+      title: "Breakdown Management", 
+      description: "Track equipment breakdowns, response times, and root cause analysis.", 
+      color: "red", 
+      checks: ["Incident Reports", "Response Time", "Root Cause Analysis"],
+      link: "/breakdowns",
+      buttonText: "Monitor Breakdowns"
+    },
+    { 
+      icon: Package, 
+      title: "Spares Management", 
+      description: "Manage spare parts inventory and optimize stocking levels.", 
+      color: "green", 
+      checks: ["Parts Catalog", "Usage Analytics", "Vendor Management"],
+      link: "/spares",
+      buttonText: "Manage Spares"
+    },
+    { 
+      icon: Fan, 
+      title: "Compressor Monitoring", 
+      description: "Monitor compressor performance and maintenance needs.", 
+      color: "cyan", 
+      checks: ["Performance Data", "Energy Usage", "Maintenance Logs"],
+      link: "/compressors",
+      buttonText: "Monitor Compressors"
+    },
+    
+    // Time & Leave
     { 
       icon: CalendarDays, 
       title: "Leave Management", 
-      description: "Track employee time off, approve requests, and manage leave balances across the organization.", 
+      description: "Track employee time off with automated approval workflows.", 
       color: "pink", 
-      checks: ["Request Approval", "Balance Tracking", "Calendar View", "Compliance"],
-      link: "/leave",
-      stats: `${stats.leavePending} Pending`,
+      checks: ["Leave Requests", "Balance Tracking", "Calendar View"],
+      link: "/leaves",
       buttonText: "Manage Leave"
     },
     { 
-      icon: Shield, 
-      title: "PPE Management", 
-      description: "Track protective equipment allocations, monitor expiry dates, and manage safety gear assignments.", 
-      color: "blue", 
-      checks: ["Allocation Tracking", "Expiry Monitoring", "Condition Assessment", "Safety Compliance"],
-      link: "/ppe",
-      stats: `${stats.ppeActive} Active`,
-      buttonText: "Manage PPE"
-    }
-  ];
-
-  // Engineering & Operational Support Modules
-  const operationalModules: ModuleItem[] = [
-    // Engineering Modules
-    { 
-      icon: BarChart3, 
-      title: "Operational Visualization", 
-      description: "Rich, interactive dashboards for real-time data monitoring of production, safety, and asset health.", 
-      color: "indigo", 
-      checks: ["Custom Dashboards", "KPI Tracking"],
-      link: "/visualization",
-      stats: "Live Data",
-      buttonText: "View Dashboards"
-    }, 
-    { 
-      icon: Calendar, 
-      title: "Scheduled Maintenance", 
-      description: "Proactive scheduling and tracking of mandatory preventative maintenance tasks and asset inspections.", 
-      color: "blue", 
-      checks: ["PM Planner", "Task Assignment"],
-      link: "/maintenance",
-      stats: `${stats.scheduledMaintenance} Scheduled`,
-      buttonText: "Schedule Maintenance"
-    }, 
-    { 
-      icon: Gauge, 
-      title: "Meter Readings", 
-      description: "Log and monitor utility and machine meter readings to optimize resource consumption and maintenance scheduling.", 
-      color: "cyan", 
-      checks: ["Usage History", "Alert Setup"],
-      link: "/equipment",
-      stats: "Daily Updates",
-      buttonText: "Record Readings"
-    }, 
-    { 
-      icon: Wrench, 
-      title: "Machine Availability", 
-      description: "Real-time visibility into machine status, utilization rates, and scheduled downtimes for maintenance.", 
-      color: "cyan", 
-      checks: ["Utilization Rate", "Downtime Schedule"],
-      link: "/equipment",
-      stats: `${stats.operationalEquipment}/${stats.equipmentCount} Available`,
-      buttonText: "Check Availability"
-    }, 
-    { 
-      icon: Drill, 
-      title: "Tool Crib Inventory", 
-      description: "Manage tool checkout, stock levels, calibration schedules, and replacement costs for engineering equipment.", 
-      color: "amber", 
-      checks: ["Stock Control", "Calibration Alerts"],
-      link: "/inventory",
-      stats: "500+ Tools",
-      buttonText: "Manage Tools"
-    }, 
-    { 
-      icon: FileBadge, 
-      title: "Permit-to-Work (PTW)", 
-      description: "Digital PTW system for high-risk work: review, approval, tracking, and close-out of required permits.", 
-      color: "cyan", 
-      checks: ["Digital Sign-off", "Conflict Check"],
-      link: "/reports",
-      stats: "Active Permits",
-      buttonText: "Manage Permits"
+      icon: ClockIcon, 
+      title: "Timesheet System", 
+      description: "Comprehensive time tracking with project allocation.", 
+      color: "purple", 
+      checks: ["Time Tracking", "Project Allocation", "Payroll Export"],
+      link: "/timesheets",
+      buttonText: "Track Time"
     },
     
-    // Operational Support Modules
+    // Safety & Compliance
     { 
       icon: Shield, 
-      title: "SHEQ Management", 
-      description: "Track incidents, manage inspections, report non-conformities, and handle environmental compliance documents.", 
-      color: "blue", 
-      checks: ["Incident Reporting", "Inspection Forms"],
-      link: "/ppe",
-      stats: `${stats.safetyIncidents} Incidents`,
-      buttonText: "Manage Safety"
-    },
-    { 
-      icon: Award, 
-      title: "Training & Certification", 
-      description: "Track mandatory employee certifications, expiry dates, and required refresher courses for compliance.", 
-      color: "purple", 
-      checks: ["Expiry Alerts", "Compliance Reports"],
-      link: "/training",
-      stats: "Certification Tracking",
-      buttonText: "Manage Training"
-    }, 
-    { 
-      icon: Folder, 
-      title: "Centralized Documents", 
-      description: "Securely store all company policies, compliance documents, and operational manuals in one accessible location.", 
-      color: "indigo", 
-      checks: ["Secure Storage", "Version Control"],
-      link: "/documents",
-      stats: `${stats.totalDocuments} Documents`,
-      buttonText: "Access Documents"
-    }, 
-    { 
-      icon: HardHat, 
       title: "PPE Management", 
-      description: "Track issue dates, replacement schedules, and mandatory training for all Personal Protective Equipment.", 
-      color: "purple", 
-      checks: ["Issue Tracking", "Training Logs"],
+      description: "Track protective equipment allocations and ensure safety compliance.", 
+      color: "blue", 
+      checks: ["Equipment Assignment", "Expiry Tracking", "Safety Compliance"],
       link: "/ppe",
-      stats: "Safety Compliance",
       buttonText: "Manage PPE"
-    }, 
+    },
+    
+    // Analytics & Visualization
     { 
-      icon: CalendarCheck, 
-      title: "Leave Tracker", 
-      description: "Manage employee vacation, sick leave, and holidays with integrated approval and balance tracking.", 
-      color: "green", 
-      checks: ["Balance View", "Request Approval"],
-      link: "/leave",
-      stats: "Leave Management",
-      buttonText: "Track Leave"
+      icon: Eye, 
+      title: "Visualization Dashboards", 
+      description: "Interactive dashboards with operational insights and analytics.", 
+      color: "indigo", 
+      checks: ["Real-time Dashboards", "Custom Reports", "KPI Tracking"],
+      link: "/visualization",
+      buttonText: "Explore Dashboards",
+      featured: true
     },
     { 
-      icon: FilePieChart, 
+      icon: BarChart3, 
       title: "Reports & Analytics", 
-      description: "Generate comprehensive reports, export data, and analyze trends across all operational modules.", 
-      color: "indigo", 
-      checks: ["Custom Reports", "Data Export"],
+      description: "Generate reports and export operational data for analysis.", 
+      color: "green", 
+      checks: ["Custom Reports", "Data Export", "Advanced Analytics"],
       link: "/reports",
-      stats: `${stats.monthlyReports} Reports`,
       buttonText: "Generate Reports"
     },
     { 
-      icon: Briefcase, 
-      title: "Job Allocation", 
-      description: "Assign and track tasks, monitor progress, and manage team workloads with priority-based job allocation system.", 
+      icon: FileText, 
+      title: "Document Management", 
+      description: "Centralized document management with version control.", 
       color: "blue", 
-      checks: ["Task Assignment", "Progress Tracking", "Priority Management"],
-      link: "/maintenance",
-      stats: `${stats.openWorkOrders} Active Jobs`,
-      buttonText: "Allocate Jobs"
+      checks: ["Secure Storage", "Version Control", "Access Management"],
+      link: "/documents",
+      buttonText: "Access Documents"
     },
     { 
       icon: MessageSquare, 
       title: "Notice Board", 
-      description: "Share important announcements, company updates, and critical information with all team members in real-time.", 
+      description: "Share important announcements and company updates.", 
       color: "green", 
       checks: ["Announcements", "Priority Alerts", "Archive Management"],
       link: "/noticeboard",
-      stats: `${stats.activeNotices} Active`,
       buttonText: "View Notices"
     },
   ];
 
-  // Utility function to get the correct button style based on feature color
-  const getButtonStyle = (color: ColorType) => {
-    const colorMap: Record<ColorType, string> = {
-      indigo: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30",
-      cyan: "bg-cyan-600 hover:bg-cyan-700 shadow-cyan-500/30",
-      green: "bg-green-600 hover:bg-green-700 shadow-green-500/30",
-      amber: "bg-amber-600 hover:bg-amber-700 shadow-amber-500/30",
-      blue: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30", 
-      purple: "bg-purple-600 hover:bg-purple-700 shadow-purple-500/30",
-      orange: "bg-orange-600 hover:bg-orange-700 shadow-orange-500/30",
-      pink: "bg-pink-600 hover:bg-pink-700 shadow-pink-500/30",
-    };
-    return `${colorMap[color] || colorMap.indigo} text-white`; 
-  }
+  const featuredModules = allModules.filter(module => module.featured);
+  const coreModules = allModules.filter(module => ['Personnel', 'Asset', 'Inventory', 'Overtime'].some(keyword => 
+    module.title.includes(keyword)
+  ));
+  const operationsModules = allModules.filter(module => ['Maintenance', 'Breakdown', 'Spares', 'Compressor'].some(keyword => 
+    module.title.includes(keyword)
+  ));
+  const analyticsModules = allModules.filter(module => ['Visualization', 'Reports', 'Document', 'Notice'].some(keyword => 
+    module.title.includes(keyword)
+  ));
 
-  // Utility function for icon box background color
-  const getIconBgStyle = (color: ColorType) => {
-    const bgMap: Record<ColorType, string> = {
-      indigo: "bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400",
-      cyan: "bg-cyan-50 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400",
-      green: "bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400",
-      amber: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400",
-      blue: "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400", 
-      purple: "bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400",
-      orange: "bg-orange-50 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400",
-      pink: "bg-pink-50 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400",
-    };
-    return bgMap[color] || bgMap.indigo;
-  }
-  
-  // Utility function for check mark color
-  const getCheckColor = (color: ColorType) => {
-    const checkMap: Record<ColorType, string> = {
-      indigo: "text-indigo-500",
-      cyan: "text-cyan-500",
-      green: "text-green-500",
-      amber: "text-amber-500",
-      blue: "text-blue-500",
-      purple: "text-purple-500",
-      orange: "text-orange-500",
-      pink: "text-pink-500",
-    };
-    return checkMap[color] || checkMap.indigo;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-indigo-600" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground">
-      
-      {/* Header with new module navigation */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex h-16 items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-white/90 backdrop-blur-md">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 lg:h-20 items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-700 shadow-lg">
-                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600">
+                <Shield className="h-5 w-5 text-white" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-extrabold tracking-tight text-foreground">Positive Software</span>
-                <span className="text-xs text-primary font-semibold uppercase tracking-wider hidden sm:inline-block">Office Management</span>
-              </div>
-            </div>
-            
-            {/* Desktop Navigation with new modules */}
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-semibold text-primary transition-colors hover:text-primary/80">
+              <span className="text-xl font-bold text-gray-900">MyOffice</span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-4">
+              <Link 
+                href="/" 
+                className="text-sm font-semibold text-indigo-600"
+              >
                 Home
               </Link>
-              <Link href="/employees" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Personnel
-              </Link>
-              <Link href="/equipment" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Assets
-              </Link>
-              <Link href="/overtime" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Overtime
-              </Link>
-              <Link href="/reports" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Reports
-              </Link>
-              <Link href="/inventory" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Inventory
-              </Link>
-              <Link href="/standby" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Standby
-              </Link>
-              {/* New Module Links */}
-              <Link href="/maintenance" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Maintenance
-              </Link>
-              <Link href="/leave" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Leave
-              </Link>
-              <Link href="/ppe" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                PPE
-              </Link>
-              <Link href="/documents" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Documents
-              </Link>
-              <Link href="/noticeboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                Notice Board
+              
+              {/* Core Management Dropdown */}
+              <div className="relative group">
+                <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2">
+                  Core Management
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                <div className="absolute top-full left-0 mt-2 hidden group-hover:block">
+                  <div className="w-64 bg-white rounded-lg shadow-lg border p-4">
+                    <div className="space-y-2">
+                      {coreModules.slice(0, 4).map((module) => (
+                        <NavLink key={module.title} href={module.link} icon={module.icon} label={module.title} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operations Dropdown */}
+              <div className="relative group">
+                <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2">
+                  Operations
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                <div className="absolute top-full left-0 mt-2 hidden group-hover:block">
+                  <div className="w-64 bg-white rounded-lg shadow-lg border p-4">
+                    <div className="space-y-2">
+                      {operationsModules.slice(0, 4).map((module) => (
+                        <NavLink key={module.title} href={module.link} icon={module.icon} label={module.title} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Analytics Dropdown */}
+              <div className="relative group">
+                <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2">
+                  Analytics
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                <div className="absolute top-full left-0 mt-2 hidden group-hover:block">
+                  <div className="w-64 bg-white rounded-lg shadow-lg border p-4">
+                    <div className="space-y-2">
+                      {analyticsModules.slice(0, 4).map((module) => (
+                        <NavLink key={module.title} href={module.link} icon={module.icon} label={module.title} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timesheets Link */}
+              <Link 
+                href="/timesheets" 
+                className="text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2"
+              >
+                Timesheets
               </Link>
             </nav>
 
-            {/* Auth Buttons - Desktop */}
-            <div className="hidden md:flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary" asChild>
-                <Link href="/login">
-                  <LogIn className="h-4 w-4" />
-                  Login
-                </Link>
-              </Button>
-              <Button size="sm" className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 text-white shadow-lg shadow-indigo-600/30 dark:shadow-indigo-700/50" asChild>
-                <Link href="/signup">
-                  <UserPlus className="h-4 w-4" />
-                  Sign Up
-                </Link>
-              </Button>
+            {/* Right Side Actions */}
+            <div className="flex items-center gap-3">
+              {isLoggedIn ? (
+                <div className="hidden lg:flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-indigo-100 text-indigo-600">
+                        {user?.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <div className="hidden lg:flex items-center gap-3">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href="/login">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                    <Link href="/signup">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Sign Up
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              
+              {/* Mobile Navigation */}
+              <MobileNav isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
             </div>
-
-            {/* Mobile Navigation */}
-            <MobileNav />
           </div>
         </div>
       </header>
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section 
-          className="relative py-16 md:py-28 overflow-hidden text-white" 
-          style={{ 
-            backgroundImage: `url('image_cba59d.jpg')`, 
-            backgroundSize: 'cover', 
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-          }}
-        >
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1px] z-0"></div>
-          <div className="container mx-auto px-4 sm:px-6 relative z-10">
-            <div className="mx-auto max-w-4xl text-center">
-              <Badge 
-                variant="outline" 
-                className="mb-4 px-3 py-1 sm:px-4 sm:py-2 text-sm font-semibold bg-white/10 text-indigo-200 border-indigo-400/50 backdrop-blur-sm shadow-inner"
-              >
-                <Zap className="mr-2 h-4 w-4 text-cyan-300" />
-                Trusted by {stats.employeeCount}+ active users
-              </Badge>
-              
-              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl leading-snug mb-3 drop-shadow-xl text-white">
-                The Integrated Platform for 
-                <span className="block mt-1">
-                  Modern Mine Operations
-                </span>
-              </h1>
-              
-              <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto mb-8"> 
-                Organize your information, make it easy to access with our sophisticated management platform.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="h-10 sm:h-12 px-6 sm:px-8 gap-2 bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 text-white shadow-xl shadow-indigo-600/40" asChild>
-                  <Link href="/employees">
-                    <Users className="h-5 w-5" />
-                    Get Started Now
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" className="h-10 sm:h-12 px-6 sm:px-8 gap-2 text-white border-white/50 hover:bg-white/10 hover:text-white" asChild>
-                  <Link href="/maintenance">
-                    <ClipboardCheck className="h-5 w-5" />
-                    Manage Maintenance
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Stats Overview with new modules */}
-        <section className="py-10 md:py-12 bg-background border-b border-border"> 
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto"> 
-              {statItems.map((item, index) => (
-                <Card 
-                  key={index} 
-                  className={`border border-border shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-offset-2 hover:ring-indigo-500/50 cursor-pointer`} 
-                >
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2"> 
-                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider"> 
-                      {item.label}
-                    </CardTitle>
-                    <item.icon className={`h-4 w-4 ${item.color} transition-transform group-hover:scale-110`} /> 
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0"> 
-                    <div className="text-2xl font-extrabold text-foreground"> 
-                      {item.value}
-                    </div>
-                    {item.subtitle && (
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {item.subtitle}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Core Management Modules - Now with 8 modules including new ones */}
-        <section className="py-16 md:py-28 bg-muted/50">
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12 sm:mb-16">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-4">
-                Core Management Modules
-              </h2>
-              <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Essential tools for managing your workforce, assets, inventory, standby, overtime, maintenance, leave, and PPE operations.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
-              {coreModules.map((module, index) => (
-                <Card 
-                  key={index}
-                  className="group relative p-1 shadow-2xl bg-gradient-to-br from-background to-card border border-border 
-                             transition-all duration-500 hover:border-indigo-500/50 transform hover:-translate-y-1"
-                >
-                  <CardContent className="p-6 bg-card rounded-lg h-full flex flex-col">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-full ${getIconBgStyle(module.color)} shadow-xl flex-shrink-0`}>
-                        <module.icon className="h-6 w-6" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-bold text-foreground">{module.title}</h3>
-                          <Badge className={`${getButtonStyle(module.color)} text-xs`}>
-                            {module.stats}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {module.description}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-xs text-foreground/80 mb-4 flex-grow">
-                      {module.checks.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <CheckCircle className={`h-3 w-3 ${getCheckColor(module.color)}`} />
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Button size="sm" className={`w-full gap-2 ${getButtonStyle(module.color)}`} asChild>
-                      <Link href={module.link || "#"}>
-                        {module.buttonText}
-                        <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Engineering & Operational Support Modules */}
-        <section id="operational-modules" className="py-16 md:py-28 bg-background">
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="max-w-7xl mx-auto"> 
-              <div className="text-center mb-10 sm:mb-12">
-                <h2 className="text-3xl font-bold text-foreground mb-4">
-                  Engineering & Operational Support
-                </h2>
-                <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
-                  Comprehensive systems for maintenance, safety, compliance, and operational excellence.
+        <section className="py-12 md:py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div className="space-y-8">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+                  <span className="block">Complete Office</span>
+                  <span className="block text-indigo-600">Management System</span>
+                </h1>
+                
+                <p className="text-lg text-gray-600 max-w-xl">
+                  Manage personnel, assets, operations, and analytics in one integrated platform designed for modern offices.
                 </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {isLoggedIn ? (
+                    <>
+                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                        <Link href="/dashboard">
+                          Go to Dashboard
+                          <ArrowRight className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline">
+                        <Link href="/employees">
+                          Manage Personnel
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                        <Link href="/signup">
+                          Get Started
+                          <ArrowRight className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline">
+                        <Link href="/login">
+                          Sign In
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {operationalModules.map((feature, index) => (
-                  <Card 
-                    key={index} 
-                    className={`group border border-border bg-card shadow-sm transition-all duration-300 transform hover:shadow-lg hover:border-${feature.color}-500/50`}
-                  >
-                    <CardContent className="p-6 h-full flex flex-col">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 shadow-md ${getIconBgStyle(feature.color)}`}>
-                          <feature.icon className="h-5 w-5" /> 
+              {/* Right Content - Auth Form or Welcome */}
+              <div className="relative">
+                {!isLoggedIn ? (
+                  <AuthForm onSuccess={handleAuthSuccess} />
+                ) : (
+                  <Card className="bg-white border shadow-lg">
+                    <CardContent className="p-8">
+                      <div className="text-center mb-6">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4">
+                          <Shield className="h-8 w-8 text-indigo-600" />
                         </div>
-                        <h4 className="font-bold text-foreground text-lg">{feature.title}</h4>
+                        <h3 className="text-xl font-bold text-gray-900">Welcome to MyOffice</h3>
+                        <p className="text-gray-600 mt-2">Access all modules from your dashboard</p>
                       </div>
                       
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-grow">
-                        {feature.description}
-                      </p>
-                      
-                      <div className="space-y-2 text-sm text-foreground/80 mb-6">
-                          {feature.checks.map((check, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                                <CheckCircle className={`h-4 w-4 ${getCheckColor(feature.color)}`} />
-                                <span>{check}</span>
-                            </div>
-                          ))}
-                      </div>
-
-                      <Button 
-                        size="sm" 
-                        className={`w-full gap-2 ${getButtonStyle(feature.color)}`} 
-                        asChild
-                      >
-                        <Link href={feature.link || "#"}>
-                          {feature.buttonText}
-                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      <Button asChild className="w-full" size="lg">
+                        <Link href="/dashboard">
+                          Go to Dashboard
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
                     </CardContent>
                   </Card>
-                ))}
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-background border-t border-border">
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="max-w-4xl mx-auto text-center">
-              <Card className="border border-border bg-card text-foreground shadow-2xl p-1 relative overflow-hidden">
-                <CardContent className="p-8 md:p-16 relative z-10">
-                  <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 drop-shadow-md text-foreground">
-                    Take Control of Your Operations
-                  </h2>
-                  <p className="text-base sm:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
-                    Start your free 30-day trial today. No credit card required.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button size="lg" className="h-10 sm:h-12 px-6 sm:px-8 gap-2 bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 text-white shadow-xl shadow-indigo-600/40" asChild>
-                      <Link href="/signup">
-                        <UserPlus className="h-5 w-5" />
-                        Sign Up Free
-                      </Link>
-                    </Button>
-                    <Button size="lg" variant="outline" className="h-10 sm:h-12 px-6 sm:px-8 gap-2 text-foreground border-border hover:bg-accent hover:text-primary" asChild>
-                      <Link href="/maintenance">
-                        <ClipboardCheck className="h-5 w-5" />
-                        Manage Maintenance
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Featured Modules */}
+        <section className="py-12 md:py-20 bg-white">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Complete Management Platform
+              </h2>
+              <p className="text-gray-600">
+                All the tools you need to manage your office operations efficiently
+              </p>
             </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredModules.map((module, index) => {
+                const colors = getColorClasses(module.color);
+                return (
+                  <Card key={index} className="border hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className={`p-3 rounded-lg ${colors.light}`}>
+                          <module.icon className={`h-6 w-6 ${colors.text}`} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg text-gray-900 mb-2">{module.title}</h3>
+                          <p className="text-gray-600 text-sm mb-4">{module.description}</p>
+                          
+                          <div className="space-y-2 mb-6">
+                            {module.checks.slice(0, 2).map((check, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-gray-700">{check}</span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <Button asChild variant="outline" className="w-full">
+                            <Link href={module.link}>
+                              {module.buttonText}
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* All Modules Tabs */}
+        <section className="py-12 md:py-20 bg-gray-50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                All Modules
+              </h2>
+              <p className="text-gray-600">
+                Explore all available modules for comprehensive office management
+              </p>
+            </div>
+
+            <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+              <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-4 mb-8">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="core">Core</TabsTrigger>
+                <TabsTrigger value="operations">Operations</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</Tabs></TabsList>
+
+              <TabsContent value="all" className="mt-0">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allModules.map((module, index) => {
+                    const colors = getColorClasses(module.color);
+                    return (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className={`p-3 rounded-lg ${colors.light}`}>
+                              <module.icon className={`h-6 w-6 ${colors.text}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-900 mb-2">{module.title}</h3>
+                              <p className="text-gray-600 text-sm mb-4">{module.description}</p>
+                              <Button asChild variant="ghost" size="sm">
+                                <Link href={module.link}>
+                                  Access
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="core" className="mt-0">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {coreModules.map((module, index) => {
+                    const colors = getColorClasses(module.color);
+                    return (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className={`p-3 rounded-lg ${colors.light}`}>
+                              <module.icon className={`h-6 w-6 ${colors.text}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-900 mb-2">{module.title}</h3>
+                              <Button asChild className={`${colors.bg} ${colors.hover} mt-4`}>
+                                <Link href={module.link}>
+                                  {module.buttonText}
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="operations" className="mt-0">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {operationsModules.map((module, index) => {
+                    const colors = getColorClasses(module.color);
+                    return (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className={`p-3 rounded-lg ${colors.light}`}>
+                              <module.icon className={`h-6 w-6 ${colors.text}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-900 mb-2">{module.title}</h3>
+                              <Button asChild className={`${colors.bg} ${colors.hover} mt-4`}>
+                                <Link href={module.link}>
+                                  {module.buttonText}
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="analytics" className="mt-0">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {analyticsModules.map((module, index) => {
+                    const colors = getColorClasses(module.color);
+                    return (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className={`p-3 rounded-lg ${colors.light}`}>
+                              <module.icon className={`h-6 w-6 ${colors.text}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-900 mb-2">{module.title}</h3>
+                              <Button asChild className={`${colors.bg} ${colors.hover} mt-4`}>
+                                <Link href={module.link}>
+                                  {module.buttonText}
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-12 md:py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <Card className="border bg-indigo-50">
+              <CardContent className="p-12 text-center">
+                <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                  Ready to Manage Your Office?
+                </h2>
+                
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+                  Start using MyOffice today to streamline all your office management needs
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  {isLoggedIn ? (
+                    <>
+                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                        <Link href="/dashboard">
+                          Go to Dashboard
+                          <ArrowRight className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline">
+                        <Link href="/employees">
+                          Manage Personnel
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                        <Link href="/signup">
+                          Get Started
+                          <ArrowRight className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline">
+                        <Link href="/login">
+                          Sign In
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-950 text-slate-300 border-t border-slate-900">
-        <div className="container mx-auto px-4 sm:px-6 py-10 sm:py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-indigo-600 shadow-md">
-                  <Shield className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Positive Software Inc</h3>
-                  <p className="text-sm text-indigo-400 font-medium">Enterprise Management Solutions</p>
-                </div>
-              </div>
-              <p className="text-slate-400 text-sm mb-6 max-w-md">
-                Dedicated to providing state-of-the-art software solutions that empower businesses 
-                to achieve peak operational efficiency and organization.
-              </p>
-              
-              <div className="flex flex-col space-y-2 text-sm text-slate-400">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-indigo-500" />
-                  <span>+1 (555) 123-4567</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-indigo-500" />
-                  <span>info@positivesoftware.com</span>
-                </div>
-              </div>
-            </div>
-
+      <footer className="bg-gray-900 text-gray-300">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h4 className="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-400">Navigation</h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
-                <li><Link href="/employees" className="hover:text-white transition-colors">Personnel</Link></li>
-                <li><Link href="/equipment" className="hover:text-white transition-colors">Assets</Link></li>
-                <li><Link href="/overtime" className="hover:text-white transition-colors">Overtime</Link></li>
-                <li><Link href="/reports" className="hover:text-white transition-colors">Reports</Link></li>
-                <li><Link href="/inventory" className="hover:text-white transition-colors">Inventory</Link></li>
-                <li><Link href="/standby" className="hover:text-white transition-colors">Standby</Link></li>
-                <li><Link href="/maintenance" className="hover:text-white transition-colors">Maintenance</Link></li>
-                <li><Link href="/leave" className="hover:text-white transition-colors">Leave</Link></li>
-                <li><Link href="/ppe" className="hover:text-white transition-colors">PPE</Link></li>
-                <li><Link href="/documents" className="hover:text-white transition-colors">Documents</Link></li>
-                <li><Link href="/noticeboard" className="hover:text-white transition-colors">Notice Board</Link></li>
+              <div className="flex items-center gap-3 mb-6">
+                <Shield className="h-8 w-8 text-indigo-400" />
+                <span className="text-xl font-bold text-white">MyOffice</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Complete office management platform for modern businesses.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">Platform</h4>
+              <ul className="space-y-3">
+                <li><Link href="/features" className="text-sm text-gray-400 hover:text-white">Features</Link></li>
+                <li><Link href="/modules" className="text-sm text-gray-400 hover:text-white">Modules</Link></li>
+                <li><Link href="/pricing" className="text-sm text-gray-400 hover:text-white">Pricing</Link></li>
               </ul>
             </div>
-
+            
             <div>
-              <h4 className="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-400">System Status</h4>
-              <div className="space-y-3 text-sm text-slate-400">
-                <div className="flex justify-between">
-                  <span>Open Maintenance:</span>
-                  <span className="text-orange-500 font-medium">{stats.maintenanceOpenRequests}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Pending Leave:</span>
-                  <span className="text-pink-500 font-medium">{stats.leavePending}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Active PPE:</span>
-                  <span className="text-blue-500 font-medium">{stats.ppeActive}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Active Notices:</span>
-                  <span className="text-green-500 font-medium">{stats.activeNotices}</span>
-                </div>
-                <div className="flex justify-between mt-2 pt-2 border-t border-slate-800">
-                  <span className="font-semibold text-white">Overall:</span>
-                  <span className="text-green-500 font-bold flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4" /> Operational
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-5 mt-6 pt-4 border-t border-slate-800">
-                <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  <Twitter className="h-5 w-5" />
-                </Link>
-                <Link href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  <Linkedin className="h-5 w-5" />
-                </Link>
-                <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  <Github className="h-5 w-5" />
-                </Link>
-              </div>
+              <h4 className="font-semibold text-white mb-4">Resources</h4>
+              <ul className="space-y-3">
+                <li><Link href="/documentation" className="text-sm text-gray-400 hover:text-white">Documentation</Link></li>
+                <li><Link href="/support" className="text-sm text-gray-400 hover:text-white">Support</Link></li>
+                <li><Link href="/contact" className="text-sm text-gray-400 hover:text-white">Contact</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">Company</h4>
+              <ul className="space-y-3">
+                <li><Link href="/about" className="text-sm text-gray-400 hover:text-white">About</Link></li>
+                <li><Link href="/privacy" className="text-sm text-gray-400 hover:text-white">Privacy</Link></li>
+                <li><Link href="/terms" className="text-sm text-gray-400 hover:text-white">Terms</Link></li>
+              </ul>
             </div>
           </div>
-
-          <div className="border-t border-slate-800 mt-8 pt-6 text-center text-xs sm:text-sm text-slate-500">
-            <p>&copy; {new Date().getFullYear()} Company Name Inc. All rights reserved.</p>
-            <p className="mt-1">
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link> 
-              <span className="mx-2">|</span> 
-              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+          
+          <Separator className="my-8 bg-gray-800" />
+          
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              © {new Date().getFullYear()} MyOffice. All rights reserved.
             </p>
           </div>
         </div>
