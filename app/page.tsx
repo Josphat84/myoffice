@@ -27,7 +27,10 @@ import {
   FileText,
   MessageSquare,
   FileCheck,
-  Home
+  Home,
+  Database,
+  Layers,
+  Server
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -185,28 +188,31 @@ function AuthForm() {
   );
 }
 
-// Mobile Navigation Component
+// Mobile Navigation Component with Top Nav Links
 function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogout: () => void; user: any }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const navLinks = [
+  const topNavLinks = [
+    { href: "/timesheets", label: "Timesheets", icon: ClockIcon },
+    { href: "/sheq", label: "SHEQ", icon: FileCheck },
+  ];
+
+  const allModules = [
     { href: "/employees", label: "Personnel", icon: Users },
     { href: "/equipment", label: "Assets", icon: ToolCase },
     { href: "/inventory", label: "Inventory", icon: Package },
     { href: "/overtime", label: "Overtime", icon: Calculator },
-    { href: "/leave", label: "Leave", icon: CalendarDays },
+    { href: "/leaves", label: "Leaves", icon: CalendarDays },
     { href: "/ppe", label: "PPE", icon: Shield },
     { href: "/maintenance", label: "Maintenance", icon: ClipboardCheck },
     { href: "/standby", label: "Standby", icon: Clock },
     { href: "/breakdowns", label: "Breakdowns", icon: AlertTriangle },
     { href: "/spares", label: "Spares", icon: Package },
     { href: "/compressors", label: "Compressors", icon: Fan },
-    { href: "/timesheets", label: "Timesheets", icon: ClockIcon },
     { href: "/reports", label: "Reports", icon: BarChart3 },
     { href: "/visualization", label: "Visualization", icon: Eye },
     { href: "/documents", label: "Documents", icon: FileText },
     { href: "/noticeboard", label: "Notice Board", icon: MessageSquare },
-    { href: "/sheq", label: "SHEQ", icon: FileCheck },
   ];
 
   return (
@@ -241,8 +247,25 @@ function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogo
                   </div>
                 </div>
 
+                {/* Top Nav Links - Visible in Mobile */}
+                <div className="mb-4 pb-4 border-b">
+                  <div className="flex gap-2">
+                    {topNavLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className="flex-1 flex flex-col items-center p-2 text-sm hover:bg-gray-50 rounded"
+                      >
+                        <link.icon className="h-4 w-4 text-gray-500 mb-1" />
+                        <span className="text-xs">{link.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="space-y-1">
-                  {navLinks.map((link) => (
+                  {allModules.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -481,15 +504,15 @@ export default function HomePage() {
     // Time & Leave
     { 
       icon: CalendarDays, 
-      title: "Leave", 
+      title: "Leaves", 
       description: "Employee time off management", 
       color: "pink", 
-      link: "/leave"
+      link: "/leaves"
     },
     { 
       icon: ClockIcon, 
       title: "Timesheets", 
-      description: "Time tracking and payroll", 
+      description: "Time tracking and payroll integration", 
       color: "purple", 
       link: "/timesheets"
     },
@@ -541,7 +564,7 @@ export default function HomePage() {
     },
   ];
 
-  const coreModules = allModules.filter(module => ['Personnel', 'Assets', 'Inventory', 'Overtime', 'Leave', 'PPE'].some(keyword => 
+  const coreModules = allModules.filter(module => ['Personnel', 'Assets', 'Inventory', 'Overtime', 'Leaves', 'PPE'].some(keyword => 
     module.title.includes(keyword)
   ));
   const operationsModules = allModules.filter(module => ['Maintenance', 'Breakdown', 'Spares', 'Compressor', 'Standby'].some(keyword => 
@@ -564,13 +587,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Background Image - Clear, not blurred */}
+      {/* Clear Background Image - Not Blurred */}
       <div className="fixed inset-0 z-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=80')",
-            opacity: 0.15
+            backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.1
           }}
         />
       </div>
@@ -583,7 +608,7 @@ export default function HomePage() {
               {/* Logo */}
               <Link href="/" className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded bg-indigo-600">
-                  <Shield className="h-4 w-4 text-white" />
+                  <Database className="h-4 w-4 text-white" />
                 </div>
                 <span className="font-bold text-gray-900">MyOffice</span>
               </Link>
@@ -603,7 +628,7 @@ export default function HomePage() {
                     <ChevronDown className="h-3 w-3" />
                   </button>
                   <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
-                    {coreModules.slice(0, 4).map((module) => (
+                    {coreModules.slice(0, 5).map((module) => (
                       <Link
                         key={module.link}
                         href={module.link}
@@ -622,7 +647,7 @@ export default function HomePage() {
                     <ChevronDown className="h-3 w-3" />
                   </button>
                   <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
-                    {operationsModules.slice(0, 4).map((module) => (
+                    {operationsModules.slice(0, 5).map((module) => (
                       <Link
                         key={module.link}
                         href={module.link}
@@ -635,19 +660,42 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <Link 
-                  href="/timesheets" 
-                  className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50"
-                >
-                  Timesheets
-                </Link>
+                <div className="relative group">
+                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
+                    Analytics
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
+                    {analyticsModules.map((module) => (
+                      <Link
+                        key={module.link}
+                        href={module.link}
+                        className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
+                      >
+                        <module.icon className="h-3 w-3 text-gray-500" />
+                        {module.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
 
-                <Link 
-                  href="/sheq" 
-                  className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50"
-                >
-                  SHEQ
-                </Link>
+                {/* Timesheets and SHEQ in dropdowns */}
+                <div className="relative group">
+                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
+                    Time & Safety
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
+                    <Link href="/timesheets" className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded">
+                      <ClockIcon className="h-3 w-3 text-gray-500" />
+                      Timesheets
+                    </Link>
+                    <Link href="/sheq" className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded">
+                      <FileCheck className="h-3 w-3 text-gray-500" />
+                      SHEQ
+                    </Link>
+                  </div>
+                </div>
               </nav>
 
               {/* Right Side Actions */}
@@ -715,11 +763,19 @@ export default function HomePage() {
           <section className="py-8 md:py-12">
             <div className="container mx-auto px-4">
               <div className="text-center mb-8">
+                <div className="flex justify-center items-center gap-2 mb-4">
+                  <Database className="h-6 w-6 text-indigo-600" />
+                  <Layers className="h-6 w-6 text-indigo-500" />
+                  <Server className="h-6 w-6 text-indigo-400" />
+                </div>
+                
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                  MyOffice Management System
+                  Organize Your Information
                 </h1>
                 <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-                  Complete platform for office operations, assets, personnel, and analytics
+                  Structured database architecture powers our platform to organize your personnel, 
+                  assets, operations, and analytics in one unified system. Every module connects 
+                  to a centralized database ensuring data integrity and seamless access.
                 </p>
               </div>
 
@@ -727,13 +783,13 @@ export default function HomePage() {
                 {isLoggedIn ? (
                   <>
                     <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                      <Link href="/dashboard">
-                        Dashboard
+                      <Link href="/employees">
+                        Start Managing
                       </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                      <Link href="/employees">
-                        Personnel
+                      <Link href="/leaves">
+                        Manage Leaves
                       </Link>
                     </Button>
                   </>
@@ -776,10 +832,10 @@ export default function HomePage() {
             <div className="container mx-auto px-4">
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  All Modules
+                  Database-Powered Modules
                 </h2>
                 <p className="text-gray-600 text-sm">
-                  Click any module to access its features
+                  Each module connects to our structured database architecture
                 </p>
               </div>
 
@@ -822,20 +878,25 @@ export default function HomePage() {
             <div className="container mx-auto px-4">
               <Card className="border bg-white">
                 <CardContent className="p-6 text-center">
+                  <div className="flex justify-center mb-3">
+                    <Database className="h-8 w-8 text-indigo-600" />
+                  </div>
+                  
                   <h3 className="font-bold text-gray-900 mb-3">
-                    Ready to Get Started?
+                    Database-Driven Organization
                   </h3>
                   
                   <p className="text-gray-600 text-sm mb-4">
-                    Access all modules and streamline your office operations
+                    Our structured database architecture ensures your information is organized, 
+                    connected, and easily accessible across all modules.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     {isLoggedIn ? (
                       <>
                         <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                          <Link href="/dashboard">
-                            Go to Dashboard
+                          <Link href="/employees">
+                            Manage Personnel
                           </Link>
                         </Button>
                         <Button asChild variant="outline" size="sm">
@@ -887,11 +948,11 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Shield className="h-5 w-5 text-indigo-400" />
+                  <Database className="h-5 w-5 text-indigo-400" />
                   <span className="font-bold text-white">MyOffice</span>
                 </div>
                 <p className="text-gray-400 text-xs">
-                  Office management platform
+                  Database-driven office management platform
                 </p>
               </div>
               
@@ -899,8 +960,8 @@ export default function HomePage() {
                 <h4 className="font-medium text-white mb-2 text-sm">Modules</h4>
                 <ul className="space-y-1">
                   <li><Link href="/employees" className="text-xs text-gray-400 hover:text-white">Personnel</Link></li>
+                  <li><Link href="/leaves" className="text-xs text-gray-400 hover:text-white">Leaves</Link></li>
                   <li><Link href="/sheq" className="text-xs text-gray-400 hover:text-white">SHEQ</Link></li>
-                  <li><Link href="/timesheets" className="text-xs text-gray-400 hover:text-white">Timesheets</Link></li>
                 </ul>
               </div>
               
@@ -925,7 +986,7 @@ export default function HomePage() {
             
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} MyOffice Management System
+                © {new Date().getFullYear()} MyOffice Management System • Database Architecture
               </p>
             </div>
           </div>
