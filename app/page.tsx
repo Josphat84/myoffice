@@ -23,12 +23,10 @@ import {
   Fan,
   Eye,
   ChevronDown,
-  Mail,
-  Phone,
   BarChart3,
   FileText,
   MessageSquare,
-  ChevronRight,
+  FileCheck,
   Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +35,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange' | 'pink' | 'red';
 
@@ -45,14 +50,11 @@ interface ModuleItem {
   title: string;
   description: string;
   color: ColorType;
-  checks: string[];
   link: string;
-  buttonText: string;
-  featured?: boolean;
 }
 
-// Simple Auth Form Component (since your AuthForm doesn't accept onSuccess prop)
-function SimpleAuthForm() {
+// Auth Form Component (Dialog version)
+function AuthForm() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -89,85 +91,64 @@ function SimpleAuthForm() {
   };
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border w-full">
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-indigo-600 mb-4">
-          <Shield className="h-6 w-6 md:h-8 md:w-8 text-white" />
-        </div>
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-          {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+    <div className="bg-white p-6 rounded-lg">
+      <div className="text-center mb-4">
+        <h2 className="text-lg font-bold text-gray-900">
+          {mode === 'login' ? 'Sign In' : 'Create Account'}
         </h2>
-        <p className="text-gray-600 mt-2 text-sm md:text-base">
-          {mode === 'login' 
-            ? 'Sign in to continue' 
-            : 'Start using MyOffice today'
-          }
-        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {mode === 'signup' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
             <input
               type="text"
-              placeholder="John Doe"
+              placeholder="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm md:text-base"
+              className="w-full px-3 py-2 border rounded text-sm"
               required
             />
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email Address
-          </label>
           <input
             type="email"
-            placeholder="you@example.com"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm md:text-base"
+            className="w-full px-3 py-2 border rounded text-sm"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Password
-          </label>
           <input
             type="password"
-            placeholder="••••••••"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm md:text-base"
+            className="w-full px-3 py-2 border rounded text-sm"
             required
           />
         </div>
 
         {mode === 'signup' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm md:text-base"
+              className="w-full px-3 py-2 border rounded text-sm"
               required
             />
           </div>
         )}
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="p-2 bg-red-50 text-red-700 rounded text-xs">
             {error}
           </div>
         )}
@@ -175,26 +156,26 @@ function SimpleAuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 md:py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm md:text-base"
+          className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 disabled:opacity-50 text-sm"
         >
           {loading ? (
             <span className="flex items-center justify-center">
-              <div className="animate-spin h-4 w-4 md:h-5 md:w-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+              <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full mr-2" />
               {mode === 'login' ? 'Signing in...' : 'Creating account...'}
             </span>
           ) : (
-            mode === 'login' ? 'Sign In' : 'Create Account'
+            mode === 'login' ? 'Sign In' : 'Sign Up'
           )}
         </button>
 
-        <div className="text-center pt-2">
+        <div className="text-center">
           <button
             type="button"
             onClick={toggleMode}
-            className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            className="text-xs text-indigo-600 hover:underline"
           >
             {mode === 'login' 
-              ? "Don't have an account? Sign up" 
+              ? "Need an account? Sign up" 
               : "Already have an account? Sign in"
             }
           </button>
@@ -225,13 +206,14 @@ function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogo
     { href: "/visualization", label: "Visualization", icon: Eye },
     { href: "/documents", label: "Documents", icon: FileText },
     { href: "/noticeboard", label: "Notice Board", icon: MessageSquare },
+    { href: "/sheq", label: "SHEQ", icon: FileCheck },
   ];
 
   return (
     <div className="lg:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        className="p-2 rounded text-gray-600 hover:bg-gray-100"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -240,24 +222,21 @@ function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogo
       {isOpen && (
         <div className="fixed inset-0 top-16 z-50">
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+            className="absolute inset-0 bg-black/50" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute right-0 top-0 h-full w-full max-w-xs bg-white shadow-2xl animate-in slide-in-from-right duration-300 overflow-y-auto">
+          <div className="absolute right-0 top-0 h-full w-full max-w-xs bg-white shadow-lg overflow-y-auto">
             <div className="flex flex-col h-full">
               <div className="p-4">
-                <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 mb-4 p-2 bg-gray-50 rounded">
                   <Avatar>
-                    <AvatarFallback className="bg-indigo-100 text-indigo-600">
-                      {isLoggedIn ? (user?.name?.charAt(0) || 'U') : 'M'}
+                    <AvatarFallback className="bg-indigo-600 text-white text-sm">
+                      {isLoggedIn ? (user?.name?.charAt(0) || 'U') : 'MO'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {isLoggedIn ? (user?.name || 'User') : 'MyOffice'}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {isLoggedIn ? (user?.email || '') : 'Management System'}
                     </p>
                   </div>
                 </div>
@@ -268,43 +247,45 @@ function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogo
                       key={link.href}
                       href={link.href}
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 hover:text-gray-900 transition-colors"
+                      className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
                     >
                       <link.icon className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium text-sm">{link.label}</span>
+                      {link.label}
                     </Link>
                   ))}
                 </div>
               </div>
               
               <div className="mt-auto p-4 border-t">
-                {isLoggedIn ? (
-                  <Button 
-                    onClick={() => {
-                      onLogout();
-                      setIsOpen(false);
-                    }}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Sign Out
-                  </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-700">
-                      <Link href="/signup" onClick={() => setIsOpen(false)}>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Sign Up
-                      </Link>
+                <div className="space-y-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-sm">
+                        <LogIn className="h-3 w-3 mr-2" />
+                        Sign In / Sign Up
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle className="text-sm">MyOffice Access</DialogTitle>
+                      </DialogHeader>
+                      <AuthForm />
+                    </DialogContent>
+                  </Dialog>
+                  
+                  {isLoggedIn && (
+                    <Button 
+                      onClick={() => {
+                        onLogout();
+                        setIsOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full text-sm"
+                    >
+                      Sign Out
                     </Button>
-                    <Button asChild variant="outline" className="w-full">
-                      <Link href="/login" onClick={() => setIsOpen(false)}>
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Sign In
-                      </Link>
-                    </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -375,6 +356,33 @@ function getColorClasses(color: ColorType) {
   return colorMap[color] || colorMap.indigo;
 }
 
+// Small Module Card Component
+function ModuleCard({ module }: { module: ModuleItem }) {
+  const colors = getColorClasses(module.color);
+
+  return (
+    <Link href={module.link} className="block">
+      <Card className="hover:shadow transition-all duration-200 border h-full">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className={`p-2 rounded-lg ${colors.light} flex-shrink-0`}>
+              <module.icon className={`h-4 w-4 ${colors.text}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-gray-900 text-sm mb-1 truncate">
+                {module.title}
+              </h3>
+              <p className="text-gray-600 text-xs line-clamp-2">
+                {module.description}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 // Main Page Component
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -383,7 +391,6 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
@@ -408,167 +415,136 @@ export default function HomePage() {
     { 
       icon: Users, 
       title: "Personnel", 
-      description: "Manage employee profiles and team coordination.", 
+      description: "Employee profiles and team management", 
       color: "indigo", 
-      checks: ["Employee Profiles", "Department Structure", "Contact Management"],
-      link: "/employees",
-      buttonText: "Manage",
-      featured: true
+      link: "/employees"
     },
     { 
       icon: ToolCase, 
       title: "Assets", 
-      description: "Track equipment lifecycle and maintenance schedules.", 
+      description: "Equipment tracking and maintenance", 
       color: "cyan", 
-      checks: ["Equipment Tracking", "Maintenance History", "Utilization"],
-      link: "/equipment",
-      buttonText: "View",
-      featured: true
+      link: "/equipment"
     },
-    
-    // Operations
     { 
       icon: Package, 
       title: "Inventory", 
-      description: "Manage inventory with automated reordering.", 
+      description: "Stock management and reordering", 
       color: "green", 
-      checks: ["Stock Levels", "Reorder Points", "Supplier Management"],
-      link: "/inventory",
-      buttonText: "Manage"
+      link: "/inventory"
     },
     { 
       icon: Clock, 
       title: "Standby", 
-      description: "Manage on-call schedules and shift coverage.", 
+      description: "On-call schedules and coverage", 
       color: "orange", 
-      checks: ["Shift Scheduling", "Contact Lists", "Emergency Response"],
-      link: "/standby",
-      buttonText: "Schedule"
+      link: "/standby"
     },
     { 
       icon: Calculator, 
       title: "Overtime", 
-      description: "Track and manage overtime requests.", 
+      description: "Track and approve overtime requests", 
       color: "purple", 
-      checks: ["Request Approval", "Payroll Integration"],
-      link: "/overtime",
-      buttonText: "Manage"
+      link: "/overtime"
     },
     
     // Maintenance
     { 
       icon: ClipboardCheck, 
       title: "Maintenance", 
-      description: "Comprehensive maintenance management system.", 
+      description: "Work orders and preventive maintenance", 
       color: "orange", 
-      checks: ["Work Orders", "Preventive Maintenance", "Technician Assignment"],
-      link: "/maintenance",
-      buttonText: "Track"
+      link: "/maintenance"
     },
     { 
       icon: AlertTriangle, 
       title: "Breakdowns", 
-      description: "Track equipment breakdowns and response times.", 
+      description: "Track equipment breakdowns", 
       color: "red", 
-      checks: ["Incident Reports", "Response Time", "Root Cause"],
-      link: "/breakdowns",
-      buttonText: "Monitor"
+      link: "/breakdowns"
     },
     { 
       icon: Package, 
       title: "Spares", 
-      description: "Manage spare parts inventory and stock levels.", 
+      description: "Spare parts inventory management", 
       color: "green", 
-      checks: ["Parts Catalog", "Usage Analytics", "Vendor Management"],
-      link: "/spares",
-      buttonText: "Manage"
+      link: "/spares"
     },
     { 
       icon: Fan, 
       title: "Compressors", 
-      description: "Monitor compressor performance and maintenance.", 
+      description: "Monitor compressor performance", 
       color: "cyan", 
-      checks: ["Performance Data", "Energy Usage", "Maintenance Logs"],
-      link: "/compressors",
-      buttonText: "Monitor"
+      link: "/compressors"
     },
     
     // Time & Leave
     { 
       icon: CalendarDays, 
       title: "Leave", 
-      description: "Track employee time off and approval workflows.", 
+      description: "Employee time off management", 
       color: "pink", 
-      checks: ["Leave Requests", "Balance Tracking", "Calendar View"],
-      link: "/leave",
-      buttonText: "Manage"
+      link: "/leave"
     },
     { 
       icon: ClockIcon, 
       title: "Timesheets", 
-      description: "Comprehensive time tracking with project allocation.", 
+      description: "Time tracking and payroll", 
       color: "purple", 
-      checks: ["Time Tracking", "Project Allocation", "Payroll Export"],
-      link: "/timesheets",
-      buttonText: "Track"
+      link: "/timesheets"
     },
     
     // Safety & Compliance
     { 
       icon: Shield, 
       title: "PPE", 
-      description: "Track protective equipment and safety compliance.", 
+      description: "Protective equipment tracking", 
       color: "blue", 
-      checks: ["Equipment Assignment", "Expiry Tracking", "Safety Compliance"],
-      link: "/ppe",
-      buttonText: "Manage"
+      link: "/ppe"
+    },
+    { 
+      icon: FileCheck, 
+      title: "SHEQ", 
+      description: "Safety, Health, Environment & Quality", 
+      color: "green", 
+      link: "/sheq"
     },
     
-    // Analytics & Visualization
+    // Analytics
     { 
       icon: Eye, 
       title: "Visualization", 
-      description: "Interactive dashboards with operational insights.", 
+      description: "Interactive dashboards and reports", 
       color: "indigo", 
-      checks: ["Real-time Dashboards", "Custom Reports", "KPI Tracking"],
-      link: "/visualization",
-      buttonText: "Explore",
-      featured: true
+      link: "/visualization"
     },
     { 
       icon: BarChart3, 
       title: "Reports", 
-      description: "Generate reports and export operational data.", 
+      description: "Generate operational reports", 
       color: "green", 
-      checks: ["Custom Reports", "Data Export", "Analytics"],
-      link: "/reports",
-      buttonText: "Generate"
+      link: "/reports"
     },
     { 
       icon: FileText, 
       title: "Documents", 
-      description: "Centralized document management system.", 
+      description: "Centralized document storage", 
       color: "blue", 
-      checks: ["Secure Storage", "Version Control", "Access Management"],
-      link: "/documents",
-      buttonText: "Access"
+      link: "/documents"
     },
     { 
       icon: MessageSquare, 
       title: "Notice Board", 
-      description: "Share important announcements and updates.", 
+      description: "Company announcements", 
       color: "green", 
-      checks: ["Announcements", "Priority Alerts", "Archive"],
-      link: "/noticeboard",
-      buttonText: "View"
+      link: "/noticeboard"
     },
   ];
 
-  const featuredModules = allModules.filter(module => module.featured);
-  const coreModules = allModules.filter(module => ['Personnel', 'Asset', 'Inventory', 'Overtime'].some(keyword => 
+  const coreModules = allModules.filter(module => ['Personnel', 'Assets', 'Inventory', 'Overtime', 'Leave', 'PPE'].some(keyword => 
     module.title.includes(keyword)
   ));
-  const operationsModules = allModules.filter(module => ['Maintenance', 'Breakdown', 'Spares', 'Compressor'].some(keyword => 
+  const operationsModules = allModules.filter(module => ['Maintenance', 'Breakdown', 'Spares', 'Compressor', 'Standby'].some(keyword => 
     module.title.includes(keyword)
   ));
   const analyticsModules = allModules.filter(module => ['Visualization', 'Reports', 'Document', 'Notice'].some(keyword => 
@@ -578,9 +554,9 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-indigo-600" />
-          <p className="text-gray-600">Loading...</p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-6 w-6 animate-spin rounded-full border-3 border-gray-300 border-t-indigo-600" />
+          <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -588,488 +564,373 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur-md">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-gray-900 hidden sm:inline">MyOffice</span>
-              <span className="text-lg font-bold text-gray-900 sm:hidden">MO</span>
-            </Link>
+      {/* Background Image - Clear, not blurred */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=80')",
+            opacity: 0.15
+          }}
+        />
+      </div>
 
-            {/* Desktop Navigation - Hidden on mobile */}
-            <nav className="hidden lg:flex items-center gap-4">
-              <Link 
-                href="/" 
-                className="text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-2"
-              >
-                Home
-              </Link>
-              
-              {/* Core Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2">
-                  Core
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-                <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-white rounded-lg shadow-lg border p-2">
-                  {coreModules.slice(0, 4).map((module) => (
-                    <Link
-                      key={module.link}
-                      href={module.link}
-                      className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
-                    >
-                      <module.icon className="h-4 w-4 text-gray-500" />
-                      {module.title}
-                    </Link>
-                  ))}
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur-sm">
+          <div className="container mx-auto px-4">
+            <div className="flex h-14 items-center justify-between">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded bg-indigo-600">
+                  <Shield className="h-4 w-4 text-white" />
                 </div>
-              </div>
-
-              {/* Operations Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2">
-                  Operations
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-                <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-white rounded-lg shadow-lg border p-2">
-                  {operationsModules.slice(0, 4).map((module) => (
-                    <Link
-                      key={module.link}
-                      href={module.link}
-                      className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
-                    >
-                      <module.icon className="h-4 w-4 text-gray-500" />
-                      {module.title}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Timesheets Link */}
-              <Link 
-                href="/timesheets" 
-                className="text-sm text-gray-700 hover:text-gray-900 font-medium px-3 py-2"
-              >
-                Timesheets
+                <span className="font-bold text-gray-900">MyOffice</span>
               </Link>
-            </nav>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center gap-3">
-              {isLoggedIn ? (
-                <div className="hidden lg:flex items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-indigo-100 text-indigo-600">
-                        {user?.name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="hidden xl:block">
-                      <p className="text-sm font-medium">{user?.name || 'User'}</p>
-                    </div>
+              {/* Desktop Navigation */}
+              <nav className="hidden lg:flex items-center gap-2">
+                <Link 
+                  href="/" 
+                  className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50"
+                >
+                  Home
+                </Link>
+                
+                <div className="relative group">
+                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
+                    Core
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
+                    {coreModules.slice(0, 4).map((module) => (
+                      <Link
+                        key={module.link}
+                        href={module.link}
+                        className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
+                      >
+                        <module.icon className="h-3 w-3 text-gray-500" />
+                        {module.title}
+                      </Link>
+                    ))}
                   </div>
-                  <Button 
-                    onClick={handleLogout}
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    Sign Out
-                  </Button>
                 </div>
-              ) : (
-                <div className="hidden lg:flex items-center gap-3">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href="/login">
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                    <Link href="/signup">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Sign Up
-                    </Link>
-                  </Button>
+
+                <div className="relative group">
+                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
+                    Operations
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
+                    {operationsModules.slice(0, 4).map((module) => (
+                      <Link
+                        key={module.link}
+                        href={module.link}
+                        className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
+                      >
+                        <module.icon className="h-3 w-3 text-gray-500" />
+                        {module.title}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              )}
-              
-              {/* Mobile Navigation */}
-              <MobileNav isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
+
+                <Link 
+                  href="/timesheets" 
+                  className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50"
+                >
+                  Timesheets
+                </Link>
+
+                <Link 
+                  href="/sheq" 
+                  className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50"
+                >
+                  SHEQ
+                </Link>
+              </nav>
+
+              {/* Right Side Actions */}
+              <div className="flex items-center gap-2">
+                {isLoggedIn ? (
+                  <div className="hidden lg:flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarFallback className="bg-indigo-100 text-indigo-600 text-xs">
+                          {user?.name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm text-gray-700">{user?.name || 'User'}</span>
+                    </div>
+                    <Button 
+                      onClick={handleLogout}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-600 hover:text-gray-900"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="hidden lg:flex items-center gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-sm">
+                          <LogIn className="h-3 w-3 mr-1" />
+                          Sign In
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="text-sm">Sign In</DialogTitle>
+                        </DialogHeader>
+                        <AuthForm />
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-sm">
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          Sign Up
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="text-sm">Create Account</DialogTitle>
+                        </DialogHeader>
+                        <AuthForm />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+                
+                <MobileNav isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="flex-1">
-        {/* Hero Section - Mobile Optimized */}
-        <section className="py-8 md:py-12 lg:py-20">
-          <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              {/* Left Content */}
-              <div className="space-y-6">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-                  <span className="block">Complete Office</span>
-                  <span className="block text-indigo-600">Management System</span>
+        <main className="flex-1">
+          {/* Hero Section */}
+          <section className="py-8 md:py-12">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-8">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                  MyOffice Management System
                 </h1>
-                
-                <p className="text-base sm:text-lg text-gray-600">
-                  Manage personnel, assets, operations, and analytics in one integrated platform.
+                <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+                  Complete platform for office operations, assets, personnel, and analytics
                 </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {isLoggedIn ? (
-                    <>
-                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                        <Link href="/dashboard">
-                          Dashboard
-                          <ArrowRight className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button asChild size="lg" variant="outline">
-                        <Link href="/employees">
-                          Manage Personnel
-                        </Link>
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                        <Link href="/signup">
-                          Get Started
-                          <ArrowRight className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button asChild size="lg" variant="outline">
-                        <Link href="/login">
-                          Sign In
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
               </div>
 
-              {/* Right Content - Auth Form or Welcome */}
-              <div className="relative mt-8 lg:mt-0">
-                {!isLoggedIn ? (
-                  <SimpleAuthForm />
+              <div className="flex justify-center gap-3 mb-8">
+                {isLoggedIn ? (
+                  <>
+                    <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                      <Link href="/dashboard">
+                        Dashboard
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/employees">
+                        Personnel
+                      </Link>
+                    </Button>
+                  </>
                 ) : (
-                  <Card className="bg-white border shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="text-center mb-6">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 mb-4">
-                          <Shield className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900">Welcome to MyOffice</h3>
-                        <p className="text-gray-600 mt-2 text-sm">Access all modules from your dashboard</p>
-                      </div>
-                      
-                      <Button asChild className="w-full" size="lg">
-                        <Link href="/dashboard">
-                          Go to Dashboard
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                          Get Started
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="text-sm">Get Started</DialogTitle>
+                        </DialogHeader>
+                        <AuthForm />
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          Sign In
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="text-sm">Sign In</DialogTitle>
+                        </DialogHeader>
+                        <AuthForm />
+                      </DialogContent>
+                    </Dialog>
+                  </>
                 )}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Featured Modules - Mobile Responsive */}
-        <section className="py-8 md:py-12 lg:py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-8 lg:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                Core Modules
-              </h2>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Essential tools for managing your office operations
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {featuredModules.map((module, index) => {
-                const colors = getColorClasses(module.color);
-                return (
-                  <Card key={index} className="border hover:shadow-md transition-shadow">
-                    <CardContent className="p-4 sm:p-6">
-                      <div className="flex items-start gap-3 sm:gap-4">
-                        <div className={`p-2 sm:p-3 rounded-lg ${colors.light} flex-shrink-0`}>
-                          <module.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${colors.text}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-gray-900 text-sm sm:text-base mb-1 sm:mb-2 truncate">
-                            {module.title}
-                          </h3>
-                          <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
-                            {module.description}
-                          </p>
-                          
-                          <Button asChild variant="outline" size="sm" className="w-full text-xs sm:text-sm">
-                            <Link href={module.link}>
-                              {module.buttonText}
-                              <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* All Modules Tabs - Mobile Responsive */}
-        <section className="py-8 md:py-12 lg:py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-8 lg:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                All Modules
-              </h2>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Explore all available modules for comprehensive office management
-              </p>
-            </div>
-
-            <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 mb-6">
-                <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-                <TabsTrigger value="core" className="text-xs sm:text-sm">Core</TabsTrigger>
-                <TabsTrigger value="operations" className="text-xs sm:text-sm">Operations</TabsTrigger>
-                <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="all" className="mt-0">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {allModules.map((module, index) => {
-                    const colors = getColorClasses(module.color);
-                    return (
-                      <Card key={index} className="hover:shadow-sm transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${colors.light} flex-shrink-0`}>
-                              <module.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${colors.text}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-gray-900 text-sm truncate">
-                                {module.title}
-                              </h3>
-                              <p className="text-gray-600 text-xs line-clamp-1 mt-1">
-                                {module.description}
-                              </p>
-                            </div>
-                            <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
-                              <Link href={module.link}>
-                                <ArrowRight className="h-3 w-3" />
-                              </Link>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="core" className="mt-0">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {coreModules.map((module, index) => {
-                    const colors = getColorClasses(module.color);
-                    return (
-                      <Card key={index} className="hover:shadow-sm transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${colors.light}`}>
-                              <module.icon className={`h-4 w-4 ${colors.text}`} />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-bold text-gray-900 text-sm">
-                                {module.title}
-                              </h3>
-                            </div>
-                            <Button asChild size="sm" className={`${colors.bg} ${colors.hover}`}>
-                              <Link href={module.link}>
-                                Open
-                              </Link>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="operations" className="mt-0">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {operationsModules.map((module, index) => {
-                    const colors = getColorClasses(module.color);
-                    return (
-                      <Card key={index} className="hover:shadow-sm transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${colors.light}`}>
-                              <module.icon className={`h-4 w-4 ${colors.text}`} />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-bold text-gray-900 text-sm">
-                                {module.title}
-                              </h3>
-                            </div>
-                            <Button asChild size="sm" className={`${colors.bg} ${colors.hover}`}>
-                              <Link href={module.link}>
-                                Open
-                              </Link>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="analytics" className="mt-0">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {analyticsModules.map((module, index) => {
-                    const colors = getColorClasses(module.color);
-                    return (
-                      <Card key={index} className="hover:shadow-sm transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${colors.light}`}>
-                              <module.icon className={`h-4 w-4 ${colors.text}`} />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-bold text-gray-900 text-sm">
-                                {module.title}
-                              </h3>
-                            </div>
-                            <Button asChild size="sm" className={`${colors.bg} ${colors.hover}`}>
-                              <Link href={module.link}>
-                                Open
-                              </Link>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </section>
-
-        {/* CTA Section - Mobile Responsive */}
-        <section className="py-8 md:py-12 lg:py-20">
-          <div className="container mx-auto px-4">
-            <Card className="border bg-indigo-50">
-              <CardContent className="p-6 md:p-8 lg:p-12 text-center">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                  Ready to Manage Your Office?
+          {/* All Modules Tabs */}
+          <section className="pb-8 md:pb-12">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  All Modules
                 </h2>
-                
-                <p className="text-gray-600 text-sm sm:text-base mb-6 md:mb-8">
-                  Start using MyOffice today to streamline all your office management needs
+                <p className="text-gray-600 text-sm">
+                  Click any module to access its features
                 </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  {isLoggedIn ? (
-                    <>
-                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                        <Link href="/dashboard">
-                          Dashboard
-                          <ArrowRight className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button asChild size="lg" variant="outline">
-                        <Link href="/employees">
-                          Personnel
-                        </Link>
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button asChild size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                        <Link href="/signup">
-                          Get Started
-                          <ArrowRight className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button asChild size="lg" variant="outline">
-                        <Link href="/login">
-                          Sign In
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer - Mobile Responsive */}
-      <footer className="bg-gray-900 text-gray-300">
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-3 mb-4">
-                <Shield className="h-6 w-6 md:h-8 md:w-8 text-indigo-400" />
-                <span className="text-lg md:text-xl font-bold text-white">MyOffice</span>
               </div>
-              <p className="text-gray-400 text-xs md:text-sm">
-                Complete office management platform.
+
+              <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+                <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 mb-6">
+                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                  <TabsTrigger value="core" className="text-xs">Core</TabsTrigger>
+                  <TabsTrigger value="operations" className="text-xs">Operations</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="all" className="mt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {allModules.map((module, index) => (
+                      <ModuleCard key={index} module={module} />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="core" className="mt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {coreModules.map((module, index) => (
+                      <ModuleCard key={index} module={module} />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="operations" className="mt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {operationsModules.map((module, index) => (
+                      <ModuleCard key={index} module={module} />
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </section>
+
+          {/* CTA Section */}
+          <section className="py-8">
+            <div className="container mx-auto px-4">
+              <Card className="border bg-white">
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-bold text-gray-900 mb-3">
+                    Ready to Get Started?
+                  </h3>
+                  
+                  <p className="text-gray-600 text-sm mb-4">
+                    Access all modules and streamline your office operations
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    {isLoggedIn ? (
+                      <>
+                        <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                          <Link href="/dashboard">
+                            Go to Dashboard
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                          <Link href="/sheq">
+                            SHEQ Module
+                          </Link>
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                              Get Started
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-sm">
+                            <DialogHeader>
+                              <DialogTitle className="text-sm">Get Started</DialogTitle>
+                            </DialogHeader>
+                            <AuthForm />
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Sign In
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-sm">
+                            <DialogHeader>
+                              <DialogTitle className="text-sm">Sign In</DialogTitle>
+                            </DialogHeader>
+                            <AuthForm />
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </main>
+
+        {/* Footer */}
+        <footer className="bg-gray-900 text-gray-300 border-t">
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="h-5 w-5 text-indigo-400" />
+                  <span className="font-bold text-white">MyOffice</span>
+                </div>
+                <p className="text-gray-400 text-xs">
+                  Office management platform
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-white mb-2 text-sm">Modules</h4>
+                <ul className="space-y-1">
+                  <li><Link href="/employees" className="text-xs text-gray-400 hover:text-white">Personnel</Link></li>
+                  <li><Link href="/sheq" className="text-xs text-gray-400 hover:text-white">SHEQ</Link></li>
+                  <li><Link href="/timesheets" className="text-xs text-gray-400 hover:text-white">Timesheets</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-white mb-2 text-sm">Resources</h4>
+                <ul className="space-y-1">
+                  <li><Link href="/support" className="text-xs text-gray-400 hover:text-white">Support</Link></li>
+                  <li><Link href="/contact" className="text-xs text-gray-400 hover:text-white">Contact</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-white mb-2 text-sm">Legal</h4>
+                <ul className="space-y-1">
+                  <li><Link href="/privacy" className="text-xs text-gray-400 hover:text-white">Privacy</Link></li>
+                  <li><Link href="/terms" className="text-xs text-gray-400 hover:text-white">Terms</Link></li>
+                </ul>
+              </div>
+            </div>
+            
+            <Separator className="my-4 bg-gray-800" />
+            
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                © {new Date().getFullYear()} MyOffice Management System
               </p>
             </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-3 text-sm md:text-base">Platform</h4>
-              <ul className="space-y-2">
-                <li><Link href="/features" className="text-xs md:text-sm text-gray-400 hover:text-white">Features</Link></li>
-                <li><Link href="/modules" className="text-xs md:text-sm text-gray-400 hover:text-white">Modules</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-3 text-sm md:text-base">Resources</h4>
-              <ul className="space-y-2">
-                <li><Link href="/support" className="text-xs md:text-sm text-gray-400 hover:text-white">Support</Link></li>
-                <li><Link href="/contact" className="text-xs md:text-sm text-gray-400 hover:text-white">Contact</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-3 text-sm md:text-base">Legal</h4>
-              <ul className="space-y-2">
-                <li><Link href="/privacy" className="text-xs md:text-sm text-gray-400 hover:text-white">Privacy</Link></li>
-                <li><Link href="/terms" className="text-xs md:text-sm text-gray-400 hover:text-white">Terms</Link></li>
-              </ul>
-            </div>
           </div>
-          
-          <Separator className="my-6 md:my-8 bg-gray-800" />
-          
-          <div className="text-center">
-            <p className="text-xs md:text-sm text-gray-500">
-              © {new Date().getFullYear()} MyOffice. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
