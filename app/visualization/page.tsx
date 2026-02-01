@@ -80,11 +80,11 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Dynamically import Plotly with no SSR - use require to avoid type issues
+// Dynamically import Plotly with no SSR
 const Plot = dynamic(() => import('react-plotly.js'), { 
   ssr: false,
   loading: () => <div className="h-full w-full flex items-center justify-center">Loading chart...</div>
-}) as any; // Use 'as any' to bypass TypeScript for now
+}) as any;
 
 // ===== TYPES =====
 interface PageOption {
@@ -97,17 +97,19 @@ interface PageOption {
   link: string;
 }
 
+// Flexible PlotData interface to handle different chart types
 interface PlotData {
   type: string;
   mode?: string;
-  x: any[];
-  y: any[];
+  x?: any[];
+  y?: any[];
   line?: { color: string };
   marker?: { 
-    color: string | any[];
+    color?: string | any[];
     size?: number;
     colorscale?: any[][];
     showscale?: boolean;
+    colors?: string[];
   };
   fill?: string;
   fillcolor?: string;
@@ -119,6 +121,7 @@ interface PlotData {
   theta?: string[];
   z?: number[][];
   parents?: string[];
+  [key: string]: any; // Allow additional properties
 }
 
 interface PlotLayout {
@@ -635,7 +638,7 @@ export default function VisualizationPage() {
             x: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
             y: Array.from({ length: 30 }, () => Math.random() * 100),
             line: { color }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -652,7 +655,7 @@ export default function VisualizationPage() {
             x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
             y: Array.from({ length: 6 }, () => Math.random() * 100),
             marker: { color }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -669,7 +672,7 @@ export default function VisualizationPage() {
             marker: { 
               colors: [color, `${color}80`, `${color}60`, `${color}40`, `${color}20`]
             }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -693,7 +696,7 @@ export default function VisualizationPage() {
               ],
               showscale: true
             }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 500,
@@ -715,7 +718,7 @@ export default function VisualizationPage() {
               [0, color],
               [1, `${color}80`]
             ]
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400
@@ -737,7 +740,7 @@ export default function VisualizationPage() {
                 { range: [80, 100], color: "#10b981" }
               ]
             }
-          } as PlotData],
+          }],
           layout: {
             height: 400
           }
@@ -750,7 +753,7 @@ export default function VisualizationPage() {
             theta: ['Metric A', 'Metric B', 'Metric C', 'Metric D'],
             fill: 'toself',
             marker: { color }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -772,7 +775,7 @@ export default function VisualizationPage() {
             marker: { 
               colors: [color, `${color}80`, `${color}60`, `${color}40`, `${color}20`, `${color}10`, `${color}90`, `${color}70`]
             }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 500
@@ -786,7 +789,7 @@ export default function VisualizationPage() {
             box: { visible: true },
             line: { color },
             fillcolor: `${color}20`
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400
@@ -802,7 +805,7 @@ export default function VisualizationPage() {
             fill: 'tozeroy',
             line: { color },
             fillcolor: `${color}20`
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -817,7 +820,7 @@ export default function VisualizationPage() {
             x: Array.from({ length: 100 }, () => Math.random() * 100),
             marker: { color },
             nbinsx: 20
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -836,7 +839,7 @@ export default function VisualizationPage() {
               color,
               size: 10
             }
-          } as PlotData],
+          }],
           layout: {
             title,
             height: 400,
@@ -851,7 +854,7 @@ export default function VisualizationPage() {
             x: [1, 2, 3], 
             y: [1, 2, 3],
             marker: { color }
-          } as PlotData],
+          }],
           layout: { 
             title, 
             height: 400 
