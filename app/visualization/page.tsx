@@ -1,7 +1,6 @@
-// app/visualization/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -377,8 +376,8 @@ const getPageConfig = (pageId: string) => {
   };
 };
 
-// ===== MAIN COMPONENT =====
-export default function VisualizationPage() {
+// ===== MAIN COMPONENT CONTENT =====
+function VisualizationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -1871,5 +1870,21 @@ export default function VisualizationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ===== MAIN COMPONENT WITH SUSPENSE =====
+export default function VisualizationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-3 border-gray-300 border-t-blue-600" />
+          <p className="text-gray-500">Loading visualizations...</p>
+        </div>
+      </div>
+    }>
+      <VisualizationContent />
+    </Suspense>
   );
 }
