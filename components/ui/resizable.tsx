@@ -2,15 +2,29 @@
 "use client"
 
 import { GripVertical } from "lucide-react"
-import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels"
+// Try different import strategies
+import ResizablePrimitive from "react-resizable-panels"
 
 import { cn } from "@/lib/utils"
+
+// Check if PanelGroup exists, otherwise use a different approach
+const PanelGroupComponent = (ResizablePrimitive as any).PanelGroup || 
+  (ResizablePrimitive as any).default?.PanelGroup || 
+  ResizablePrimitive;
+
+const PanelComponent = (ResizablePrimitive as any).Panel || 
+  (ResizablePrimitive as any).default?.Panel || 
+  ResizablePrimitive;
+
+const PanelResizeHandleComponent = (ResizablePrimitive as any).PanelResizeHandle || 
+  (ResizablePrimitive as any).default?.PanelResizeHandle || 
+  ResizablePrimitive;
 
 const ResizablePanelGroup = ({
   className,
   ...props
-}: React.ComponentProps<typeof PanelGroup>) => (
-  <PanelGroup
+}: React.ComponentProps<typeof PanelGroupComponent>) => (
+  <PanelGroupComponent
     className={cn(
       "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
       className
@@ -19,16 +33,16 @@ const ResizablePanelGroup = ({
   />
 )
 
-const ResizablePanel = Panel
+const ResizablePanel = PanelComponent
 
 const ResizableHandle = ({
   withHandle,
   className,
   ...props
-}: React.ComponentProps<typeof PanelResizeHandle> & {
+}: React.ComponentProps<typeof PanelResizeHandleComponent> & {
   withHandle?: boolean
 }) => (
-  <PanelResizeHandle
+  <PanelResizeHandleComponent
     className={cn(
       "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
       className
@@ -40,7 +54,7 @@ const ResizableHandle = ({
         <GripVertical className="h-2.5 w-2.5" />
       </div>
     )}
-  </PanelResizeHandle>
+  </PanelResizeHandleComponent>
 )
 
 export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
