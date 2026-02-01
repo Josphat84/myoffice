@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,2045 +8,1528 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { 
   Calendar,
-  Download,
-  Calculator,
-  Users,
-  FileText,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  Plus,
-  Settings,
-  Zap,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  Filter,
   Search,
-  BarChart3,
-  Moon,
-  Sun,
+  Download,
+  Plus,
+  Clock,
+  Users,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Building,
   CalendarDays,
-  Plane,
-  PartyPopper,
-  UserPlus,
-  Trash2,
-  Copy,
-  RotateCcw,
-  Play,
-  Square,
-  FastForward,
+  Shield,
   RefreshCw,
-  Database,
-  Cloud,
-  CloudOff
+  Zap,
+  Moon,
+  Mail as MailIcon,
+  Trash2
 } from 'lucide-react';
 
-// API service for FastAPI backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const timesheetsApi = {
-  // Employees
-  async getEmployees(filters = {}) {
-    const params = new URLSearchParams();
-    if (filters.department && filters.department !== 'all') {
-      params.append('department', filters.department);
+// Helper function to get initials from name
+const getInitials = (name) => {
+  if (!name || typeof name !== 'string') return '??';
+  const names = name.trim().split(' ');
+  const first = names[0]?.[0] || '';
+  const last = names.length > 1 ? names[names.length - 1]?.[0] || '' : '';
+  return (first + last).toUpperCase();
+};
+
+// Helper function to extract employee data
+const extractEmployeeData = (data) => {
+  const name = 
+    data.name || 
+    data.employee_name || 
+    data.full_name || 
+    data.Name || 
+    data.EmployeeName ||
+    (data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : null) ||
+    'Employee';
+
+  return {
+    id: String(data.id || data.employee_id || Math.random().toString(36).substr(2, 9)),
+    name: name.trim(),
+    position: data.position || data.job_title || data.Position || data.JobTitle || 'Maintenance',
+    department: 'Maintenance',
+    contact: data.contact || data.phone || data.mobile || data.contact_number || data.Contact || 'No Contact',
+    email: data.email || data.Email || data.email_address || 'No Email',
+    is_active: data.is_active !== undefined ? data.is_active : true
+  };
+};
+
+// Calculate total hours from time strings
+const calculateTotalHours = (startTime, endTime) => {
+  if (!startTime || !endTime) return 0;
+  
+  try {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    let startTotal = startHour + (startMinute / 60);
+    let endTotal = endHour + (endMinute / 60);
+    
+    // Handle overnight shifts (end time before start time)
+    if (endTotal < startTotal) {
+      endTotal += 24;
     }
     
-    const response = await fetch(`${API_BASE_URL}/employees?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch employees');
-    return await response.json();
-  },
-
-  async createEmployee(employeeData) {
-    const response = await fetch(`${API_BASE_URL}/employees`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(employeeData)
-    });
-    if (!response.ok) throw new Error('Failed to create employee');
-    return await response.json();
-  },
-
-  async updateEmployee(employeeId, employeeData) {
-    const response = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(employeeData)
-    });
-    if (!response.ok) throw new Error('Failed to update employee');
-    return await response.json();
-  },
-
-  async deleteEmployee(employeeId) {
-    const response = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
-      method: 'DELETE'
-    });
-    if (!response.ok) throw new Error('Failed to delete employee');
-    return await response.json();
-  },
-
-  // Timesheets
-  async getTimesheets(filters = {}) {
-    const params = new URLSearchParams();
-    if (filters.employeeId) params.append('employee_id', filters.employeeId);
-    if (filters.startDate) params.append('start_date', filters.startDate);
-    if (filters.endDate) params.append('end_date', filters.endDate);
-    if (filters.department && filters.department !== 'all') {
-      params.append('department', filters.department);
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/timesheets?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch timesheets');
-    return await response.json();
-  },
-
-  async createTimesheetEntry(entryData) {
-    const response = await fetch(`${API_BASE_URL}/timesheets`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entryData)
-    });
-    if (!response.ok) throw new Error('Failed to create timesheet entry');
-    return await response.json();
-  },
-
-  async updateTimesheetEntry(entryId, entryData) {
-    const response = await fetch(`${API_BASE_URL}/timesheets/${entryId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entryData)
-    });
-    if (!response.ok) throw new Error('Failed to update timesheet entry');
-    return await response.json();
-  },
-
-  async deleteTimesheetEntry(entryId) {
-    const response = await fetch(`${API_BASE_URL}/timesheets/${entryId}`, {
-      method: 'DELETE'
-    });
-    if (!response.ok) throw new Error('Failed to delete timesheet entry');
-    return await response.json();
-  },
-
-  // Bulk operations
-  async applyShiftToRange(bulkData) {
-    const response = await fetch(`${API_BASE_URL}/timesheets/apply-shift`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bulkData)
-    });
-    if (!response.ok) throw new Error('Failed to apply shift to range');
-    return await response.json();
-  },
-
-  // Holidays
-  async getHolidays(filters = {}) {
-    const params = new URLSearchParams();
-    if (filters.startDate) params.append('start_date', filters.startDate);
-    if (filters.endDate) params.append('end_date', filters.endDate);
-    
-    const response = await fetch(`${API_BASE_URL}/holidays?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch holidays');
-    return await response.json();
-  },
-
-  async createHoliday(holidayData) {
-    const response = await fetch(`${API_BASE_URL}/holidays`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(holidayData)
-    });
-    if (!response.ok) throw new Error('Failed to create holiday');
-    return await response.json();
-  },
-
-  async deleteHoliday(holidayId) {
-    const response = await fetch(`${API_BASE_URL}/holidays/${holidayId}`, {
-      method: 'DELETE'
-    });
-    if (!response.ok) throw new Error('Failed to delete holiday');
-    return await response.json();
-  },
-
-  // Leave Days
-  async getLeaveDays(filters = {}) {
-    const params = new URLSearchParams();
-    if (filters.employeeId) params.append('employee_id', filters.employeeId);
-    if (filters.startDate) params.append('start_date', filters.startDate);
-    if (filters.endDate) params.append('end_date', filters.endDate);
-    
-    const response = await fetch(`${API_BASE_URL}/leave-days?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch leave days');
-    return await response.json();
-  },
-
-  async createLeaveDay(leaveData) {
-    const response = await fetch(`${API_BASE_URL}/leave-days`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(leaveData)
-    });
-    if (!response.ok) throw new Error('Failed to create leave day');
-    return await response.json();
-  },
-
-  async deleteLeaveDay(leaveDayId) {
-    const response = await fetch(`${API_BASE_URL}/leave-days/${leaveDayId}`, {
-      method: 'DELETE'
-    });
-    if (!response.ok) throw new Error('Failed to delete leave day');
-    return await response.json();
-  },
-
-  // Statistics
-  async getMonthlySummary(year, month, department = null) {
-    const params = new URLSearchParams();
-    params.append('year', year);
-    params.append('month', month);
-    if (department && department !== 'all') params.append('department', department);
-    
-    const response = await fetch(`${API_BASE_URL}/stats/monthly-summary?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch monthly summary');
-    return await response.json();
-  },
-
-  async getEmployeeSummary(employeeId, year, month) {
-    const params = new URLSearchParams();
-    params.append('year', year);
-    params.append('month', month);
-    
-    const response = await fetch(`${API_BASE_URL}/stats/employee-summary/${employeeId}?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch employee summary');
-    return await response.json();
-  },
-
-  async getSystemOverview() {
-    const response = await fetch(`${API_BASE_URL}/stats/overview`);
-    if (!response.ok) throw new Error('Failed to fetch system overview');
-    return await response.json();
+    return Math.max(0, endTotal - startTotal);
+  } catch (error) {
+    console.error('Error calculating hours:', error);
+    return 0;
   }
 };
 
-// Status types
-const STATUS_TYPES = {
-  WORK: 'work',
-  LEAVE: 'leave',
-  OFF: 'off',
-  ABSENT: 'absent',
-  HOLIDAY: 'holiday'
+// Calculate nightshift hours (18:00 to 02:00) from any time period
+const calculateNightshiftHours = (startTime, endTime) => {
+  if (!startTime || !endTime) return 0;
+  
+  try {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    let startTotal = startHour + (startMinute / 60);
+    let endTotal = endHour + (endMinute / 60);
+    
+    // Handle overnight shifts
+    if (endTotal < startTotal) {
+      endTotal += 24;
+    }
+    
+    let nightHours = 0;
+    
+    // Calculate hours in nightshift period (18:00 to 26:00 - which is 02:00 next day)
+    const nightStart = 18;
+    const nightEnd = 26;
+    
+    // Calculate overlap with nightshift period
+    const overlapStart = Math.max(startTotal, nightStart);
+    const overlapEnd = Math.min(endTotal, nightEnd);
+    
+    if (overlapEnd > overlapStart) {
+      nightHours = overlapEnd - overlapStart;
+    }
+    
+    return Math.max(0, nightHours);
+  } catch (error) {
+    console.error('Error calculating nightshift hours:', error);
+    return 0;
+  }
 };
 
+// Calculate overtime hours from time strings
+const calculateOvertimeHours = (startTime, endTime) => {
+  if (!startTime || !endTime) return 0;
+  
+  try {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    let startTotal = startHour + (startMinute / 60);
+    let endTotal = endHour + (endMinute / 60);
+    
+    if (endTotal < startTotal) {
+      endTotal += 24;
+    }
+    
+    return Math.max(0, endTotal - startTotal);
+  } catch (error) {
+    console.error('Error calculating overtime:', error);
+    return 0;
+  }
+};
+
+// Apply 208-hour rule to monthly totals
+const apply208HourRule = (regularHours, overtime1_5x) => {
+  if (regularHours <= 208) {
+    return { regular: regularHours, overtime1_5x };
+  }
+  
+  // If regular hours exceed 208, move excess to overtime
+  const excess = regularHours - 208;
+  return {
+    regular: 208,
+    overtime1_5x: overtime1_5x + excess
+  };
+};
+
+// API Service
+const apiService = {
+  async getEmployees() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/employees`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch employees`);
+      }
+      
+      const employeesData = await response.json();
+      
+      const transformedEmployees = (employeesData || []).map(extractEmployeeData);
+      return transformedEmployees;
+      
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      throw error;
+    }
+  },
+
+  async getTimesheets(employeeId = null, startDate = null, endDate = null) {
+    try {
+      let url = `${API_BASE_URL}/api/timesheets`;
+      const params = new URLSearchParams();
+      
+      if (employeeId) params.append('employee_id', employeeId);
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        console.warn('Timesheets endpoint returned error:', response.status);
+        return [];
+      }
+      
+      const timesheetsData = await response.json();
+      return timesheetsData || [];
+    } catch (error) {
+      console.warn('Timesheets fetch failed:', error.message);
+      return [];
+    }
+  },
+
+  async createTimesheetEntry(entryData) {
+    try {
+      console.log('Creating timesheet entry:', entryData);
+      
+      const response = await fetch(`${API_BASE_URL}/api/timesheets`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(entryData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create timesheet entry: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      return result.data || result;
+    } catch (error) {
+      console.error('Error creating timesheet entry:', error);
+      throw error;
+    }
+  },
+
+  async updateTimesheetEntry(entryId, entryData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/timesheets/${entryId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(entryData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update timesheet entry: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      return result.data || result;
+    } catch (error) {
+      console.error('Error updating timesheet entry:', error);
+      throw error;
+    }
+  },
+
+  async deleteTimesheetEntry(entryId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/timesheets/${entryId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete timesheet entry: ${response.status} - ${errorText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting timesheet entry:', error);
+      throw error;
+    }
+  },
+
+  async getTimesheetStats(startDate = null, endDate = null) {
+    try {
+      let url = `${API_BASE_URL}/api/timesheets/stats/summary`;
+      const params = new URLSearchParams();
+      
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        console.warn('Stats endpoint returned error:', response.status);
+        return null;
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.warn('Stats fetch failed:', error.message);
+      return null;
+    }
+  }
+};
+
+// Status Configurations
 const STATUS_CONFIG = {
-  [STATUS_TYPES.LEAVE]: { label: 'Leave', color: 'bg-blue-100 text-blue-800', hours: 8 },
-  [STATUS_TYPES.OFF]: { label: 'Off', color: 'bg-gray-100 text-gray-800', hours: 8 },
-  [STATUS_TYPES.ABSENT]: { label: 'Absent', color: 'bg-red-100 text-red-800', hours: 0 },
-  [STATUS_TYPES.HOLIDAY]: { label: 'Holiday', color: 'bg-purple-100 text-purple-800', hours: 8 },
-  [STATUS_TYPES.WORK]: { label: 'Work', color: 'bg-green-100 text-green-800', hours: 0 }
+  work: { label: 'Work', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
+  leave: { label: 'Leave', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: CalendarDays },
+  off: { label: 'Off', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: XCircle },
+  absent: { label: 'Absent', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertTriangle },
+  holiday: { label: 'Holiday', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: CalendarDays },
+  sick: { label: 'Sick Leave', color: 'bg-orange-100 text-orange-800 border-orange-200', icon: AlertTriangle },
+  training: { label: 'Training', color: 'bg-cyan-100 text-cyan-800 border-cyan-200', icon: Shield },
+  vacation: { label: 'Vacation', color: 'bg-pink-100 text-pink-800 border-pink-200', icon: CalendarDays }
 };
 
-// Department options
-const DEPARTMENTS = ['Engineering', 'Design', 'Management', 'Marketing', 'Sales', 'Support', 'HR'];
+// Status Badge Component
+const StatusBadge = ({ status }) => {
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.work;
+  const Icon = config.icon;
+  
+  return (
+    <Badge variant="outline" className={`${config.color} text-xs px-2 py-0 h-5`}>
+      <Icon className="w-3 h-3 mr-1" />
+      {config.label}
+    </Badge>
+  );
+};
 
-// Color options for employees
-const COLOR_OPTIONS = [
-  'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-pink-500', 'bg-orange-500',
-  'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-teal-500', 'bg-cyan-500'
-];
+// Overtime Period Component
+const OvertimePeriod = ({ period, index, onUpdate, onRemove }) => {
+  const [startTime, setStartTime] = useState(period.start_time || '');
+  const [endTime, setEndTime] = useState(period.end_time || '');
+  const [overtimeType, setOvertimeType] = useState(period.overtime_type || '1.5x');
 
-// Common shift patterns
-const SHIFT_PRESETS = [
-  { name: 'Standard 9-5', start: '09:00', end: '17:00', break: 60 },
-  { name: 'Early 7-3', start: '07:00', end: '15:00', break: 30 },
-  { name: 'Late 12-8', start: '12:00', end: '20:00', break: 45 },
-  { name: 'Night 22-6', start: '22:00', end: '06:00', break: 60 },
-  { name: 'Flexible 10-6', start: '10:00', end: '18:00', break: 60 }
-];
+  // Calculate overtime hours
+  useEffect(() => {
+    if (startTime && endTime) {
+      const otHours = calculateOvertimeHours(startTime, endTime);
+      const nightHours = calculateNightshiftHours(startTime, endTime);
+      
+      onUpdate(index, {
+        start_time: startTime,
+        end_time: endTime,
+        overtime_type: overtimeType,
+        overtime_hours: otHours,
+        nightshift_hours: nightHours
+      });
+    }
+  }, [startTime, endTime, overtimeType, index, onUpdate]);
 
+  return (
+    <div className="p-3 border rounded-lg bg-gray-50 space-y-3">
+      <div className="flex justify-between items-center">
+        <Label className="font-medium">Overtime Period {index + 1}</Label>
+        {onRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(index)}
+            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Start Time</Label>
+          <Input 
+            type="time" 
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>End Time</Label>
+          <Input 
+            type="time" 
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label>Overtime Type</Label>
+        <Select value={overtimeType} onValueChange={setOvertimeType}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1.5x">1.5x Regular Overtime</SelectItem>
+            <SelectItem value="2.0x">2.0x Holiday/Weekend</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="text-sm text-gray-600">
+          <span className="font-semibold">Overtime: </span>
+          {calculateOvertimeHours(startTime, endTime).toFixed(2)} hrs
+        </div>
+        <div className="text-sm text-gray-600">
+          <Moon className="w-3 h-3 inline mr-1 text-indigo-600" />
+          <span className="font-semibold">Nightshift: </span>
+          {calculateNightshiftHours(startTime, endTime).toFixed(2)} hrs
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Timesheet Entry Dialog
+const TimesheetEntryDialog = ({ 
+  employee, 
+  date, 
+  entry, 
+  onSave, 
+  onClose 
+}) => {
+  const [formData, setFormData] = useState({
+    start_time: entry?.start_time || '07:00',
+    end_time: entry?.end_time || '17:00',
+    regular_hours: entry?.regular_hours || 0,
+    nightshift_hours: entry?.nightshift_hours || 0,
+    status: entry?.status || 'work',
+    standby_allowance: entry?.standby_allowance || false,
+    notes: entry?.notes || ''
+  });
+  
+  const [overtimePeriods, setOvertimePeriods] = useState(
+    Array.isArray(entry?.overtime_periods) ? entry.overtime_periods : []
+  );
+  
+  const [saving, setSaving] = useState(false);
+
+  // Calculate hours when times change
+  useEffect(() => {
+    if (formData.start_time && formData.end_time) {
+      const totalHours = calculateTotalHours(
+        formData.start_time, 
+        formData.end_time
+      );
+      
+      const nightHours = calculateNightshiftHours(
+        formData.start_time,
+        formData.end_time
+      );
+      
+      setFormData(prev => ({
+        ...prev,
+        regular_hours: totalHours,
+        nightshift_hours: nightHours
+      }));
+    }
+  }, [formData.start_time, formData.end_time]);
+
+  // Calculate overtime totals - FIXED: Added proper array check
+  const overtimeTotals = useMemo(() => {
+    let total1_5x = 0;
+    let total2_0x = 0;
+    let overtimeNightshift = 0;
+    
+    // Ensure overtimePeriods is an array
+    const periodsArray = Array.isArray(overtimePeriods) ? overtimePeriods : [];
+    
+    periodsArray.forEach(period => {
+      const hours = calculateOvertimeHours(period.start_time, period.end_time);
+      const nightHours = calculateNightshiftHours(period.start_time, period.end_time);
+      
+      overtimeNightshift += nightHours;
+      
+      if (period.overtime_type === '2.0x') {
+        total2_0x += hours;
+      } else {
+        total1_5x += hours;
+      }
+    });
+    
+    return { total1_5x, total2_0x, overtimeNightshift };
+  }, [overtimePeriods]);
+
+  const handleAddOvertimePeriod = () => {
+    setOvertimePeriods(prev => [
+      ...(Array.isArray(prev) ? prev : []),
+      { start_time: '18:00', end_time: '20:00', overtime_type: '1.5x', overtime_hours: 0, nightshift_hours: 0 }
+    ]);
+  };
+
+  const handleUpdateOvertimePeriod = (index, updatedPeriod) => {
+    setOvertimePeriods(prev => {
+      const newPeriods = Array.isArray(prev) ? [...prev] : [];
+      if (index >= 0 && index < newPeriods.length) {
+        newPeriods[index] = { ...newPeriods[index], ...updatedPeriod };
+      }
+      return newPeriods;
+    });
+  };
+
+  const handleRemoveOvertimePeriod = (index) => {
+    setOvertimePeriods(prev => 
+      Array.isArray(prev) ? prev.filter((_, i) => i !== index) : []
+    );
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setSaving(true);
+      
+      // Calculate total nightshift hours (from regular shift + overtime periods)
+      const totalNightshiftHours = formData.nightshift_hours + overtimeTotals.overtimeNightshift;
+      
+      // Calculate total overtime hours
+      const totalOvertime = overtimeTotals.total1_5x;
+      const totalHolidayOvertime = formData.status === 'holiday' 
+        ? overtimeTotals.total1_5x + overtimeTotals.total2_0x
+        : overtimeTotals.total2_0x;
+      
+      // Calculate total hours
+      const totalHours = formData.regular_hours + totalOvertime + totalHolidayOvertime + totalNightshiftHours;
+      
+      // Prepare data for backend
+      const backendData = {
+        employee_id: parseInt(employee.id),
+        date: date.toISOString().split('T')[0],
+        start_time: formData.start_time,
+        end_time: formData.end_time,
+        regular_hours: formData.regular_hours,
+        overtime_hours: formData.status === 'holiday' ? 0 : totalOvertime,
+        holiday_overtime_hours: totalHolidayOvertime,
+        nightshift_hours: totalNightshiftHours,
+        standby_allowance: formData.standby_allowance,
+        total_hours: totalHours,
+        status: formData.status,
+        notes: formData.notes,
+        overtime_periods: Array.isArray(overtimePeriods) ? overtimePeriods : [],
+        callout_overtime_hours: 0,
+        callout_count: 0
+      };
+      
+      console.log('Saving data to backend:', backendData);
+      await onSave(backendData);
+      toast.success('Timesheet entry saved successfully');
+      onClose();
+    } catch (error) {
+      toast.error('Failed to save entry: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const calculateTotal = () => {
+    return formData.regular_hours + 
+           overtimeTotals.total1_5x + 
+           overtimeTotals.total2_0x +
+           formData.nightshift_hours +
+           overtimeTotals.overtimeNightshift;
+  };
+
+  const isHoliday = formData.status === 'holiday';
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Timesheet Entry</DialogTitle>
+          <DialogDescription>
+            {employee?.name || 'Employee'} - {date?.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            }) || ''}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          {/* Status Selection */}
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value) => setFormData({...formData, status: value})}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center">
+                        <Icon className="w-4 h-4 mr-2" />
+                        {config.label}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {isHoliday && (
+              <p className="text-sm text-purple-600 mt-1">
+                ⓘ All overtime hours will be added to holiday overtime (2.0x rate)
+              </p>
+            )}
+          </div>
+          
+          {/* Regular Time Inputs */}
+          <div className="space-y-3 p-3 border rounded-lg">
+            <h3 className="font-medium">Regular Shift</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Input 
+                  type="time" 
+                  value={formData.start_time}
+                  onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Time</Label>
+                <Input 
+                  type="time" 
+                  value={formData.end_time}
+                  onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <span>Total Hours</span>
+                  <Badge variant="outline" className="text-xs">Auto-calculated</Badge>
+                </Label>
+                <Input 
+                  type="number" 
+                  step="0.25"
+                  min="0"
+                  value={formData.regular_hours.toFixed(2)}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <Moon className="w-3 h-3" />
+                  <span>Nightshift Hours</span>
+                  <Badge variant="outline" className="text-xs bg-indigo-50">18:00-02:00</Badge>
+                </Label>
+                <Input 
+                  type="number" 
+                  step="0.25"
+                  min="0"
+                  value={formData.nightshift_hours.toFixed(2)}
+                  readOnly
+                  className="bg-indigo-50"
+                />
+                <p className="text-xs text-gray-500">
+                  Any hours between 18:00-02:00 automatically added
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Overtime Periods */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium">Overtime Periods</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddOvertimePeriod}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Overtime
+              </Button>
+            </div>
+            
+            {(!overtimePeriods || overtimePeriods.length === 0) ? (
+              <div className="text-center p-4 border border-dashed rounded-lg">
+                <p className="text-gray-500">No overtime periods added</p>
+                <p className="text-sm text-gray-400 mt-1">Click "Add Overtime" to add overtime periods</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {Array.isArray(overtimePeriods) && overtimePeriods.map((period, index) => (
+                  <OvertimePeriod
+                    key={index}
+                    period={period}
+                    index={index}
+                    onUpdate={handleUpdateOvertimePeriod}
+                    onRemove={handleRemoveOvertimePeriod}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* Overtime Summary */}
+            {Array.isArray(overtimePeriods) && overtimePeriods.length > 0 && (
+              <div className="p-3 bg-gray-50 rounded-lg border">
+                <h4 className="font-medium mb-2">Overtime Summary</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm">1.5x Overtime</Label>
+                    <p className="text-lg font-semibold text-orange-600">
+                      {overtimeTotals.total1_5x.toFixed(2)} hours
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm">2.0x Overtime</Label>
+                    <p className="text-lg font-semibold text-purple-600">
+                      {overtimeTotals.total2_0x.toFixed(2)} hours
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  <Moon className="w-3 h-3 inline mr-1 text-indigo-600" />
+                  Overtime Nightshift: <span className="font-semibold">
+                    {overtimeTotals.overtimeNightshift.toFixed(2)} hours
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Total Hours */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="font-semibold">Total Hours</Label>
+              <span className="text-lg font-bold text-blue-600">{calculateTotal().toFixed(2)}</span>
+            </div>
+            <Progress value={(calculateTotal() / 24) * 100} className="h-2" />
+          </div>
+          
+          {/* 208-Hour Rule Notice */}
+          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-green-600 mt-0.5" />
+              <div className="space-y-1">
+                <Label className="font-medium text-green-700">208-Hour Rule Applied</Label>
+                <p className="text-sm text-green-600">
+                  • Regular hours capped at 208 per month
+                  • Any hours beyond 208 automatically move to 1.5x overtime
+                  • Nightshift hours (18:00-02:00) tracked separately
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Standby Allowance */}
+          <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="space-y-0.5">
+              <Label className="font-medium">Standby Allowance</Label>
+              <p className="text-sm text-gray-600">Adds 8 hours to overtime for each consecutive standby day (max 7)</p>
+            </div>
+            <Switch 
+              checked={formData.standby_allowance}
+              onCheckedChange={(checked) => setFormData({...formData, standby_allowance: checked})}
+            />
+          </div>
+          
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label>Notes (Optional)</Label>
+            <Input 
+              placeholder="Additional notes, comments, or remarks..."
+              value={formData.notes}
+              onChange={(e) => setFormData({...formData, notes: e.target.value})}
+            />
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save Entry
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Main Component
 const TimesheetsSystem = () => {
-  const [isClient, setIsClient] = useState(false);
+  const [payPeriodStartDay, setPayPeriodStartDay] = useState(13);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [employees, setEmployees] = useState([]);
   const [timesheets, setTimesheets] = useState([]);
-  const [holidays, setHolidays] = useState([]);
-  const [leaveDays, setLeaveDays] = useState([]);
-  const [activeTab, setActiveTab] = useState('monthly-view');
-  const [settings, setSettings] = useState({
-    autoOvertime: true,
-    overtimeThreshold: 8,
-    darkMode: false,
-    showWeekends: true,
-    holidayOvertimeRate: 2.0,
-    enableTimer: true,
-    autoCopyPrevious: false
-  });
-  const [filters, setFilters] = useState({
-    department: 'all',
-    search: ''
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState(true);
-  const [activeTimers, setActiveTimers] = useState({});
-  const [quickEntryMode, setQuickEntryMode] = useState(false);
-  const [selectedShift, setSelectedShift] = useState(SHIFT_PRESETS[0]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('timesheets');
 
-  // Initialize component
-  useEffect(() => {
-    setIsClient(true);
-    loadAllData();
-    
-    // Check online status
-    setIsOnline(navigator.onLine);
-    window.addEventListener('online', () => setIsOnline(true));
-    window.addEventListener('offline', () => setIsOnline(false));
-    
-    return () => {
-      window.removeEventListener('online', () => setIsOnline(true));
-      window.removeEventListener('offline', () => setIsOnline(false));
-    };
-  }, []);
-
-  // Load all data from API
-  const loadAllData = async () => {
-    try {
-      setIsLoading(true);
-      
-      const [employeesData, timesheetsData, holidaysData, leaveDaysData, overviewData] = await Promise.all([
-        timesheetsApi.getEmployees(),
-        timesheetsApi.getTimesheets(),
-        timesheetsApi.getHolidays(),
-        timesheetsApi.getLeaveDays(),
-        timesheetsApi.getSystemOverview()
-      ]);
-
-      setEmployees(employeesData);
-      setTimesheets(timesheetsData);
-      setHolidays(holidaysData);
-      setLeaveDays(leaveDaysData);
-      
-      toast.success('Data loaded successfully');
-    } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load data from server');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Refresh data
-  const refreshData = async () => {
-    await loadAllData();
-  };
-
-  // Get all days in current month
-  const getDaysInMonth = useCallback(() => {
+  // Calculate pay period dates based on start day
+  const getPayPeriodDates = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    const date = new Date(year, month, 1);
+    
+    const currentDay = currentMonth.getDate();
+    let startDate, endDate;
+    
+    if (currentDay < payPeriodStartDay) {
+      startDate = new Date(year, month - 1, payPeriodStartDay);
+      endDate = new Date(year, month, payPeriodStartDay - 1);
+    } else {
+      startDate = new Date(year, month, payPeriodStartDay);
+      endDate = new Date(year, month + 1, payPeriodStartDay - 1);
+    }
+    
+    return { startDate, endDate };
+  };
+
+  // Get all days in the pay period
+  const getDaysInPayPeriod = () => {
+    const { startDate, endDate } = getPayPeriodDates();
     const days = [];
+    const current = new Date(startDate);
     
-    while (date.getMonth() === month) {
-      days.push(new Date(date));
-      date.setDate(date.getDate() + 1);
+    while (current <= endDate) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
     }
+    
     return days;
-  }, [currentMonth]);
-
-  // Memoized days in month
-  const daysInMonth = useMemo(() => getDaysInMonth(), [getDaysInMonth]);
-
-  // Check if date is holiday
-  const isHoliday = useCallback((date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return holidays.some(holiday => holiday.date === dateStr);
-  }, [holidays]);
-
-  // Check if date is leave/off/absent
-  const getDayStatus = useCallback((employeeId, date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const employeeLeaveDay = leaveDays.find(ld => 
-      ld.employee_id === employeeId && ld.date === dateStr
-    );
-    return employeeLeaveDay ? employeeLeaveDay.status : STATUS_TYPES.WORK;
-  }, [leaveDays]);
-
-  // Navigate months
-  const previousMonth = () => {
-    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
-  const nextMonth = () => {
-    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-  };
-
-  // Validate time format (HH:MM)
-  const isValidTime = (time) => {
-    if (!time) return false;
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    return timeRegex.test(time);
-  };
-
-  // Format time input
-  const formatTimeInput = (value) => {
-    const numbers = value.replace(/[^\d]/g, '');
-    
-    if (numbers.length <= 2) {
-      return numbers;
-    } else if (numbers.length <= 4) {
-      return `${numbers.slice(0, 2)}:${numbers.slice(2)}`;
-    } else {
-      return `${numbers.slice(0, 2)}:${numbers.slice(2, 4)}`;
-    }
-  };
-
-  // Calculate hours from start/end times
-  const calculateHoursFromTimes = useCallback((startTime, endTime, breakMinutes = 60) => {
-    if (!startTime || !endTime || !isValidTime(startTime) || !isValidTime(endTime)) {
-      return { regularHours: 0, overtimeHours: 0, holidayOvertimeHours: 0, totalHours: 0 };
-    }
-
-    const [startHours, startMinutes] = startTime.split(':').map(Number);
-    const [endHours, endMinutes] = endTime.split(':').map(Number);
-    
-    let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-    totalMinutes -= breakMinutes;
-    
-    const totalHours = Math.max(0, totalMinutes / 60);
-    
-    if (settings.autoOvertime && totalHours > settings.overtimeThreshold) {
-      return {
-        regularHours: settings.overtimeThreshold,
-        overtimeHours: totalHours - settings.overtimeThreshold,
-        holidayOvertimeHours: 0,
-        totalHours
-      };
-    } else {
-      return {
-        regularHours: totalHours,
-        overtimeHours: 0,
-        holidayOvertimeHours: 0,
-        totalHours
-      };
-    }
-  }, [settings.autoOvertime, settings.overtimeThreshold]);
-
-  // Update time entry
-  const updateTimeEntry = async (employeeId, date, field, value) => {
+  // Load all data
+  const loadData = async () => {
     try {
-      const dateStr = date.toISOString().split('T')[0];
-      const existingEntry = timesheets.find(ts => 
-        ts.employee_id === employeeId && ts.date === dateStr
+      setLoading(true);
+      setError(null);
+      
+      const employeesData = await apiService.getEmployees();
+      setEmployees(employeesData);
+      
+      const { startDate, endDate } = getPayPeriodDates();
+      
+      const timesheetsData = await apiService.getTimesheets(
+        null,
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
       );
+      setTimesheets(timesheetsData || []);
+      
+      toast.success('Data loaded successfully');
+      
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      setError(err.message);
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      let entryData = {
-        employee_id: employeeId,
-        date: dateStr,
-        [field]: value
-      };
+  useEffect(() => {
+    loadData();
+  }, [currentMonth, payPeriodStartDay]);
 
-      // If updating times, calculate hours
-      if (field === 'startTime' || field === 'endTime' || field === 'breakMinutes') {
-        const currentEntry = existingEntry || {};
-        const startTime = field === 'startTime' ? value : currentEntry.start_time;
-        const endTime = field === 'endTime' ? value : currentEntry.end_time;
-        const breakMins = field === 'breakMinutes' ? value : currentEntry.break_minutes;
+  const daysInPayPeriod = getDaysInPayPeriod();
 
-        if (startTime && endTime) {
-          const hours = calculateHoursFromTimes(startTime, endTime, breakMins);
-          Object.assign(entryData, hours);
-        }
+  // Get employee timesheet entry for a specific date
+  const getEmployeeEntry = (employeeId, date) => {
+    if (!date) return null;
+    const dateStr = date.toISOString().split('T')[0];
+    return timesheets.find(ts => 
+      ts.employee_id === parseInt(employeeId) && ts.date === dateStr
+    );
+  };
+
+  // Calculate employee pay period totals WITH 208-HOUR RULE
+  const calculateEmployeePayPeriodTotals = (employeeId) => {
+    const employeeEntries = timesheets.filter(ts => ts.employee_id === parseInt(employeeId));
+    
+    let totalRegular = 0;
+    let totalOvertime1_5x = 0;
+    let totalOvertime2_0x = 0;
+    let totalNightshift = 0;
+    let consecutiveStandbyDays = 0;
+    let standbyOvertimeBonus = 0;
+    
+    const sortedEntries = [...employeeEntries].sort((a, b) => 
+      new Date(a.date) - new Date(b.date)
+    );
+    
+    sortedEntries.forEach(entry => {
+      const regularHours = entry.regular_hours || 0;
+      const overtimeHours = entry.overtime_hours || 0;
+      const holidayOTHours = entry.holiday_overtime_hours || 0;
+      const nightshiftHours = entry.nightshift_hours || 0;
+      const isStandby = entry.standby_allowance || false;
+      const isHoliday = entry.status === 'holiday';
+      
+      // Add regular hours (will apply 208 rule later)
+      totalRegular += regularHours;
+      totalNightshift += nightshiftHours;
+      
+      if (isHoliday) {
+        totalOvertime2_0x += overtimeHours + holidayOTHours;
+      } else {
+        totalOvertime1_5x += overtimeHours;
+        totalOvertime2_0x += holidayOTHours;
       }
+      
+      if (isStandby) {
+        consecutiveStandbyDays++;
+        if (consecutiveStandbyDays <= 7) {
+          standbyOvertimeBonus += 8;
+        }
+      } else {
+        consecutiveStandbyDays = 0;
+      }
+    });
+    
+    // Apply 208-hour rule - if regular hours exceed 208, move excess to overtime 1.5x
+    const adjustedTotals = apply208HourRule(totalRegular, totalOvertime1_5x);
+    totalRegular = adjustedTotals.regular;
+    totalOvertime1_5x = adjustedTotals.overtime1_5x;
+    
+    // Add standby bonus to overtime
+    totalOvertime1_5x += standbyOvertimeBonus;
+    
+    const totalHours = totalRegular + totalOvertime1_5x + totalOvertime2_0x + totalNightshift;
+    
+    return {
+      regular: totalRegular,
+      overtime1_5x: totalOvertime1_5x,
+      overtime2_0x: totalOvertime2_0x,
+      nightshift: totalNightshift,
+      standbyBonus: standbyOvertimeBonus,
+      total: totalHours,
+      excessRegular: Math.max(0, totalRegular - 208)
+    };
+  };
 
-      if (existingEntry) {
-        // Update existing entry
-        const updated = await timesheetsApi.updateTimesheetEntry(existingEntry.id, entryData);
+  // Handle timesheet entry save
+  const handleSaveEntry = async (employeeId, date, data) => {
+    if (!employeeId || !date) return;
+    
+    const dateStr = date.toISOString().split('T')[0];
+    const existingEntry = getEmployeeEntry(employeeId, date);
+    
+    try {
+      if (existingEntry?.id) {
+        const updated = await apiService.updateTimesheetEntry(existingEntry.id, data);
         setTimesheets(prev => prev.map(ts => 
           ts.id === existingEntry.id ? { ...ts, ...updated } : ts
         ));
       } else {
-        // Create new entry
-        const newEntry = await timesheetsApi.createTimesheetEntry({
-          ...entryData,
-          status: STATUS_TYPES.WORK
-        });
-        setTimesheets(prev => [...prev, newEntry]);
+        const newEntry = await apiService.createTimesheetEntry(data);
+        setTimesheets(prev => [...prev, newEntry.data || newEntry]);
       }
-
-      toast.success('Timesheet updated');
-    } catch (error) {
-      console.error('Failed to update timesheet:', error);
-      toast.error('Failed to update timesheet');
-    }
-  };
-
-  // Update day status (leave, off, absent, etc.)
-  const updateDayStatus = async (employeeId, date, status) => {
-    try {
-      const dateStr = date.toISOString().split('T')[0];
       
-      if (status === STATUS_TYPES.WORK) {
-        // Remove leave day and clear timesheet
-        const existingLeaveDay = leaveDays.find(ld => 
-          ld.employee_id === employeeId && ld.date === dateStr
-        );
-        
-        if (existingLeaveDay) {
-          await timesheetsApi.deleteLeaveDay(existingLeaveDay.id);
-          setLeaveDays(prev => prev.filter(ld => ld.id !== existingLeaveDay.id));
-        }
-
-        const existingTimesheet = timesheets.find(ts => 
-          ts.employee_id === employeeId && ts.date === dateStr
-        );
-        
-        if (existingTimesheet) {
-          await timesheetsApi.deleteTimesheetEntry(existingTimesheet.id);
-          setTimesheets(prev => prev.filter(ts => ts.id !== existingTimesheet.id));
-        }
-      } else {
-        // Add leave day
-        const leaveData = {
-          employee_id: employeeId,
-          date: dateStr,
-          status
-        };
-        
-        const newLeaveDay = await timesheetsApi.createLeaveDay(leaveData);
-        setLeaveDays(prev => [...prev, newLeaveDay]);
-
-        // Set automatic hours for leave/off days
-        const statusConfig = STATUS_CONFIG[status];
-        if (statusConfig.hours > 0) {
-          const timesheetData = {
-            employee_id: employeeId,
-            date: dateStr,
-            start_time: '09:00',
-            end_time: '17:00',
-            break_minutes: 60,
-            regular_hours: statusConfig.hours,
-            overtime_hours: 0,
-            holiday_overtime_hours: 0,
-            total_hours: statusConfig.hours,
-            status
-          };
-          
-          const newTimesheet = await timesheetsApi.createTimesheetEntry(timesheetData);
-          setTimesheets(prev => [...prev, newTimesheet]);
-        }
-      }
-
-      toast.success(`Status updated to ${STATUS_CONFIG[status].label}`);
+      const employee = employees.find(e => e.id === employeeId);
+      toast.success(`${employee?.name || 'Employee'}'s entry saved!`);
+      
     } catch (error) {
-      console.error('Failed to update day status:', error);
-      toast.error('Failed to update day status');
+      throw error;
     }
   };
 
-  // Add/remove holiday
-  const toggleHoliday = async (date) => {
-    try {
-      const dateStr = date.toISOString().split('T')[0];
-      const existingHoliday = holidays.find(h => h.date === dateStr);
-
-      if (existingHoliday) {
-        await timesheetsApi.deleteHoliday(existingHoliday.id);
-        setHolidays(prev => prev.filter(h => h.id !== existingHoliday.id));
-        toast.success('Holiday removed');
-      } else {
-        const newHoliday = await timesheetsApi.createHoliday({
-          date: dateStr,
-          name: 'Holiday'
-        });
-        setHolidays(prev => [...prev, newHoliday]);
-        toast.success('Holiday added');
+  // Filter employees
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(employee => {
+      if (!employee) return false;
+      
+      if (searchTerm && employee.name && !employee.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
       }
-    } catch (error) {
-      console.error('Failed to toggle holiday:', error);
-      toast.error('Failed to update holiday');
-    }
-  };
-
-  // Get hours for an employee on a specific date
-  const getHours = useCallback((employeeId, date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const entry = timesheets.find(ts => 
-      ts.employee_id === employeeId && ts.date === dateStr
-    );
-    const status = getDayStatus(employeeId, date);
-    const isHolidayDay = isHoliday(date);
-    
-    if (isHolidayDay && status === STATUS_TYPES.WORK) {
-      return {
-        startTime: '',
-        endTime: '',
-        regularHours: 0,
-        overtimeHours: 0,
-        holidayOvertimeHours: 0,
-        totalHours: 0,
-        breakMinutes: 60,
-        status: STATUS_TYPES.HOLIDAY
-      };
-    }
-    
-    if (status !== STATUS_TYPES.WORK) {
-      const statusConfig = STATUS_CONFIG[status];
-      return {
-        startTime: '09:00',
-        endTime: '17:00',
-        regularHours: statusConfig.hours,
-        overtimeHours: 0,
-        holidayOvertimeHours: 0,
-        totalHours: statusConfig.hours,
-        breakMinutes: 60,
-        status: status
-      };
-    }
-    
-    if (!entry) {
-      return {
-        startTime: '',
-        endTime: '',
-        regularHours: 0,
-        overtimeHours: 0,
-        holidayOvertimeHours: 0,
-        totalHours: 0,
-        breakMinutes: 60,
-        status: STATUS_TYPES.WORK
-      };
-    }
-    
-    return {
-      startTime: entry.start_time || '',
-      endTime: entry.end_time || '',
-      regularHours: entry.regular_hours || 0,
-      overtimeHours: entry.overtime_hours || 0,
-      holidayOvertimeHours: entry.holiday_overtime_hours || 0,
-      totalHours: entry.total_hours || 0,
-      breakMinutes: entry.break_minutes || 60,
-      status: entry.status || STATUS_TYPES.WORK
-    };
-  }, [timesheets, getDayStatus, isHoliday]);
-
-  // Calculate monthly totals for an employee
-  const calculateEmployeeTotals = useCallback((employeeId) => {
-    const employee = employees.find(emp => emp.id === employeeId);
-    if (!employee) return { totalRegular: 0, totalOvertime: 0, totalHolidayOvertime: 0, totalHours: 0, totalDaysWorked: 0, totalPay: 0 };
-    
-    let totalRegular = 0;
-    let totalOvertime = 0;
-    let totalHolidayOvertime = 0;
-    let totalDaysWorked = 0;
-
-    daysInMonth.forEach(day => {
-      const hours = getHours(employeeId, day);
-      if (hours.totalHours > 0) {
-        totalDaysWorked++;
-      }
-      totalRegular += hours.regularHours;
-      totalOvertime += hours.overtimeHours;
-      totalHolidayOvertime += hours.holidayOvertimeHours;
+      return true;
     });
+  }, [employees, searchTerm]);
 
-    const totalHours = totalRegular + totalOvertime + totalHolidayOvertime;
-    const totalPay = (totalRegular * employee.rate) + 
-                   (totalOvertime * employee.rate * 1.5) + 
-                   (totalHolidayOvertime * employee.rate * settings.holidayOvertimeRate);
-
-    return {
-      totalRegular,
-      totalOvertime,
-      totalHolidayOvertime,
-      totalHours,
-      totalDaysWorked,
-      totalPay
-    };
-  }, [employees, daysInMonth, getHours, settings.holidayOvertimeRate]);
-
-  // Calculate overall monthly totals
-  const calculateMonthlyTotals = useCallback(() => {
-    let totalRegular = 0;
-    let totalOvertime = 0;
-    let totalHolidayOvertime = 0;
-    let totalHours = 0;
-    let totalPay = 0;
-    let totalDaysWorked = 0;
-
-    employees.forEach(employee => {
-      const totals = calculateEmployeeTotals(employee.id);
-      totalRegular += totals.totalRegular;
-      totalOvertime += totals.totalOvertime;
-      totalHolidayOvertime += totals.totalHolidayOvertime;
-      totalHours += totals.totalHours;
-      totalPay += totals.totalPay;
-      totalDaysWorked += totals.totalDaysWorked;
-    });
-
-    return { totalRegular, totalOvertime, totalHolidayOvertime, totalHours, totalPay, totalDaysWorked };
-  }, [employees, calculateEmployeeTotals]);
-
-  // Quick add common shifts
-  const quickAddShift = useCallback((employeeId, date, shiftType) => {
-    const shifts = {
-      'standard': { start: '09:00', end: '17:00', break: 60 },
-      'early': { start: '07:00', end: '15:00', break: 30 },
-      'late': { start: '12:00', end: '20:00', break: 45 },
-      'double': { start: '08:00', end: '20:00', break: 60 }
-    };
-    
-    const shift = shifts[shiftType];
-    if (shift) {
-      updateTimeEntry(employeeId, date, 'startTime', shift.start);
-      updateTimeEntry(employeeId, date, 'endTime', shift.end);
-      updateTimeEntry(employeeId, date, 'breakMinutes', shift.break);
-    }
-  }, [updateTimeEntry]);
-
-  // Add new employee
-  const addEmployee = async (employeeData) => {
-    try {
-      const newEmployee = await timesheetsApi.createEmployee({
-        ...employeeData,
-        color: COLOR_OPTIONS[Math.floor(Math.random() * COLOR_OPTIONS.length)]
-      });
-      
-      setEmployees(prev => [...prev, newEmployee]);
-      toast.success(`Employee ${employeeData.name} added successfully`);
-    } catch (error) {
-      console.error('Failed to add employee:', error);
-      toast.error('Failed to add employee');
-    }
+  // Navigate pay periods
+  const previousPayPeriod = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
-  // Delete employee
-  const deleteEmployee = async (employeeId) => {
-    try {
-      const employee = employees.find(emp => emp.id === employeeId);
-      if (!employee) return;
-
-      await timesheetsApi.deleteEmployee(employeeId);
-      setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-      
-      // Remove related timesheets and leave days from state
-      setTimesheets(prev => prev.filter(ts => ts.employee_id !== employeeId));
-      setLeaveDays(prev => prev.filter(ld => ld.employee_id !== employeeId));
-      
-      toast.success(`Employee ${employee.name} deleted successfully`);
-    } catch (error) {
-      console.error('Failed to delete employee:', error);
-      toast.error('Failed to delete employee');
-    }
+  const nextPayPeriod = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  // Apply shift to date range
-  const applyShiftToRange = async (employeeId, startDate, endDate, shift) => {
-    try {
-      const bulkData = {
-        employee_id: employeeId,
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
-        start_time: shift.start,
-        end_time: shift.end,
-        break_minutes: shift.break
-      };
-
-      const results = await timesheetsApi.applyShiftToRange(bulkData);
-      setTimesheets(prev => [...prev, ...results]);
-      toast.success(`Applied ${shift.name} to selected range`);
-    } catch (error) {
-      console.error('Failed to apply shift to range:', error);
-      toast.error('Failed to apply shift to range');
-    }
+  const goToCurrentPayPeriod = () => {
+    setCurrentMonth(new Date());
   };
 
-  // Copy previous day's times
-  const copyPreviousDay = useCallback((employeeId, currentDate) => {
-    const prevDate = new Date(currentDate);
-    prevDate.setDate(prevDate.getDate() - 1);
+  // Export data
+  const exportData = () => {
+    const { startDate, endDate } = getPayPeriodDates();
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+    const filename = 'timesheets-' + startStr + '-to-' + endStr + '.json';
     
-    const prevHours = getHours(employeeId, prevDate);
-    
-    if (prevHours.totalHours > 0) {
-      updateTimeEntry(employeeId, currentDate, 'startTime', prevHours.startTime);
-      updateTimeEntry(employeeId, currentDate, 'endTime', prevHours.endTime);
-      updateTimeEntry(employeeId, currentDate, 'breakMinutes', prevHours.breakMinutes);
-      toast.success('Copied previous day\'s times');
-    } else {
-      toast.error('No previous day data found');
-    }
-  }, [getHours, updateTimeEntry]);
-
-  // Start/stop timer
-  const toggleTimer = useCallback((employeeId, date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const timerKey = `${employeeId}-${dateStr}`;
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
-
-    setActiveTimers(prev => {
-      const newTimers = { ...prev };
-      
-      if (newTimers[timerKey]) {
-        // Stop timer and set end time
-        updateTimeEntry(employeeId, date, 'endTime', currentTime);
-        delete newTimers[timerKey];
-        toast.success('Timer stopped');
-      } else {
-        // Start timer and set start time
-        updateTimeEntry(employeeId, date, 'startTime', currentTime);
-        newTimers[timerKey] = now.getTime();
-        toast.success('Timer started');
-      }
-      
-      return newTimers;
-    });
-  }, [updateTimeEntry]);
-
-  // Get timer status
-  const getTimerStatus = useCallback((employeeId, date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const timerKey = `${employeeId}-${dateStr}`;
-    return activeTimers[timerKey];
-  }, [activeTimers]);
-
-  // Quick fill current time
-  const fillCurrentTime = useCallback((employeeId, date, field) => {
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
-    updateTimeEntry(employeeId, date, field, currentTime);
-    toast.success(`Set ${field} to current time`);
-  }, [updateTimeEntry]);
-
-  // Enhanced Time Input Component
-  const TimeInput = React.memo(({ 
-    value, 
-    onChange, 
-    placeholder, 
-    disabled,
-    className = '',
-    onNowClick,
-    showQuickActions = false
-  }) => {
-    const handleChange = (e) => {
-      const formattedValue = formatTimeInput(e.target.value);
-      onChange(formattedValue);
+    const data = {
+      payPeriod: {
+        start: startStr,
+        end: endStr,
+        startDay: payPeriodStartDay
+      },
+      employees: employees.length,
+      timesheets: timesheets.length,
+      data: timesheets,
+      calculations: employees.map(emp => ({
+        employee: emp.name,
+        ...calculateEmployeePayPeriodTotals(emp.id)
+      }))
     };
-
-    const handleBlur = (e) => {
-      const time = e.target.value;
-      if (time && isValidTime(time)) {
-        const [hours, minutes] = time.split(':');
-        const formattedTime = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-        onChange(formattedTime);
-      }
-    };
-
-    return (
-      <div className="relative">
-        <Input
-          type="text"
-          value={value}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder={placeholder}
-          disabled={disabled}
-          className={`h-7 text-xs pr-8 ${className} ${
-            value && !isValidTime(value) ? 'border-red-500' : ''
-          } ${settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}`}
-        />
-        {showQuickActions && onNowClick && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-7 w-7 p-0 hover:bg-transparent"
-                  onClick={onNowClick}
-                  disabled={disabled}
-                >
-                  <Clock className="w-3 h-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Set to current time</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
-    );
-  });
-
-  TimeInput.displayName = 'TimeInput';
-
-  // Status Badge Component
-  const StatusBadge = React.memo(({ status }) => {
-    const config = STATUS_CONFIG[status];
-    if (!config) return null;
     
-    return (
-      <Badge variant="secondary" className={`text-xs ${config.color}`}>
-        {config.label}
-      </Badge>
-    );
-  });
-
-  StatusBadge.displayName = 'StatusBadge';
-
-  // Enhanced Day Cell Component
-  const DayCell = React.memo(({ employeeId, day, hours }) => {
-    const isHolidayDay = isHoliday(day);
-    const status = hours.status;
-    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-    const isToday = day.toDateString() === new Date().toDateString();
-    const hasTimer = getTimerStatus(employeeId, day);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     
+    toast.success('Data exported successfully');
+  };
+
+  // Format date range
+  const formatDateRange = (start, end) => {
+    return `${start.getDate()} ${start.toLocaleString('default', { month: 'short' })} - ${end.getDate()} ${end.toLocaleString('default', { month: 'short' })}`;
+  };
+
+  if (loading) {
     return (
-      <td className={`text-center p-1 ${
-        isWeekend ? (settings.darkMode ? 'bg-slate-700/50' : 'bg-slate-50') : ''
-      } ${
-        isHolidayDay ? (settings.darkMode ? 'bg-purple-900/20' : 'bg-purple-50') : ''
-      } ${
-        isToday ? (settings.darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-500') : ''
-      }`}>
-        <div className="space-y-1">
-          {/* Date and Status */}
-          <div className="flex justify-between items-center px-1">
-            <div className={`text-xs font-medium ${
-              isToday ? 'text-blue-600 font-bold' : 
-              settings.darkMode ? 'text-slate-300' : 'text-slate-700'
-            }`}>
-              {day.getDate()}
-            </div>
-            <div className="flex gap-1">
-              {isHolidayDay && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <PartyPopper className="w-3 h-3 text-purple-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Holiday</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              <StatusBadge status={status} />
-            </div>
-          </div>
-
-          {/* Timer Button */}
-          {settings.enableTimer && status === STATUS_TYPES.WORK && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={hasTimer ? "destructive" : "outline"}
-                    size="sm"
-                    className={`h-6 w-full text-xs ${
-                      hasTimer ? 'animate-pulse' : ''
-                    }`}
-                    onClick={() => toggleTimer(employeeId, day)}
-                  >
-                    {hasTimer ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{hasTimer ? 'Stop timer' : 'Start timer'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          {/* Time Inputs */}
-          <div className="space-y-1">
-            <TimeInput
-              value={hours.startTime}
-              onChange={(value) => updateTimeEntry(employeeId, day, 'startTime', value)}
-              placeholder="09:00"
-              disabled={status !== STATUS_TYPES.WORK}
-              showQuickActions={true}
-              onNowClick={() => fillCurrentTime(employeeId, day, 'startTime')}
-            />
-            <TimeInput
-              value={hours.endTime}
-              onChange={(value) => updateTimeEntry(employeeId, day, 'endTime', value)}
-              placeholder="17:00"
-              disabled={status !== STATUS_TYPES.WORK}
-              showQuickActions={true}
-              onNowClick={() => fillCurrentTime(employeeId, day, 'endTime')}
-            />
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex gap-1 justify-center">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => copyPreviousDay(employeeId, day)}
-                    disabled={status !== STATUS_TYPES.WORK}
-                  >
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Copy previous day</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <Zap className="w-3 h-3" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className={settings.darkMode ? 'bg-slate-800' : ''}>
-                <DialogHeader>
-                  <DialogTitle>Quick Actions</DialogTitle>
-                  <DialogDescription>
-                    Quick actions for {day.toLocaleDateString()}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Set Status</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(STATUS_CONFIG).map(([statusKey, config]) => (
-                        <Button
-                          key={statusKey}
-                          variant={hours.status === statusKey ? "default" : "outline"}
-                          onClick={() => updateDayStatus(employeeId, day, statusKey)}
-                          className="justify-start"
-                        >
-                          {config.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold mb-2">Quick Shifts</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {SHIFT_PRESETS.map(preset => (
-                        <Button
-                          key={preset.name}
-                          variant="outline"
-                          onClick={() => {
-                            updateTimeEntry(employeeId, day, 'startTime', preset.start);
-                            updateTimeEntry(employeeId, day, 'endTime', preset.end);
-                            updateTimeEntry(employeeId, day, 'breakMinutes', preset.break);
-                          }}
-                          disabled={status !== STATUS_TYPES.WORK}
-                        >
-                          {preset.name}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Hours Display */}
-          <div className={`text-xs font-medium ${
-            hours.holidayOvertimeHours > 0 ? 'text-purple-600' :
-            hours.overtimeHours > 0 ? 'text-orange-600' : 
-            hours.totalHours > 0 ? 'text-green-600' :
-            settings.darkMode ? 'text-slate-400' : 'text-slate-600'
-          }`}>
-            {hours.totalHours > 0 ? `${hours.totalHours.toFixed(1)}h` : '-'}
-            {hours.overtimeHours > 0 && ` (+${hours.overtimeHours.toFixed(1)})`}
-            {hours.holidayOvertimeHours > 0 && ` (+${hours.holidayOvertimeHours.toFixed(1)} HOT)`}
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600">Loading timesheets data...</p>
           </div>
         </div>
-      </td>
+      </div>
     );
-  });
+  }
 
-  DayCell.displayName = 'DayCell';
-
-  // Quick Entry Panel Component
-  const QuickEntryPanel = () => {
-    const [selectedEmployee, setSelectedEmployee] = useState(employees[0]?.id);
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-
-    useEffect(() => {
-      // Set default dates to current week
-      const today = new Date();
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
-      
-      const endOfWeek = new Date(today);
-      endOfWeek.setDate(today.getDate() - today.getDay() + 5); // Friday
-      
-      setStartDate(startOfWeek.toISOString().split('T')[0]);
-      setEndDate(endOfWeek.toISOString().split('T')[0]);
-    }, []);
-
-    const applyToRange = () => {
-      if (!selectedEmployee || !startDate || !endDate) {
-        toast.error('Please select employee and date range');
-        return;
-      }
-
-      applyShiftToRange(selectedEmployee, new Date(startDate), new Date(endDate), selectedShift);
-    };
-
-    return (
-      <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-        <CardHeader>
-          <CardTitle>Quick Shift Entry</CardTitle>
-          <CardDescription>Apply shifts to multiple days quickly</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Employee</Label>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}>
+  return (
+    <div className="container mx-auto p-4 md:p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Maintenance Timesheets</h1>
+            <p className="text-gray-500 mt-2">
+              {employees.length} employees • {timesheets.length} entries • Pay Period
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">Pay Period Start Day:</Label>
+              <Select 
+                value={payPeriodStartDay.toString()} 
+                onValueChange={(value) => setPayPeriodStartDay(parseInt(value))}
+              >
+                <SelectTrigger className="w-24">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map(employee => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name}
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+                    <SelectItem key={day} value={day.toString()}>
+                      {day}th of month
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Start Date</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>End Date</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Shift Preset</Label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-              {SHIFT_PRESETS.map(preset => (
-                <Button
-                  key={preset.name}
-                  variant={selectedShift.name === preset.name ? "default" : "outline"}
-                  onClick={() => setSelectedShift(preset)}
-                  className="h-16"
-                >
-                  <div className="text-xs">
-                    <div className="font-semibold">{preset.name}</div>
-                    <div>{preset.start} - {preset.end}</div>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <Button onClick={applyToRange} className="w-full" size="lg">
-            <FastForward className="w-4 h-4 mr-2" />
-            Apply to Selected Range
-          </Button>
-
-          <div className="text-xs text-slate-500 text-center">
-            This will apply the selected shift to all weekdays in the date range
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Add Employee Form Component
-  const AddEmployeeForm = ({ onAdd, onCancel }) => {
-    const [formData, setFormData] = useState({
-      name: '',
-      department: '',
-      rate: ''
-    });
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      if (!formData.name || !formData.department || !formData.rate) {
-        toast.error('Please fill in all fields');
-        return;
-      }
-      
-      onAdd({
-        name: formData.name,
-        department: formData.department,
-        rate: parseFloat(formData.rate)
-      });
-      
-      setFormData({ name: '', department: '', rate: '' });
-    };
-
-    return (
-      <DialogContent className={settings.darkMode ? 'bg-slate-800' : ''}>
-        <DialogHeader>
-          <DialogTitle>Add New Employee</DialogTitle>
-          <DialogDescription>
-            Enter the employee details below.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="John Smith"
-              className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="department">Department</Label>
-            <Select 
-              value={formData.department} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
-            >
-              <SelectTrigger className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}>
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent>
-                {DEPARTMENTS.map(dept => (
-                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="rate">Hourly Rate ($)</Label>
-            <Input
-              id="rate"
-              type="number"
-              step="0.01"
-              value={formData.rate}
-              onChange={(e) => setFormData(prev => ({ ...prev, rate: e.target.value }))}
-              placeholder="85.00"
-              className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
-            />
-          </div>
-          
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
+            <Button variant="outline" onClick={exportData}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
             </Button>
-            <Button type="submit">
-              Add Employee
+            <Button onClick={loadData} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
             </Button>
           </div>
-        </form>
-      </DialogContent>
-    );
-  };
+        </div>
 
-  // Filtered employees based on search and department
-  const filteredEmployees = useMemo(() => {
-    return employees.filter(employee => {
-      if (filters.department !== 'all' && employee.department !== filters.department) return false;
-      if (filters.search && !employee.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
-      return true;
-    });
-  }, [employees, filters.department, filters.search]);
-
-  if (!isClient || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-emerald-50/20 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-slate-600">Loading Timesheets System...</p>
-            </div>
-          </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Employees</p>
+                  <h3 className="text-2xl font-bold mt-2">{employees.length}</h3>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Regular Hours</p>
+                  <h3 className="text-2xl font-bold mt-2">
+                    {employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).regular, 0).toFixed(1)}
+                  </h3>
+                </div>
+                <div className="p-3 bg-green-100 rounded-full">
+                  <Clock className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Overtime 1.5x</p>
+                  <h3 className="text-2xl font-bold mt-2">
+                    {employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).overtime1_5x, 0).toFixed(1)}
+                  </h3>
+                </div>
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <Zap className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Overtime 2.0x</p>
+                  <h3 className="text-2xl font-bold mt-2">
+                    {employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).overtime2_0x, 0).toFixed(1)}
+                  </h3>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-full">
+                  <Zap className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Current Period</p>
+                  <h3 className="text-2xl font-bold mt-2">
+                    {payPeriodStartDay}
+                  </h3>
+                </div>
+                <div className="p-3 bg-indigo-100 rounded-full">
+                  <Calendar className="w-6 h-6 text-indigo-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    );
-  }
 
-  const monthlyTotals = calculateMonthlyTotals();
-  const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full md:w-auto grid-cols-2">
+          <TabsTrigger value="timesheets">
+            <CalendarDays className="w-4 h-4 mr-2" />
+            Timesheet Grid
+          </TabsTrigger>
+          <TabsTrigger value="employees">
+            <Users className="w-4 h-4 mr-2" />
+            Employees
+          </TabsTrigger>
+        </TabsList>
 
-  return (
-    <div className={`min-h-screen p-6 transition-colors ${
-      settings.darkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white' 
-        : 'bg-gradient-to-br from-slate-50 via-blue-50/20 to-emerald-50/20'
-    }`}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={refreshData}
-                      disabled={!isOnline}
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Refresh data</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Badge variant={isOnline ? "default" : "destructive"} className="flex items-center gap-1">
-                {isOnline ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
-                {isOnline ? 'Online' : 'Offline'}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Timesheets Pro
-                </h1>
-                <p className="text-slate-600 mt-2">FastAPI Backend • Real-time Sync</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={quickEntryMode ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setQuickEntryMode(!quickEntryMode)}
-                    >
-                      <Zap className="w-4 h-4 mr-2" />
-                      Quick Entry
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {quickEntryMode ? 'Exit quick entry mode' : 'Enter quick entry mode'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const newSettings = { ...settings, darkMode: !settings.darkMode };
-                        setSettings(newSettings);
-                      }}
-                    >
-                      {settings.darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {settings.darkMode ? 'Light mode' : 'Dark mode'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-          
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 max-w-5xl mx-auto mb-6">
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-blue-600">{monthlyTotals.totalHours.toFixed(1)}h</div>
-                <div className="text-xs text-slate-500">Total Hours</div>
-              </CardContent>
-            </Card>
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-orange-600">{monthlyTotals.totalOvertime.toFixed(1)}h</div>
-                <div className="text-xs text-slate-500">Overtime</div>
-              </CardContent>
-            </Card>
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-purple-600">{monthlyTotals.totalHolidayOvertime.toFixed(1)}h</div>
-                <div className="text-xs text-slate-500">Holiday OT</div>
-              </CardContent>
-            </Card>
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-green-600">${monthlyTotals.totalPay.toFixed(0)}</div>
-                <div className="text-xs text-slate-500">Payroll</div>
-              </CardContent>
-            </Card>
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-pink-600">{monthlyTotals.totalDaysWorked}</div>
-                <div className="text-xs text-slate-500">Days Worked</div>
-              </CardContent>
-            </Card>
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-indigo-600">{employees.length}</div>
-                <div className="text-xs text-slate-500">Employees</div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Quick Entry Panel */}
-        {quickEntryMode && (
-          <div className="mb-6">
-            <QuickEntryPanel />
-          </div>
-        )}
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full grid-cols-4 p-1 rounded-lg ${
-            settings.darkMode ? 'bg-slate-800' : 'bg-slate-100'
-          }`}>
-            <TabsTrigger value="monthly-view" className="rounded-md">
-              <Calendar className="w-4 h-4 mr-2" />
-              Grid View
-            </TabsTrigger>
-            <TabsTrigger value="summary" className="rounded-md">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="quick-shifts" className="rounded-md">
-              <Zap className="w-4 h-4 mr-2" />
-              Quick Shifts
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-md">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Monthly Grid View Tab */}
-          <TabsContent value="monthly-view">
-            <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Button variant="outline" size="sm" onClick={previousMonth}>
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <CardTitle>{monthName}</CardTitle>
-                    <Button variant="outline" size="sm" onClick={nextMonth}>
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+        {/* Timesheets Tab */}
+        <TabsContent value="timesheets" className="space-y-6">
+          {/* Pay Period Navigation */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <Button variant="outline" size="icon" onClick={previousPayPeriod}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <div className="text-center">
+                    <h2 className="text-xl font-semibold">
+                      Pay Period: {formatDateRange(getPayPeriodDates().startDate, getPayPeriodDates().endDate)}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {daysInPayPeriod.length} days • Starts on {payPeriodStartDay}th of month
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Search className="w-4 h-4 text-slate-400" />
-                      <Input
-                        placeholder="Search employees..."
-                        value={filters.search}
-                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                        className={`w-48 ${settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}`}
-                      />
-                    </div>
-                    <Select 
-                      value={filters.department} 
-                      onValueChange={(value) => setFilters(prev => ({ ...prev, department: value }))}
-                    >
-                      <SelectTrigger className={`w-32 ${settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}`}>
-                        <SelectValue placeholder="Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Departments</SelectItem>
-                        {DEPARTMENTS.map(dept => (
-                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Add Employee
-                        </Button>
-                      </DialogTrigger>
-                      <AddEmployeeForm 
-                        onAdd={addEmployee}
-                        onCancel={() => {}} 
-                      />
-                    </Dialog>
-                  </div>
+                  <Button variant="outline" size="icon" onClick={nextPayPeriod}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className={`border-b-2 ${settings.darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                        <th className={`text-left p-3 font-semibold sticky left-0 z-10 ${
-                          settings.darkMode ? 'bg-slate-800' : 'bg-slate-50'
-                        }`}>
-                          Employee
-                        </th>
-                        {daysInMonth.map(day => {
-                          const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                          if (!settings.showWeekends && isWeekend) return null;
-                          const isHolidayDay = isHoliday(day);
-                          const isToday = day.toDateString() === new Date().toDateString();
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search employees..."
+                      className="pl-9 w-full md:w-64"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Button variant="outline" onClick={goToCurrentPayPeriod}>
+                    Current Period
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timesheet Grid */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Pay Period Timesheet</CardTitle>
+              <CardDescription>
+                Click on any cell to edit timesheet entry
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-48 sticky left-0 bg-white">Employee</TableHead>
+                      {daysInPayPeriod.map(day => (
+                        <TableHead key={day.toISOString()} className="text-center min-w-24">
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs font-normal">
+                              {day.toLocaleDateString('default', { weekday: 'short' })}
+                            </span>
+                            <span className={`font-medium ${
+                              day.toDateString() === new Date().toDateString() ? 'text-blue-600' : ''
+                            }`}>
+                              {day.getDate()}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {day.toLocaleDateString('default', { month: 'short' })}
+                            </span>
+                          </div>
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-center min-w-24 bg-green-50">Reg</TableHead>
+                      <TableHead className="text-center min-w-24 bg-orange-50">1.5x OT</TableHead>
+                      <TableHead className="text-center min-w-24 bg-purple-50">2.0x OT</TableHead>
+                      <TableHead className="text-center min-w-24 bg-indigo-50">Night</TableHead>
+                      <TableHead className="text-center min-w-24 bg-blue-50">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEmployees.map(employee => {
+                      if (!employee) return null;
+                      const totals = calculateEmployeePayPeriodTotals(employee.id);
+                      
+                      return (
+                        <TableRow key={employee.id} className="hover:bg-gray-50">
+                          <TableCell className="font-medium sticky left-0 bg-white">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs">
+                                  {getInitials(employee.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p>{employee.name || 'Unknown Employee'}</p>
+                                <p className="text-xs text-gray-500">Maintenance</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          {daysInPayPeriod.map(day => {
+                            const entry = getEmployeeEntry(employee.id, day);
+                            const isToday = day.toDateString() === new Date().toDateString();
+                            const isDifferentMonth = day.getMonth() !== currentMonth.getMonth();
+                            
+                            return (
+                              <TableCell key={day.toISOString()} className="text-center p-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-10 w-full p-0 ${
+                                    entry ? 'bg-green-50 hover:bg-green-100' : 
+                                    isToday ? 'bg-blue-50 hover:bg-blue-100' :
+                                    isDifferentMonth ? 'bg-gray-50 hover:bg-gray-100' : 'hover:bg-gray-100'
+                                  }`}
+                                  onClick={() => {
+                                    setSelectedEmployee(employee);
+                                    setSelectedDate(day);
+                                    setSelectedEntry(entry);
+                                  }}
+                                >
+                                  {entry ? (
+                                    <div className="flex flex-col items-center w-full">
+                                      <StatusBadge status={entry.status} />
+                                      <div className="text-xs mt-1 space-y-0.5">
+                                        <div className="flex items-center justify-center gap-1">
+                                          <span className="text-green-600 font-medium">
+                                            {entry.regular_hours?.toFixed(1) || 0}
+                                          </span>
+                                          {entry.overtime_hours > 0 && (
+                                            <span className="text-orange-600">
+                                              +{entry.overtime_hours?.toFixed(1)}
+                                            </span>
+                                          )}
+                                          {entry.nightshift_hours > 0 && (
+                                            <Moon className="w-3 h-3 text-indigo-600" />
+                                          )}
+                                        </div>
+                                        {entry.start_time && (
+                                          <div className="text-[10px] text-gray-500">
+                                            {entry.start_time}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-center">
+                                      <span className={`text-sm ${
+                                        isToday ? 'text-blue-600 font-medium' : 
+                                        isDifferentMonth ? 'text-gray-400' : 'text-gray-600'
+                                      }`}>
+                                        {day.getDate()}
+                                      </span>
+                                      {isDifferentMonth && (
+                                        <span className="text-[10px] text-gray-400">
+                                          {day.toLocaleDateString('default', { month: 'short' })}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </Button>
+                              </TableCell>
+                            );
+                          })}
                           
-                          return (
-                            <th key={day.toISOString()} className={`text-center p-2 font-semibold min-w-32 ${
-                              isWeekend ? (settings.darkMode ? 'bg-slate-700' : 'bg-slate-50') : ''
-                            } ${
-                              isHolidayDay ? (settings.darkMode ? 'bg-purple-900/30' : 'bg-purple-100') : ''
-                            } ${
-                              isToday ? (settings.darkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-500') : ''
-                            }`}>
-                              <div className="text-sm">{day.getDate()}</div>
-                              <div className={`text-xs font-normal ${
-                                settings.darkMode ? 'text-slate-400' : 'text-slate-500'
-                              }`}>
-                                {day.toLocaleDateString('default', { weekday: 'short' })}
-                              </div>
-                              {isHolidayDay && (
-                                <div className="text-xs text-purple-500 mt-1">
-                                  Holiday
-                                </div>
-                              )}
-                              {isToday && (
-                                <div className="text-xs text-blue-500 mt-1 font-semibold">
-                                  Today
-                                </div>
-                              )}
-                            </th>
-                          );
-                        }).filter(Boolean)}
-                        <th className={`text-center p-3 font-semibold min-w-24 ${
-                          settings.darkMode ? 'bg-slate-800' : 'bg-slate-50'
-                        }`}>
-                          Total
-                        </th>
-                        <th className={`text-center p-3 font-semibold min-w-24 ${
-                          settings.darkMode ? 'bg-slate-800' : 'bg-slate-50'
-                        }`}>
-                          Overtime
-                        </th>
-                        <th className={`text-center p-3 font-semibold min-w-24 ${
-                          settings.darkMode ? 'bg-slate-800' : 'bg-slate-50'
-                        }`}>
-                          Holiday OT
-                        </th>
-                        <th className={`text-center p-3 font-semibold min-w-24 ${
-                          settings.darkMode ? 'bg-slate-800' : 'bg-slate-50'
-                        }`}>
-                          Amount
-                        </th>
-                        <th className={`text-center p-3 font-semibold min-w-16 ${
-                          settings.darkMode ? 'bg-slate-800' : 'bg-slate-50'
-                        }`}>
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredEmployees.map(employee => {
-                        const totals = calculateEmployeeTotals(employee.id);
-                        
-                        return (
-                          <tr key={employee.id} className={`border-b ${
-                            settings.darkMode ? 'border-slate-700 hover:bg-slate-700/50' : 'border-slate-100 hover:bg-slate-50'
-                          }`}>
-                            {/* Employee Name */}
-                            <td className={`p-3 font-medium sticky left-0 z-10 ${
-                              settings.darkMode ? 'bg-slate-800' : 'bg-white'
-                            }`}>
-                              <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 ${employee.color} rounded-full flex items-center justify-center text-white text-sm font-medium`}>
-                                  {employee.name.split(' ').map(n => n[0]).join('')}
-                                </div>
-                                <div>
-                                  <div>{employee.name}</div>
-                                  <div className={`text-xs ${
-                                    settings.darkMode ? 'text-slate-400' : 'text-slate-500'
-                                  }`}>
-                                    {employee.department} • ${employee.rate}/h
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            
-                            {/* Daily Cells */}
-                            {daysInMonth.map(day => {
-                              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                              if (!settings.showWeekends && isWeekend) return null;
-                              
-                              const hours = getHours(employee.id, day);
-                              return (
-                                <DayCell
-                                  key={day.toISOString()}
-                                  employeeId={employee.id}
-                                  day={day}
-                                  hours={hours}
-                                />
-                              );
-                            }).filter(Boolean)}
-                            
-                            {/* Monthly Totals */}
-                            <td className="text-center p-3 font-semibold bg-blue-500/10 text-blue-600">
-                              {totals.totalHours.toFixed(1)}h
-                            </td>
-                            <td className="text-center p-3 font-semibold bg-orange-500/10 text-orange-600">
-                              {totals.totalOvertime.toFixed(1)}h
-                            </td>
-                            <td className="text-center p-3 font-semibold bg-purple-500/10 text-purple-600">
-                              {totals.totalHolidayOvertime.toFixed(1)}h
-                            </td>
-                            <td className="text-center p-3 font-semibold bg-green-500/10 text-green-600">
-                              ${totals.totalPay.toFixed(0)}
-                            </td>
-                            
-                            {/* Actions */}
-                            <td className="text-center p-3">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        if (confirm(`Are you sure you want to delete ${employee.name}? This will also remove all their timesheet data.`)) {
-                                          deleteEmployee(employee.id);
-                                        }
-                                      }}
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Delete Employee</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="summary">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Overall Stats */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                  <CardHeader>
-                    <CardTitle>Monthly Overview</CardTitle>
-                    <CardDescription>Performance and utilization metrics</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {/* Progress Bars */}
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span>Regular Hours</span>
-                            <span>{monthlyTotals.totalRegular.toFixed(1)}h</span>
-                          </div>
-                          <Progress value={(monthlyTotals.totalRegular / (monthlyTotals.totalHours || 1)) * 100} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-orange-600">Overtime Hours</span>
-                            <span className="text-orange-600">{monthlyTotals.totalOvertime.toFixed(1)}h</span>
-                          </div>
-                          <Progress value={(monthlyTotals.totalOvertime / (monthlyTotals.totalHours || 1)) * 100} className="bg-orange-100" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-purple-600">Holiday Overtime Hours</span>
-                            <span className="text-purple-600">{monthlyTotals.totalHolidayOvertime.toFixed(1)}h</span>
-                          </div>
-                          <Progress value={(monthlyTotals.totalHolidayOvertime / (monthlyTotals.totalHours || 1)) * 100} className="bg-purple-100" />
-                        </div>
-                      </div>
-
-                      {/* Employee Performance */}
-                      <div className="space-y-3">
-                        <h4 className="font-semibold">Employee Performance</h4>
-                        {employees.map(employee => {
-                          const totals = calculateEmployeeTotals(employee.id);
-                          return (
-                            <div key={employee.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                              settings.darkMode ? 'border-slate-700' : ''
-                            }`}>
-                              <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 ${employee.color} rounded-full flex items-center justify-center text-white text-sm font-medium`}>
-                                  {employee.name.split(' ').map(n => n[0]).join('')}
-                                </div>
-                                <div>
-                                  <div className="font-medium">{employee.name}</div>
-                                  <div className="text-sm text-slate-500">{employee.department}</div>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-semibold">{totals.totalHours.toFixed(1)}h</div>
-                                <div className="text-sm text-slate-500">${totals.totalPay.toFixed(0)}</div>
-                              </div>
+                          {/* Pay Period Totals Columns */}
+                          <TableCell className="text-center font-bold bg-green-50">
+                            {totals.regular.toFixed(1)}
+                            <div className="text-xs text-gray-500 mt-1">
+                              {Math.min(208, totals.regular).toFixed(0)}/208
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                            {totals.excessRegular > 0 && (
+                              <div className="text-xs text-orange-600 mt-1">
+                                +{totals.excessRegular.toFixed(1)} to OT
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center font-bold bg-orange-50">
+                            {totals.overtime1_5x.toFixed(1)}
+                            {totals.standbyBonus > 0 && (
+                              <div className="text-xs text-yellow-600 mt-1">
+                                +{totals.standbyBonus.toFixed(0)} standby
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center font-bold bg-purple-50">
+                            {totals.overtime2_0x.toFixed(1)}
+                          </TableCell>
+                          <TableCell className="text-center font-bold bg-indigo-50">
+                            {totals.nightshift.toFixed(1)}
+                          </TableCell>
+                          <TableCell className="text-center font-bold bg-blue-50">
+                            <span className="text-lg">{totals.total.toFixed(1)}</span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              {/* Quick Actions & Insights */}
-              <div className="space-y-6">
-                <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                  <CardHeader>
-                    <CardTitle>Quick Insights</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-200">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <div className="font-semibold text-blue-600">Productivity High</div>
-                        <div className="text-sm text-slate-600">Team is 15% above average</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-200">
-                      <AlertCircle className="w-5 h-5 text-orange-600" />
-                      <div>
-                        <div className="font-semibold text-orange-600">Overtime Alert</div>
-                        <div className="text-sm text-slate-600">2 employees exceeding limits</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-200">
-                      <PartyPopper className="w-5 h-5 text-purple-600" />
-                      <div>
-                        <div className="font-semibold text-purple-600">Holiday Work</div>
-                        <div className="text-sm text-slate-600">{monthlyTotals.totalHolidayOvertime.toFixed(1)}h at 2.0x rate</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                  <CardHeader>
-                    <CardTitle>System Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Backend Connection</span>
-                        <Badge variant={isOnline ? "default" : "destructive"}>
-                          {isOnline ? 'Connected' : 'Offline'}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Total Employees</span>
-                        <span className="font-semibold">{employees.length}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">This Month Hours</span>
-                        <span className="font-semibold">{monthlyTotals.totalHours.toFixed(1)}h</span>
-                      </div>
-                      <Button onClick={refreshData} className="w-full" variant="outline">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Refresh Data
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                  <CardHeader>
-                    <CardTitle>Manage Employees</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="w-full justify-start">
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Add New Employee
-                        </Button>
-                      </DialogTrigger>
-                      <AddEmployeeForm 
-                        onAdd={addEmployee}
-                        onCancel={() => {}} 
-                      />
-                    </Dialog>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Quick Shifts Tab */}
-          <TabsContent value="quick-shifts">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <QuickEntryPanel />
-              
-              <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                <CardHeader>
-                  <CardTitle>Quick Individual Shifts</CardTitle>
-                  <CardDescription>Add common shifts quickly for today</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-4">
-                    {employees.map(employee => (
-                      <div key={employee.id} className={`p-4 rounded-lg border ${
-                        settings.darkMode ? 'border-slate-700' : 'border-slate-200'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 ${employee.color} rounded-full flex items-center justify-center text-white text-sm font-medium`}>
-                              {employee.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div>
-                              <div className="font-medium">{employee.name}</div>
-                              <div className="text-sm text-slate-500">{employee.department}</div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            {SHIFT_PRESETS.slice(0, 3).map(preset => (
-                              <TooltipProvider key={preset.name}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        const today = new Date();
-                                        updateTimeEntry(employee.id, today, 'startTime', preset.start);
-                                        updateTimeEntry(employee.id, today, 'endTime', preset.end);
-                                        updateTimeEntry(employee.id, today, 'breakMinutes', preset.break);
-                                        toast.success(`Applied ${preset.name} to ${employee.name}`);
-                                      }}
-                                    >
-                                      {preset.name}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{preset.start} - {preset.end}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                <CardHeader>
-                  <CardTitle>System Settings</CardTitle>
-                  <CardDescription>Configure timesheet preferences</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="auto-overtime" className="font-semibold">Auto Overtime Calculation</Label>
-                        <div className="text-sm text-slate-500">Automatically calculate overtime after threshold</div>
-                      </div>
-                      <Switch
-                        id="auto-overtime"
-                        checked={settings.autoOvertime}
-                        onCheckedChange={(checked) => {
-                          setSettings(prev => ({ ...prev, autoOvertime: checked }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="overtime-threshold">Overtime Threshold (hours)</Label>
-                      <Input
-                        id="overtime-threshold"
-                        type="number"
-                        value={settings.overtimeThreshold}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, overtimeThreshold: parseInt(e.target.value) || 8 }));
-                        }}
-                        className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
-                        disabled={!settings.autoOvertime}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="holiday-overtime-rate">Holiday Overtime Rate</Label>
-                      <Input
-                        id="holiday-overtime-rate"
-                        type="number"
-                        step="0.1"
-                        value={settings.holidayOvertimeRate}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, holidayOvertimeRate: parseFloat(e.target.value) || 2.0 }));
-                        }}
-                        className={settings.darkMode ? 'bg-slate-700 border-slate-600' : ''}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="enable-timer" className="font-semibold">Enable Timer Feature</Label>
-                        <div className="text-sm text-slate-500">Show start/stop timer buttons</div>
-                      </div>
-                      <Switch
-                        id="enable-timer"
-                        checked={settings.enableTimer}
-                        onCheckedChange={(checked) => {
-                          setSettings(prev => ({ ...prev, enableTimer: checked }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="auto-copy-previous" className="font-semibold">Auto Copy Previous Day</Label>
-                        <div className="text-sm text-slate-500">Suggest copying previous day's times</div>
-                      </div>
-                      <Switch
-                        id="auto-copy-previous"
-                        checked={settings.autoCopyPrevious}
-                        onCheckedChange={(checked) => {
-                          setSettings(prev => ({ ...prev, autoCopyPrevious: checked }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="show-weekends" className="font-semibold">Show Weekends</Label>
-                        <div className="text-sm text-slate-500">Display Saturday and Sunday columns</div>
-                      </div>
-                      <Switch
-                        id="show-weekends"
-                        checked={settings.showWeekends}
-                        onCheckedChange={(checked) => {
-                          setSettings(prev => ({ ...prev, showWeekends: checked }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label htmlFor="dark-mode" className="font-semibold">Dark Mode</Label>
-                        <div className="text-sm text-slate-500">Switch to dark color scheme</div>
-                      </div>
-                      <Switch
-                        id="dark-mode"
-                        checked={settings.darkMode}
-                        onCheckedChange={(checked) => {
-                          setSettings(prev => ({ ...prev, darkMode: checked }));
-                        }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className={settings.darkMode ? 'bg-slate-800 border-slate-700' : ''}>
-                <CardHeader>
-                  <CardTitle>System Information</CardTitle>
-                  <CardDescription>Backend connection and data status</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 rounded-lg border">
-                      <span>Backend Status</span>
-                      <Badge variant={isOnline ? "default" : "destructive"}>
-                        {isOnline ? 'Connected' : 'Offline'}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-3 rounded-lg border">
-                      <span>Total Employees</span>
-                      <span className="font-semibold">{employees.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 rounded-lg border">
-                      <span>Timesheet Entries</span>
-                      <span className="font-semibold">{timesheets.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 rounded-lg border">
-                      <span>Holidays</span>
-                      <span className="font-semibold">{holidays.length}</span>
-                    </div>
-                    
-                    <Button onClick={refreshData} className="w-full" variant="outline">
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Refresh All Data
-                    </Button>
-                    
-                    <Button 
-                      onClick={() => {
-                        if (confirm('This will reload all data from the server. Continue?')) {
-                          loadAllData();
-                        }
-                      }}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Database className="w-4 h-4 mr-2" />
-                      Reload from Server
-                    </Button>
-                  </div>
+        {/* Employees Tab */}
+        <TabsContent value="employees">
+          <Card>
+            <CardHeader>
+              <CardTitle>Employee Directory</CardTitle>
+              <CardDescription>Maintenance Department Team</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredEmployees.map(employee => {
+                  if (!employee) return null;
+                  const totals = calculateEmployeePayPeriodTotals(employee.id);
                   
-                  <div className="text-xs text-slate-500">
-                    <p>Connected to: {API_BASE_URL}</p>
-                    <p>All data is synchronized with the FastAPI backend.</p>
-                    <p>Changes are saved automatically to the server.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+                  return (
+                    <Card key={employee.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-blue-100 text-blue-600">
+                              {getInitials(employee.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 space-y-1">
+                            <h3 className="font-semibold">{employee.name || 'Unknown Employee'}</h3>
+                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                              <Building className="w-3 h-3" />
+                              <span>Maintenance</span>
+                            </div>
+                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                              <MailIcon className="w-3 h-3" />
+                              <span className="truncate">{employee.email}</span>
+                            </div>
+                          </div>
+                          <Badge variant={employee.is_active ? "default" : "outline"} className="bg-blue-50 text-blue-700">
+                            {employee.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                        
+                        <Separator className="my-3" />
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Regular</p>
+                            <p className="font-semibold">{totals.regular.toFixed(1)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">1.5x OT</p>
+                            <p className="font-semibold text-orange-600">{totals.overtime1_5x.toFixed(1)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">2.0x OT</p>
+                            <p className="font-semibold text-purple-600">{totals.overtime2_0x.toFixed(1)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Nightshift</p>
+                            <p className="font-semibold text-indigo-600">{totals.nightshift.toFixed(1)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Standby</p>
+                            <p className="font-semibold text-yellow-600">{totals.standbyBonus.toFixed(1)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Total</p>
+                            <p className="font-bold">{totals.total.toFixed(1)}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3">
+                          <Progress 
+                            value={(totals.regular / 208) * 100} 
+                            className="h-2"
+                            max={208}
+                          />
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>{Math.min(208, totals.regular).toFixed(0)} of 208 regular hours</span>
+                            {totals.excessRegular > 0 && (
+                              <span className="text-orange-600 font-semibold">
+                                +{totals.excessRegular.toFixed(1)} to OT
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Timesheet Entry Dialog */}
+      {selectedEmployee && selectedDate && (
+        <TimesheetEntryDialog
+          employee={selectedEmployee}
+          date={selectedDate}
+          entry={selectedEntry}
+          onSave={(data) => handleSaveEntry(selectedEmployee.id, selectedDate, data)}
+          onClose={() => {
+            setSelectedEmployee(null);
+            setSelectedDate(null);
+            setSelectedEntry(null);
+          }}
+        />
+      )}
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={loadData}
+            >
+              Try Again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };
