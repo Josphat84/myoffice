@@ -4,194 +4,209 @@ import React, { useState, useMemo, useEffect } from "react";
 import { 
   Calendar, Plus, Search, RefreshCw, Filter, ChevronDown, ChevronUp,
   CheckCircle2, XCircle, User, FileText, Eye, Loader2,
-  Clock, AlertCircle, Send, Phone, Trash2, MoreVertical,
-  Download, Edit, X, Clock as ClockIcon, DollarSign, ArrowUpRight,
-  TrendingUp, BarChart3, Users, Briefcase, Zap, FileDown,
-  List, LayoutGrid, Home as HomeIcon, Database, Layers, Server,
-  Link as LinkIcon, Calculator
+  Clock, AlertCircle, Send, Phone, Info, Trash2, MoreVertical,
+  Download, FileDown, List, LayoutGrid, X, Edit, ArrowUpRight,
+  TrendingUp, Copy, Share2, Bookmark, BookOpen, Heart, Brain,
+  Briefcase, Stethoscope, Shield, GraduationCap, Zap, Users,
+  BarChart3, PieChart, Settings, Bell, HelpCircle, Mail,
+  CopyCheck, CalendarDays, Workflow, Target, Sparkles,
+  Database, Layers, Server, Home, BarChart, Home as HomeIcon
 } from "lucide-react";
 import Link from "next/link";
 
 // API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const OVERTIME_API = `${API_BASE}/api/overtime`;
+const LEAVES_API = `${API_BASE}/api/leaves`;
 
-// Enhanced Overtime Types with elegant styling
-const OVERTIME_TYPES = {
-  regular: { 
-    name: 'Regular Overtime', 
-    shortName: 'Regular', 
-    color: '#2563eb', 
-    rate: 1.5, 
-    icon: ClockIcon,
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-    borderColor: 'border-blue-200',
-    description: 'Standard overtime hours'
+// Enhanced Constants with elegant icons
+const LEAVE_TYPES = {
+  annual: { 
+    name: 'Annual Leave', shortName: 'Annual', color: '#2563eb', 
+    bgColor: 'bg-blue-50', textColor: 'text-blue-700', borderColor: 'border-blue-200',
+    icon: CalendarDays, gradient: 'from-blue-500 to-blue-600',
+    description: 'Paid vacation time'
   },
-  weekend: { 
-    name: 'Weekend Overtime', 
-    shortName: 'Weekend', 
-    color: '#dc2626', 
-    rate: 2.0, 
-    icon: Calendar,
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700',
-    borderColor: 'border-red-200',
-    description: 'Weekend and holiday work'
+  sick: { 
+    name: 'Sick Leave', shortName: 'Sick', color: '#dc2626', 
+    bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200',
+    icon: Stethoscope, gradient: 'from-red-500 to-red-600',
+    description: 'Medical and health-related'
   },
   emergency: { 
-    name: 'Emergency Overtime', 
-    shortName: 'Emergency', 
-    color: '#d97706', 
-    rate: 2.5, 
-    icon: AlertCircle,
-    bgColor: 'bg-amber-50',
-    textColor: 'text-amber-700',
-    borderColor: 'border-amber-200',
-    description: 'Urgent and critical work'
+    name: 'Emergency Leave', shortName: 'Emergency', color: '#d97706', 
+    bgColor: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200',
+    icon: Shield, gradient: 'from-amber-500 to-amber-600',
+    description: 'Urgent personal matters'
   },
-  project: { 
-    name: 'Project Overtime', 
-    shortName: 'Project', 
-    color: '#7c3aed', 
-    rate: 1.75, 
-    icon: FileText,
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-700',
-    borderColor: 'border-purple-200',
-    description: 'Project-based overtime'
+  compassionate: { 
+    name: 'Compassionate Leave', shortName: 'Compassionate', color: '#7c3aed', 
+    bgColor: 'bg-purple-50', textColor: 'text-purple-700', borderColor: 'border-purple-200',
+    icon: Heart, gradient: 'from-purple-500 to-purple-600',
+    description: 'Family emergencies'
+  },
+  maternity: { 
+    name: 'Maternity Leave', shortName: 'Maternity', color: '#db2777', 
+    bgColor: 'bg-pink-50', textColor: 'text-pink-700', borderColor: 'border-pink-200',
+    icon: Users, gradient: 'from-pink-500 to-pink-600',
+    description: 'Parental leave'
+  },
+  study: { 
+    name: 'Study Leave', shortName: 'Study', color: '#059669', 
+    bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', borderColor: 'border-emerald-200',
+    icon: GraduationCap, gradient: 'from-emerald-500 to-emerald-600',
+    description: 'Professional development'
   }
 };
 
-// Enhanced Utility Functions
+// Enhanced Utility functions
 const formatDate = (dateString) => {
   if (!dateString) return 'Not specified';
-  try {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  } catch {
-    return dateString;
-  }
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
 };
 
-const formatTime = (timeString) => {
-  if (!timeString) return '';
-  try {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: true 
-    });
-  } catch {
-    return timeString;
-  }
+const formatDateForExport = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
 };
 
-const calculateHours = (startTime, endTime, date) => {
-  if (!startTime || !endTime || !date) return 0;
-  try {
-    const start = new Date(`${date}T${startTime}`);
-    const end = new Date(`${date}T${endTime}`);
-    if (end < start) end.setDate(end.getDate() + 1);
-    const diffMs = end.getTime() - start.getTime();
-    return Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
-  } catch {
-    return 0;
-  }
+const formatTime = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
 };
 
-const calculateEarnings = (hours, rate, hourlyRate = 25) => {
-  return hours * rate * hourlyRate;
+const calculateDays = (startDate, endDate) => {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 };
 
 // API Functions
-const fetchOvertime = async (filters = {}) => {
+const fetchLeaves = async (filters = {}) => {
   try {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== 'all') params.append(key, value);
     });
 
-    const url = params.toString() ? `${OVERTIME_API}?${params.toString()}` : OVERTIME_API;
+    const url = params.toString() ? `${LEAVES_API}?${params.toString()}` : LEAVES_API;
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
+    if (!response.ok) throw new Error(`Failed to fetch leaves: ${response.status}`);
     return await response.json();
   } catch (error) {
-    console.error('❌ Error fetching overtime:', error);
+    console.error('Error fetching leaves:', error);
     throw error;
   }
 };
 
-const createOvertime = async (overtimeData) => {
+const fetchLeaveBalance = async () => {
   try {
-    const response = await fetch(OVERTIME_API, {
+    const response = await fetch(`${LEAVES_API}/balance/MNT001`);
+    if (!response.ok) return getDefaultBalance();
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching balance:', error);
+    return getDefaultBalance();
+  }
+};
+
+const createLeave = async (leaveData) => {
+  try {
+    const response = await fetch(LEAVES_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(overtimeData),
+      body: JSON.stringify(leaveData),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to create: ${response.status} - ${errorText}`);
+      throw new Error(`Failed to create leave: ${response.status} - ${errorText}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('❌ Error creating overtime:', error);
+    console.error('Error creating leave:', error);
     throw error;
   }
 };
 
-const updateOvertime = async (overtimeId, overtimeData) => {
+const updateLeave = async (leaveId, leaveData) => {
   try {
-    const response = await fetch(`${OVERTIME_API}/${overtimeId}`, {
+    const response = await fetch(`${LEAVES_API}/${leaveId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(overtimeData),
+      body: JSON.stringify(leaveData),
     });
 
-    if (!response.ok) throw new Error(`Failed to update: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update leave: ${response.status} - ${errorText}`);
+    }
+    
     return await response.json();
   } catch (error) {
-    console.error('❌ Error updating overtime:', error);
+    console.error('Error updating leave:', error);
     throw error;
   }
 };
 
-const updateOvertimeStatus = async (overtimeId, status) => {
+const updateLeaveStatus = async (leaveId, status) => {
   try {
-    const response = await fetch(`${OVERTIME_API}/${overtimeId}`, {
+    const response = await fetch(`${LEAVES_API}/${leaveId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
 
-    if (!response.ok) throw new Error(`Failed to update status: ${response.status}`);
+    if (!response.ok) throw new Error(`Failed to update leave status: ${response.status}`);
     return await response.json();
   } catch (error) {
-    console.error('❌ Error updating overtime status:', error);
+    console.error('Error updating leave status:', error);
     throw error;
   }
 };
 
-const deleteOvertime = async (overtimeId) => {
+const deleteLeave = async (leaveId) => {
   try {
-    const response = await fetch(`${OVERTIME_API}/${overtimeId}`, { 
+    const response = await fetch(`${LEAVES_API}/${leaveId}`, { 
       method: 'DELETE' 
     });
     
-    if (!response.ok) throw new Error(`Failed to delete: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to delete leave: ${response.status} - ${errorText}`);
+    }
+    
     return await response.json();
   } catch (error) {
-    console.error('❌ Error deleting overtime:', error);
+    console.error('Error deleting leave:', error);
     throw error;
   }
 };
+
+const getDefaultBalance = () => ({
+  annual: { total: 21, used: 0, pending: 0, remaining: 21 },
+  sick: { total: 10, used: 0, pending: 0, remaining: 10 },
+  emergency: { total: 5, used: 0, pending: 0, remaining: 5 },
+  compassionate: { total: 5, used: 0, pending: 0, remaining: 5 },
+  maternity: { total: 90, used: 0, pending: 0, remaining: 90 },
+  study: { total: 10, used: 0, pending: 0, remaining: 10 }
+});
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status }) => {
@@ -210,11 +225,6 @@ const StatusBadge = ({ status }) => {
       color: 'bg-rose-50 text-rose-700 border-rose-200',
       icon: XCircle, 
       label: 'Not Approved' 
-    },
-    paid: { 
-      color: 'bg-green-50 text-green-700 border-green-200',
-      icon: DollarSign, 
-      label: 'Paid' 
     }
   }[status] || config.pending;
 
@@ -228,7 +238,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// Elegant Stat Card Component (Matches home page style)
+// Elegant Stat Card Component
 const StatCard = ({ title, value, icon, onClick, subtitle }) => {
   const Icon = icon;
   
@@ -258,29 +268,125 @@ const StatCard = ({ title, value, icon, onClick, subtitle }) => {
   );
 };
 
-// Enhanced Overtime Card Component
-const OvertimeCard = ({ overtime, onView, onEdit, onDelete, onDownload }) => {
-  const overtimeType = OVERTIME_TYPES[overtime.overtime_type] || OVERTIME_TYPES.regular;
-  const Icon = overtimeType.icon;
+// Enhanced Leave Balance Card
+const LeaveBalanceCard = ({ type, data, isExpanded, onToggle }) => {
+  const leaveType = LEAVE_TYPES[type];
+  const Icon = leaveType.icon;
+  const percentage = data.total ? (data.used / data.total) * 100 : 0;
+  
+  return (
+    <div className={`bg-white rounded-2xl border-2 ${leaveType.borderColor} transition-all duration-300 hover:shadow-lg group ${
+      isExpanded ? 'ring-2 ring-blue-100' : ''
+    }`}>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${leaveType.bgColor} border-2 ${leaveType.borderColor} group-hover:scale-105 transition-transform`}>
+              <Icon className={`h-6 w-6 ${leaveType.textColor}`} />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg tracking-wide">{leaveType.name}</h3>
+              <p className="text-sm text-gray-500 font-medium">{leaveType.description}</p>
+            </div>
+          </div>
+          <button 
+            onClick={onToggle}
+            className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-400 hover:text-gray-600 border border-gray-200"
+          >
+            {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">{data.remaining}</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Available</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-700">{data.used}</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Used</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-700">{data.total}</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total</div>
+            </div>
+          </div>
+
+          {/* Enhanced Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 font-semibold">Usage Progress</span>
+              <span className="font-bold" style={{ color: leaveType.color }}>
+                {Math.round(percentage)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200">
+              <div 
+                className="h-2.5 rounded-full transition-all duration-1000 ease-out"
+                style={{ 
+                  width: `${percentage}%`,
+                  backgroundColor: leaveType.color,
+                }}
+              />
+            </div>
+          </div>
+
+          {data.pending > 0 && (
+            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-semibold">{data.pending} days pending approval</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t border-gray-200 p-6 bg-gray-50">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="text-center p-3 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-600 text-xs uppercase tracking-wide font-semibold">Total Allocation</p>
+              <p className="font-bold text-gray-900 text-lg">{data.total} days</p>
+            </div>
+            <div className="text-center p-3 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-600 text-xs uppercase tracking-wide font-semibold">Used This Year</p>
+              <p className="font-bold text-gray-900 text-lg">{data.used} days</p>
+            </div>
+            <div className="text-center p-3 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-600 text-xs uppercase tracking-wide font-semibold">Pending Approval</p>
+              <p className="font-bold text-amber-600 text-lg">{data.pending} days</p>
+            </div>
+            <div className="text-center p-3 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-600 text-xs uppercase tracking-wide font-semibold">Available Balance</p>
+              <p className="font-bold text-emerald-600 text-lg">{data.remaining} days</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Leave Card Component
+const LeaveCard = ({ leave, onView, onDownload, onEdit, onDelete }) => {
+  const leaveType = LEAVE_TYPES[leave.leave_type];
+  const Icon = leaveType.icon;
   const [showActions, setShowActions] = useState(false);
   
-  const calculatedHours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
-  const earnings = calculateEarnings(calculatedHours, overtimeType.rate, overtime.hourly_rate);
-
   return (
     <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 transition-all duration-300 hover:shadow-xl hover:border-gray-300 group hover:scale-[1.02]">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${overtimeType.bgColor} border-2 ${overtimeType.borderColor} group-hover:scale-110 transition-transform`}>
-            <Icon className={`h-4 w-4 ${overtimeType.textColor}`} />
+          <div className={`p-2 rounded-xl ${leaveType.bgColor} border-2 ${leaveType.borderColor} group-hover:scale-110 transition-transform`}>
+            <Icon className={`h-4 w-4 ${leaveType.textColor}`} />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 text-lg tracking-wide">{overtime.employee_name}</h3>
-            <p className="text-sm text-gray-500 font-medium">{overtime.position} • {overtime.employee_id}</p>
+            <h3 className="font-bold text-gray-900 text-lg tracking-wide">{leave.employee_name}</h3>
+            <p className="text-sm text-gray-500 font-medium">{leave.position} • {leave.employee_id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <StatusBadge status={overtime.status} />
+          <StatusBadge status={leave.status} />
           <div className="relative">
             <button 
               onClick={() => setShowActions(!showActions)}
@@ -291,26 +397,26 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete, onDownload }) => {
             {showActions && (
               <div className="absolute right-0 top-10 bg-white border-2 border-gray-200 rounded-xl shadow-xl z-10 min-w-[180px] overflow-hidden">
                 <button 
-                  onClick={() => { onView(overtime); setShowActions(false); }}
+                  onClick={() => { onView(leave); setShowActions(false); }}
                   className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-100 font-medium"
                 >
                   <Eye className="h-4 w-4" /> View Details
                 </button>
                 <button 
-                  onClick={() => { onEdit(overtime); setShowActions(false); }}
+                  onClick={() => { onEdit(leave); setShowActions(false); }}
                   className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-100 font-medium"
                 >
                   <Edit className="h-4 w-4" /> Edit Request
                 </button>
                 <button 
-                  onClick={() => { onDownload(overtime); setShowActions(false); }}
+                  onClick={() => { onDownload(leave); setShowActions(false); }}
                   className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-100 font-medium"
                 >
                   <Download className="h-4 w-4" /> Download
                 </button>
                 <div className="border-t border-gray-200">
                   <button 
-                    onClick={() => { onDelete(overtime.id); setShowActions(false); }}
+                    onClick={() => { onDelete(leave.id); setShowActions(false); }}
                     className="w-full px-4 py-3 text-left text-sm text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors font-medium"
                   >
                     <Trash2 className="h-4 w-4" /> Delete
@@ -325,44 +431,34 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete, onDownload }) => {
       <div className="space-y-3 mb-4">
         <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
           <Calendar className="h-4 w-4" />
-          <span>{formatDate(overtime.date)}</span>
+          <span>{formatDate(leave.start_date)} - {formatDate(leave.end_date)}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Time</span>
-          <span className="font-bold text-gray-900">
-            {formatTime(overtime.start_time)} - {formatTime(overtime.end_time)}
-          </span>
+          <span className="text-gray-600 font-semibold">Duration</span>
+          <span className="font-bold text-gray-900">{leave.total_days} days</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Hours</span>
-          <span className="font-bold text-gray-900">{calculatedHours}h</span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Earnings</span>
-          <span className="font-bold text-green-600">${earnings.toFixed(2)}</span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Rate</span>
-          <span className="font-medium">${overtime.hourly_rate || 25}/hour × {overtimeType.rate}x</span>
+          <span className="text-gray-600 font-semibold">Applied</span>
+          <span className="text-gray-500 font-medium">{formatTime(leave.applied_date)}</span>
         </div>
       </div>
 
-      {overtime.reason && (
+      {leave.reason && (
         <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed font-medium">{overtime.reason}</p>
+          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed font-medium">{leave.reason}</p>
         </div>
       )}
 
       <div className="flex gap-2">
         <button 
-          onClick={() => onView(overtime)}
+          onClick={() => onView(leave)}
           className="flex-1 py-2.5 bg-gray-50 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2 group/btn border-2 border-gray-200 hover:border-gray-300"
         >
           <Eye className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
           View Details
         </button>
         <button 
-          onClick={() => onDownload(overtime)}
+          onClick={() => onDownload(leave)}
           className="px-3 py-2.5 bg-blue-50 text-blue-600 rounded-xl font-semibold hover:bg-blue-100 transition-all duration-200 flex items-center justify-center border-2 border-blue-200 hover:border-blue-300"
           title="Download Report"
         >
@@ -373,12 +469,41 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete, onDownload }) => {
   );
 };
 
-// Enhanced Overtime Application Form
-const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
+// Enhanced Quick Actions Component
+const QuickActions = ({ onNewRequest, onExport, onRefresh, loading }) => {
+  return (
+    <div className="flex items-center gap-3">
+      <button 
+        onClick={onExport}
+        className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold tracking-wide shadow-sm hover:shadow-md"
+      >
+        <Download className="h-4 w-4" />
+        Export Data
+      </button>
+      <button 
+        onClick={onRefresh}
+        disabled={loading}
+        className="p-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm hover:shadow-md"
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+      </button>
+      <button 
+        onClick={onNewRequest}
+        className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-bold tracking-wide"
+      >
+        <Plus className="h-4 w-4" />
+        New Request
+      </button>
+    </div>
+  );
+};
+
+// Enhanced Leave Application Form with Update Support
+const LeaveApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
   const [formData, setFormData] = useState(editData || {
-    employee_name: '', employee_id: '', position: '', overtime_type: 'regular',
-    date: new Date().toISOString().split('T')[0], start_time: '18:00', end_time: '20:00',
-    reason: '', contact_number: '', emergency_contact: '', hourly_rate: 25
+    employee_name: '', employee_id: '', position: '', leave_type: 'annual',
+    start_date: '', end_date: '', reason: '', contact_number: '', 
+    emergency_contact: '', handover_to: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -395,17 +520,21 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
 
     try {
       if (!formData.employee_name || !formData.employee_id || !formData.position || 
-          !formData.date || !formData.start_time || !formData.end_time || !formData.reason || !formData.contact_number) {
+          !formData.start_date || !formData.end_date || !formData.reason || !formData.contact_number) {
         throw new Error('Please fill in all required fields');
+      }
+
+      if (new Date(formData.end_date) < new Date(formData.start_date)) {
+        throw new Error('End date must be after start date');
       }
 
       if (editData) {
         await onUpdate(editData.id, formData);
       } else {
-        await createOvertime(formData);
+        await createLeave(formData);
       }
       
-      onSuccess(editData ? 'Overtime application updated successfully!' : 'Overtime application submitted successfully!');
+      onSuccess(editData ? 'Leave application updated successfully!' : 'Leave application submitted successfully!');
       onClose();
     } catch (err) {
       setError(err.message);
@@ -414,9 +543,8 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
     }
   };
 
-  const calculatedHours = calculateHours(formData.start_time, formData.end_time, formData.date);
-  const selectedOvertimeType = OVERTIME_TYPES[formData.overtime_type];
-  const earnings = calculateEarnings(calculatedHours, selectedOvertimeType.rate, formData.hourly_rate);
+  const calculatedDays = calculateDays(formData.start_date, formData.end_date);
+  const selectedLeaveType = LEAVE_TYPES[formData.leave_type];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -424,7 +552,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
         <div className="p-6 border-b-2 border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900 tracking-wide">
-              {editData ? 'Edit Overtime Application' : 'New Overtime Request'}
+              {editData ? 'Edit Leave Application' : 'New Leave Request'}
             </h2>
             <button onClick={onClose} className="p-2 hover:bg-gray-50 rounded-lg transition-colors border-2 border-gray-200">
               <X className="h-5 w-5 text-gray-500" />
@@ -446,7 +574,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               { label: 'Full Name', field: 'employee_name', type: 'text', placeholder: 'Enter your full name', required: true },
-              { label: 'Employee ID', field: 'employee_id', type: 'text', placeholder: 'e.g., EMP001', required: true },
+              { label: 'Employee ID', field: 'employee_id', type: 'text', placeholder: 'e.g., MNT001', required: true },
               { label: 'Position', field: 'position', type: 'text', placeholder: 'e.g., Senior Technician', required: true },
               { label: 'Contact Number', field: 'contact_number', type: 'tel', placeholder: '+263 XXX XXX XXX', required: true }
             ].map(({ label, field, type, placeholder, required }) => (
@@ -469,93 +597,72 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                Overtime Type <span className="text-red-500">*</span>
+                Leave Type <span className="text-red-500">*</span>
               </label>
               <select 
                 required 
-                value={formData.overtime_type} 
-                onChange={(e) => handleChange('overtime_type', e.target.value)} 
+                value={formData.leave_type} 
+                onChange={(e) => handleChange('leave_type', e.target.value)} 
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
               >
-                {Object.entries(OVERTIME_TYPES).map(([key, type]) => 
-                  <option key={key} value={key}>{type.name} ({type.rate}x rate)</option>
+                {Object.entries(LEAVE_TYPES).map(([key, type]) => 
+                  <option key={key} value={key}>{type.name}</option>
                 )}
               </select>
             </div>
             <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${selectedOvertimeType.bgColor} border-2 ${selectedOvertimeType.borderColor}`}>
-                  {React.createElement(selectedOvertimeType.icon, { className: `h-5 w-5 ${selectedOvertimeType.textColor}` })}
+                <div className={`p-2 rounded-lg ${selectedLeaveType.bgColor} border-2 ${selectedLeaveType.borderColor}`}>
+                  {React.createElement(selectedLeaveType.icon, { className: `h-5 w-5 ${selectedLeaveType.textColor}` })}
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">{selectedOvertimeType.name}</p>
-                  <p className="text-sm text-gray-600 font-medium">{selectedOvertimeType.description}</p>
+                  <p className="font-bold text-gray-900">{selectedLeaveType.name}</p>
+                  <p className="text-sm text-gray-600 font-medium">{selectedLeaveType.description}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                Date <span className="text-red-500">*</span>
+                Start Date <span className="text-red-500">*</span>
               </label>
               <input 
                 type="date" 
                 required 
-                value={formData.date} 
-                onChange={(e) => handleChange('date', e.target.value)} 
+                value={formData.start_date} 
+                onChange={(e) => handleChange('start_date', e.target.value)} 
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
               />
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                Start Time <span className="text-red-500">*</span>
+                End Date <span className="text-red-500">*</span>
               </label>
               <input 
-                type="time" 
+                type="date" 
                 required 
-                value={formData.start_time} 
-                onChange={(e) => handleChange('start_time', e.target.value)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                End Time <span className="text-red-500">*</span>
-              </label>
-              <input 
-                type="time" 
-                required 
-                value={formData.end_time} 
-                onChange={(e) => handleChange('end_time', e.target.value)} 
+                value={formData.end_date} 
+                onChange={(e) => handleChange('end_date', e.target.value)} 
+                min={formData.start_date}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
               />
             </div>
           </div>
 
-          {calculatedHours > 0 && (
+          {calculatedDays > 0 && (
             <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">Total Hours</p>
-                  <p className="text-lg font-bold text-emerald-600">{calculatedHours}h</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">Rate Multiplier</p>
-                  <p className="text-lg font-bold text-emerald-600">{selectedOvertimeType.rate}x</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">Estimated Earnings</p>
-                  <p className="text-lg font-bold text-emerald-600">${earnings.toFixed(2)}</p>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-700">Total Leave Days:</span>
+                <span className="text-lg font-bold text-emerald-600">{calculatedDays} days</span>
               </div>
             </div>
           )}
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-              Reason for Overtime <span className="text-red-500">*</span>
+              Reason for Leave <span className="text-red-500">*</span>
             </label>
             <textarea 
               required 
@@ -563,24 +670,11 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
               onChange={(e) => handleChange('reason', e.target.value)} 
               rows={4} 
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
-              placeholder="Please provide details about why overtime is required..." 
+              placeholder="Please provide details about your leave request..." 
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Hourly Rate ($)</label>
-              <input 
-                type="number" 
-                step="0.01"
-                min="0"
-                value={formData.hourly_rate} 
-                onChange={(e) => handleChange('hourly_rate', parseFloat(e.target.value) || 25)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
-              />
-            </div>
-          </div>
-
+          {/* Advanced Options */}
           <div className="border-2 border-gray-200 rounded-xl overflow-hidden">
             <button
               type="button"
@@ -593,7 +687,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             
             {showAdvanced && (
               <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Emergency Contact</label>
                     <input 
@@ -602,6 +696,16 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                       onChange={(e) => handleChange('emergency_contact', e.target.value)} 
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
                       placeholder="Name and phone number" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">Handover To</label>
+                    <input 
+                      type="text" 
+                      value={formData.handover_to} 
+                      onChange={(e) => handleChange('handover_to', e.target.value)} 
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
+                      placeholder="Colleague's name" 
                     />
                   </div>
                 </div>
@@ -633,30 +737,38 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
 };
 
 // Main Component - Elegant Professional Design
-export default function OvertimeManagement() {
-  const [overtime, setOvertime] = useState([]);
-  const [selectedOvertime, setSelectedOvertime] = useState(null);
+export default function PremiumLeaveManagement() {
+  const [leaves, setLeaves] = useState([]);
+  const [selectedLeave, setSelectedLeave] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState({ overtime: false });
+  const [loading, setLoading] = useState({ leaves: false, stats: false, balance: false });
   const [viewMode, setViewMode] = useState('grid');
+  const [showBalance, setShowBalance] = useState(false);
+  const [expandedBalances, setExpandedBalances] = useState({});
+  const [leaveBalance, setLeaveBalance] = useState(getDefaultBalance());
 
   // Enhanced data fetching
   const fetchAllData = async () => {
     try {
       setError(null);
-      setLoading({ overtime: true });
+      setLoading({ leaves: true, stats: true, balance: true });
       
-      const data = await fetchOvertime();
-      setOvertime(data);
-      setLoading({ overtime: false });
+      const [leavesData, balanceData] = await Promise.all([
+        fetchLeaves(), 
+        fetchLeaveBalance()
+      ]);
+      
+      setLeaves(leavesData);
+      if (balanceData) setLeaveBalance(balanceData);
+      setLoading({ leaves: false, stats: false, balance: false });
     } catch (err) {
       setError(err.message);
-      setLoading({ overtime: false });
+      setLoading({ leaves: false, stats: false, balance: false });
     }
   };
 
@@ -668,104 +780,109 @@ export default function OvertimeManagement() {
   };
 
   // Enhanced status update
-  const handleStatusUpdate = async (overtimeId, newStatus) => {
+  const handleStatusUpdate = async (leaveId, newStatus) => {
     try {
-      await updateOvertimeStatus(overtimeId, newStatus);
-      setOvertime(prev => prev.map(ot => 
-        ot.id === overtimeId ? { ...ot, status: newStatus } : ot
+      await updateLeaveStatus(leaveId, newStatus);
+      setLeaves(prev => prev.map(leave => 
+        leave.id === leaveId ? { ...leave, status: newStatus } : leave
       ));
-      setSuccess(`Overtime status updated to ${newStatus}`);
+      setSuccess(`Leave status updated to ${newStatus}`);
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setError(`Failed to update overtime status: ${error.message}`);
+      setError(`Failed to update leave status: ${error.message}`);
     }
   };
 
-  // Enhanced overtime update handler
-  const handleOvertimeUpdate = async (overtimeId, overtimeData) => {
+  // Enhanced leave update handler
+  const handleLeaveUpdate = async (leaveId, leaveData) => {
     try {
-      const updatedOvertime = await updateOvertime(overtimeId, overtimeData);
-      setOvertime(prev => prev.map(ot => 
-        ot.id === overtimeId ? { ...ot, ...updatedOvertime } : ot
+      const updatedLeave = await updateLeave(leaveId, leaveData);
+      setLeaves(prev => prev.map(leave => 
+        leave.id === leaveId ? { ...leave, ...updatedLeave } : leave
       ));
       setEditData(null);
-      setSuccess('Overtime application updated successfully');
+      setSuccess('Leave application updated successfully');
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setError(`Failed to update overtime: ${error.message}`);
+      setError(`Failed to update leave: ${error.message}`);
     }
   };
 
   // Enhanced delete handler with confirmation
-  const handleDeleteOvertime = async (overtimeId) => {
-    if (!confirm('Are you sure you want to delete this overtime application? This action cannot be undone.')) {
+  const handleDeleteLeave = async (leaveId) => {
+    if (!confirm('Are you sure you want to delete this leave application? This action cannot be undone.')) {
       return;
     }
 
     try {
-      await deleteOvertime(overtimeId);
-      setOvertime(prev => prev.filter(ot => ot.id !== overtimeId));
-      setSelectedOvertime(null);
-      setSuccess('Overtime application deleted successfully');
+      await deleteLeave(leaveId);
+      setLeaves(prev => prev.filter(leave => leave.id !== leaveId));
+      setSelectedLeave(null);
+      setSuccess('Leave application deleted successfully');
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setError(`Failed to delete overtime: ${error.message}`);
+      setError(`Failed to delete leave: ${error.message}`);
     }
   };
 
+  // Toggle balance expansion
+  const toggleBalanceExpansion = (type) => {
+    setExpandedBalances(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
   // Enhanced filtering with better search
-  const filteredOvertime = useMemo(() => {
-    let filtered = overtime;
+  const filteredLeaves = useMemo(() => {
+    let filtered = leaves;
     
     // Status filter
     if (filter !== 'all') {
-      filtered = filtered.filter(ot => ot.status === filter);
+      filtered = filtered.filter(leave => leave.status === filter);
     }
     
     // Enhanced search
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(ot => 
-        ot.employee_name?.toLowerCase().includes(searchLower) ||
-        ot.overtime_type?.toLowerCase().includes(searchLower) ||
-        ot.employee_id?.toLowerCase().includes(searchLower) ||
-        ot.position?.toLowerCase().includes(searchLower) ||
-        ot.contact_number?.includes(searchTerm)
+      filtered = filtered.filter(leave => 
+        leave.employee_name?.toLowerCase().includes(searchLower) ||
+        leave.leave_type?.toLowerCase().includes(searchLower) ||
+        leave.employee_id?.toLowerCase().includes(searchLower) ||
+        leave.position?.toLowerCase().includes(searchLower) ||
+        leave.contact_number?.includes(searchTerm)
       );
     }
     
     return filtered;
-  }, [overtime, filter, searchTerm]);
+  }, [leaves, filter, searchTerm]);
 
   // Calculate real-time stats from actual data
   const stats = useMemo(() => {
-    const total = overtime.length;
-    const pending = overtime.filter(ot => ot.status === 'pending').length;
-    const approved = overtime.filter(ot => ot.status === 'approved').length;
-    const rejected = overtime.filter(ot => ot.status === 'rejected').length;
-    
-    // Calculate total hours and earnings
-    const totalHours = overtime.reduce((sum, ot) => {
-      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-      return sum + hours;
-    }, 0);
-    
-    const totalEarnings = overtime.reduce((sum, ot) => {
-      const overtimeType = OVERTIME_TYPES[ot.overtime_type] || OVERTIME_TYPES.regular;
-      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-      const earnings = calculateEarnings(hours, overtimeType.rate, ot.hourly_rate);
-      return sum + earnings;
-    }, 0);
+    const total = leaves.length;
+    const pending = leaves.filter(leave => leave.status === 'pending').length;
+    const approved = leaves.filter(leave => leave.status === 'approved').length;
+    const rejected = leaves.filter(leave => leave.status === 'rejected').length;
+    const today = new Date().toISOString().split('T')[0];
+    const on_leave_now = leaves.filter(leave => 
+      leave.status === 'approved' && 
+      leave.start_date <= today && 
+      leave.end_date >= today
+    ).length;
 
+    // Calculate approval rate
+    const decided = approved + rejected;
+    const approvalRate = decided > 0 ? Math.round((approved / decided) * 100) : 0;
+    
     return { 
       total, 
       pending, 
       approved, 
       rejected, 
-      totalHours: Math.round(totalHours * 100) / 100,
-      totalEarnings: Math.round(totalEarnings * 100) / 100
+      on_leave_now,
+      approvalRate 
     };
-  }, [overtime]);
+  }, [leaves]);
 
   // Initial data fetch
   useEffect(() => { 
@@ -807,37 +924,20 @@ export default function OvertimeManagement() {
                     Home
                   </Link>
                   <div className="text-sm text-gray-500">/</div>
-                  <span className="text-sm font-medium text-gray-900 px-2">Overtime Management</span>
+                  <span className="text-sm font-medium text-gray-900 px-2">Leave Management</span>
                 </div>
               </div>
 
               {/* Right Side Actions */}
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => {
-                    // Export functionality
-                    alert('Export functionality would be implemented here');
-                  }}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold tracking-wide shadow-sm hover:shadow-md"
-                >
-                  <Download className="h-4 w-4" />
-                  Export Data
-                </button>
-                <button 
-                  onClick={fetchAllData}
-                  disabled={loading.overtime}
-                  className="p-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm hover:shadow-md"
-                >
-                  {loading.overtime ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                </button>
-                <button 
-                  onClick={() => setShowForm(true)}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-bold tracking-wide"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Overtime
-                </button>
-              </div>
+              <QuickActions 
+                onNewRequest={() => setShowForm(true)}
+                onExport={() => {
+                  // Export functionality would go here
+                  alert('Export functionality would be implemented here');
+                }}
+                onRefresh={fetchAllData}
+                loading={loading.leaves}
+              />
             </div>
           </div>
         </header>
@@ -848,17 +948,17 @@ export default function OvertimeManagement() {
             <div className="container mx-auto px-4">
               <div className="text-center mb-8">
                 <div className="flex justify-center items-center gap-2 mb-4">
-                  <ClockIcon className="h-8 w-8 text-indigo-600" />
+                  <Calendar className="h-8 w-8 text-indigo-600" />
                   <Layers className="h-8 w-8 text-indigo-500" />
                   <Server className="h-8 w-8 text-indigo-400" />
                 </div>
                 
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                  Professional Overtime Management
+                  Professional Leave Management
                 </h1>
                 <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-                  Track, approve, and calculate overtime earnings with our structured database system. 
-                  All overtime data is securely stored and easily accessible.
+                  Track, approve, and manage employee leave requests with our structured database system. 
+                  All leave data is securely stored and easily accessible.
                 </p>
               </div>
             </div>
@@ -900,10 +1000,10 @@ export default function OvertimeManagement() {
             <div className="container mx-auto px-4">
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  Overtime Analytics
+                  Leave Analytics
                 </h2>
                 <p className="text-gray-600 text-sm">
-                  Real-time overview of overtime requests and earnings
+                  Real-time overview of leave requests and status
                 </p>
               </div>
 
@@ -927,24 +1027,70 @@ export default function OvertimeManagement() {
                   onClick={() => setFilter('approved')}
                 />
                 <StatCard 
-                  title="Total Earnings" 
-                  value={`$${stats.totalEarnings}`} 
-                  icon={DollarSign} 
-                  subtitle={`${stats.totalHours} hours`}
+                  title="On Leave" 
+                  value={stats.on_leave_now} 
+                  icon={User} 
+                  subtitle={`${stats.approvalRate}% approval rate`}
                 />
               </div>
             </div>
           </section>
 
-          {/* Enhanced Overtime Records Section */}
+          {/* Enhanced Leave Balance Summary */}
+          <section className="pb-8">
+            <div className="container mx-auto px-4">
+              <div className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-sm">
+                <button
+                  onClick={() => setShowBalance(!showBalance)}
+                  className="w-full px-8 py-6 flex items-center justify-between hover:bg-gray-50 transition-colors border-b-2 border-gray-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center border-2 border-blue-200">
+                      <BookOpen className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-xl font-bold text-gray-900 tracking-wide">My Leave Balance</h2>
+                      <p className="text-sm text-gray-600 font-medium">Available leave days and usage overview</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 font-medium">{showBalance ? 'Hide' : 'Show'} balances</span>
+                    {showBalance ? (
+                      <ChevronUp className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    )}
+                  </div>
+                </button>
+
+                {showBalance && (
+                  <div className="p-8 bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {Object.entries(leaveBalance).map(([key, data]) => (
+                        <LeaveBalanceCard 
+                          key={key} 
+                          type={key} 
+                          data={data} 
+                          isExpanded={expandedBalances[key]}
+                          onToggle={() => toggleBalanceExpansion(key)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Enhanced Leave Records Section */}
           <section className="pb-12">
             <div className="container mx-auto px-4">
               <div className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-sm">
                 <div className="p-8 border-b-2 border-gray-200">
                   <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Overtime Requests</h2>
-                      <p className="text-sm text-gray-600 font-medium">Manage and review all overtime applications</p>
+                      <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Leave Requests</h2>
+                      <p className="text-sm text-gray-600 font-medium">Manage and review all leave applications</p>
                     </div>
                     
                     <div className="flex flex-wrap gap-4 w-full lg:w-auto">
@@ -996,33 +1142,33 @@ export default function OvertimeManagement() {
                         <option value="pending">Pending Review</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Not Approved</option>
-                        <option value="paid">Paid</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-8">
-                  {loading.overtime ? (
+                  {loading.leaves ? (
                     <div className="flex items-center justify-center py-16">
                       <div className="text-center space-y-3">
                         <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-                        <p className="text-gray-600 font-semibold">Loading overtime records...</p>
+                        <p className="text-gray-600 font-semibold">Loading leave records...</p>
                       </div>
                     </div>
                   ) : viewMode === 'grid' ? (
                     // Enhanced Grid View
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredOvertime.map((ot) => (
-                        <OvertimeCard 
-                          key={ot.id} 
-                          overtime={ot} 
-                          onView={setSelectedOvertime}
-                          onEdit={setEditData}
-                          onDelete={handleDeleteOvertime}
-                          onDownload={(data) => {
+                      {filteredLeaves.map((leave) => (
+                        <LeaveCard 
+                          key={leave.id} 
+                          leave={leave} 
+                          onView={setSelectedLeave}
+                          onDownload={() => {
+                            // Download functionality would go here
                             alert('Download functionality would be implemented here');
                           }}
+                          onEdit={setEditData}
+                          onDelete={handleDeleteLeave}
                         />
                       ))}
                     </div>
@@ -1032,7 +1178,7 @@ export default function OvertimeManagement() {
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b-2 border-gray-200">
                           <tr>
-                            {['Employee', 'Overtime Type', 'Date', 'Time', 'Hours', 'Earnings', 'Status', 'Applied', 'Actions'].map(header => (
+                            {['Employee', 'Leave Type', 'Period', 'Duration', 'Status', 'Applied', 'Actions'].map(header => (
                               <th key={header} className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 {header}
                               </th>
@@ -1040,86 +1186,74 @@ export default function OvertimeManagement() {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {filteredOvertime.map((ot) => {
-                            const overtimeType = OVERTIME_TYPES[ot.overtime_type] || OVERTIME_TYPES.regular;
-                            const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-                            const earnings = calculateEarnings(hours, overtimeType.rate, ot.hourly_rate);
-                            
-                            return (
-                              <tr key={ot.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4">
-                                  <div>
-                                    <p className="font-bold text-gray-900">{ot.employee_name}</p>
-                                    <p className="text-sm text-gray-500 font-medium">{ot.position} • {ot.employee_id}</p>
+                          {filteredLeaves.map((leave) => (
+                            <tr key={leave.id} className="hover:bg-gray-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="font-bold text-gray-900">{leave.employee_name}</p>
+                                  <p className="text-sm text-gray-500 font-medium">{leave.position} • {leave.employee_id}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className={`p-1.5 rounded-lg ${LEAVE_TYPES[leave.leave_type]?.bgColor} border-2 ${LEAVE_TYPES[leave.leave_type]?.borderColor}`}>
+                                    {React.createElement(LEAVE_TYPES[leave.leave_type]?.icon || FileText, { 
+                                      className: `h-3.5 w-3.5 ${LEAVE_TYPES[leave.leave_type]?.textColor}` 
+                                    })}
                                   </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <div className={`p-1.5 rounded-lg ${overtimeType.bgColor} border-2 ${overtimeType.borderColor}`}>
-                                      {React.createElement(overtimeType.icon, { 
-                                        className: `h-3.5 w-3.5 ${overtimeType.textColor}` 
-                                      })}
-                                    </div>
-                                    <span className="text-sm font-semibold text-gray-900">
-                                      {overtimeType.shortName}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                  {formatDate(ot.date)}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                                  {formatTime(ot.start_time)} - {formatTime(ot.end_time)}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                  {hours}h
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold text-green-600">
-                                  ${earnings.toFixed(2)}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <StatusBadge status={ot.status} />
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                                  {formatDate(ot.applied_date)}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <button 
-                                      onClick={() => setSelectedOvertime(ot)}
-                                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold"
-                                    >
-                                      <Eye className="h-3.5 w-3.5" />
-                                      View
-                                    </button>
-                                    <button 
-                                      onClick={() => setEditData(ot)}
-                                      className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold"
-                                    >
-                                      <Edit className="h-3.5 w-3.5" />
-                                      Edit
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {LEAVE_TYPES[leave.leave_type]?.shortName || leave.leave_type}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900 font-bold">
+                                {formatDate(leave.start_date)} - {formatDate(leave.end_date)}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900 font-bold">
+                                {leave.total_days} days
+                              </td>
+                              <td className="px-6 py-4">
+                                <StatusBadge status={leave.status} />
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500 font-medium">
+                                {formatTime(leave.applied_date)}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={() => setSelectedLeave(leave)}
+                                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                    View
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditData(leave)}
+                                    className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold"
+                                  >
+                                    <Edit className="h-3.5 w-3.5" />
+                                    Edit
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
                   )}
 
-                  {!loading.overtime && filteredOvertime.length === 0 && (
+                  {!loading.leaves && filteredLeaves.length === 0 && (
                     <div className="text-center py-16">
-                      <ClockIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <p className="text-lg font-bold text-gray-900 mb-2 tracking-wide">No overtime requests found</p>
+                      <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-bold text-gray-900 mb-2 tracking-wide">No leave requests found</p>
                       <p className="text-sm text-gray-600 mb-6 font-medium">
-                        {overtime.length === 0 
-                          ? "Get started by creating your first overtime request." 
+                        {leaves.length === 0 
+                          ? "Get started by creating your first leave request." 
                           : "No requests match your current filters."
                         }
                       </p>
-                      {overtime.length === 0 && (
+                      {leaves.length === 0 && (
                         <button 
                           onClick={() => setShowForm(true)} 
                           className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl font-bold tracking-wide"
@@ -1140,17 +1274,17 @@ export default function OvertimeManagement() {
             <div className="container mx-auto px-4">
               <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-center">
                 <div className="flex justify-center mb-3">
-                  <Calculator className="h-8 w-8 text-indigo-600" />
+                  <Calendar className="h-8 w-8 text-indigo-600" />
                 </div>
                 
                 <h3 className="font-bold text-gray-900 mb-3">
-                  Need Help with Overtime Management?
+                  Need Help with Leave Management?
                 </h3>
                 
                 <p className="text-gray-600 text-sm mb-4 max-w-lg mx-auto">
-                  Our structured database system ensures all your overtime data is organized, 
-                  secure, and easily accessible. Track hours, approve requests, and 
-                  calculate earnings all in one place.
+                  Our structured database system ensures all your leave data is organized, 
+                  secure, and easily accessible. Track balances, approve requests, and 
+                  generate reports all in one place.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -1159,7 +1293,7 @@ export default function OvertimeManagement() {
                     className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl font-semibold"
                   >
                     <Plus className="h-4 w-4 inline mr-2" />
-                    New Overtime Request
+                    New Leave Request
                   </button>
                   <Link href="/" className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold">
                     Back to Dashboard
@@ -1180,7 +1314,7 @@ export default function OvertimeManagement() {
                   <span className="font-bold text-white">MyOffice</span>
                 </div>
                 <p className="text-gray-400 text-xs">
-                  Professional overtime management system
+                  Professional leave management system
                 </p>
               </div>
               
@@ -1188,8 +1322,8 @@ export default function OvertimeManagement() {
                 <h4 className="font-medium text-white mb-2 text-sm">Modules</h4>
                 <ul className="space-y-1">
                   <li><Link href="/employees" className="text-xs text-gray-400 hover:text-white">Personnel</Link></li>
-                  <li><Link href="/overtime" className="text-xs text-gray-400 hover:text-white">Overtime</Link></li>
                   <li><Link href="/leaves" className="text-xs text-gray-400 hover:text-white">Leaves</Link></li>
+                  <li><Link href="/sheq" className="text-xs text-gray-400 hover:text-white">SHEQ</Link></li>
                 </ul>
               </div>
               
@@ -1214,7 +1348,7 @@ export default function OvertimeManagement() {
             
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} MyOffice Overtime Management System • Database Architecture
+                © {new Date().getFullYear()} MyOffice Leave Management System • Database Architecture
               </p>
             </div>
           </div>
@@ -1223,53 +1357,49 @@ export default function OvertimeManagement() {
 
       {/* Modals */}
       {showForm && (
-        <OvertimeApplicationForm 
+        <LeaveApplicationForm 
           onClose={() => {
             setShowForm(false);
             setEditData(null);
           }} 
           onSuccess={handleFormSuccess}
           editData={editData}
-          onUpdate={handleOvertimeUpdate}
+          onUpdate={handleLeaveUpdate}
         />
       )}
 
-      {selectedOvertime && (
-        <OvertimeDetailsModal 
-          overtime={selectedOvertime} 
-          onClose={() => setSelectedOvertime(null)} 
+      {selectedLeave && (
+        <LeaveDetailsModal 
+          leave={selectedLeave} 
+          onClose={() => setSelectedLeave(null)} 
           onStatusUpdate={handleStatusUpdate} 
-          onDelete={handleDeleteOvertime} 
+          onDelete={handleDeleteLeave} 
           onEdit={setEditData}
         />
       )}
 
       {editData && (
-        <OvertimeApplicationForm 
+        <LeaveApplicationForm 
           onClose={() => setEditData(null)} 
           onSuccess={handleFormSuccess}
           editData={editData}
-          onUpdate={handleOvertimeUpdate}
+          onUpdate={handleLeaveUpdate}
         />
       )}
     </div>
   );
 }
 
-// Enhanced Overtime Details Modal
-const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onEdit }) => {
+// Enhanced Leave Details Modal with Edit Feature
+const LeaveDetailsModal = ({ leave, onClose, onStatusUpdate, onDelete, onEdit }) => {
   const [showActions, setShowActions] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const overtimeType = OVERTIME_TYPES[overtime.overtime_type] || OVERTIME_TYPES.regular;
-  const Icon = overtimeType.icon;
-
-  const calculatedHours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
-  const earnings = calculateEarnings(calculatedHours, overtimeType.rate, overtime.hourly_rate);
+  const selectedLeaveType = LEAVE_TYPES[leave.leave_type];
 
   const handleStatusUpdate = async (newStatus) => {
     setUpdating(true);
     try {
-      await onStatusUpdate(overtime.id, newStatus);
+      await onStatusUpdate(leave.id, newStatus);
       setShowActions(false);
     } catch (error) {
       console.error('Error updating status:', error);
@@ -1279,23 +1409,23 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this overtime application? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this leave application? This action cannot be undone.')) {
       return;
     }
 
     setUpdating(true);
     try {
-      await onDelete(overtime.id);
+      await onDelete(leave.id);
       setShowActions(false);
     } catch (error) {
-      console.error('Error deleting overtime:', error);
+      console.error('Error deleting leave:', error);
     } finally {
       setUpdating(false);
     }
   };
 
   const handleEdit = () => {
-    onEdit(overtime);
+    onEdit(leave);
     onClose();
   };
 
@@ -1305,12 +1435,12 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
         <div className="p-6 border-b-2 border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${overtimeType.bgColor} border-2 ${overtimeType.borderColor}`}>
-                {React.createElement(Icon, { className: `h-6 w-6 ${overtimeType.textColor}` })}
+              <div className={`p-3 rounded-xl ${selectedLeaveType.bgColor} border-2 ${selectedLeaveType.borderColor}`}>
+                {React.createElement(selectedLeaveType.icon, { className: `h-6 w-6 ${selectedLeaveType.textColor}` })}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 tracking-wide">Overtime Application Details</h2>
-                <p className="text-sm text-gray-600 font-medium">{overtimeType.name} • {overtime.employee_name}</p>
+                <h2 className="text-xl font-bold text-gray-900 tracking-wide">Leave Application Details</h2>
+                <p className="text-sm text-gray-600 font-medium">{selectedLeaveType.name} • {leave.employee_name}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -1369,9 +1499,9 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
                   Employee Information
                 </h3>
                 <div className="space-y-3">
-                  <div><p className="text-sm text-gray-600 font-semibold">Full Name</p><p className="font-bold text-gray-900">{overtime.employee_name}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Employee ID</p><p className="font-bold text-gray-900">{overtime.employee_id}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Position</p><p className="font-bold text-gray-900">{overtime.position}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Full Name</p><p className="font-bold text-gray-900">{leave.employee_name}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Employee ID</p><p className="font-bold text-gray-900">{leave.employee_id}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Position</p><p className="font-bold text-gray-900">{leave.position}</p></div>
                 </div>
               </div>
 
@@ -1382,74 +1512,45 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
                   Contact Information
                 </h3>
                 <div className="space-y-3">
-                  <div><p className="text-sm text-gray-600 font-semibold">Contact Number</p><p className="font-bold text-gray-900">{overtime.contact_number}</p></div>
-                  {overtime.emergency_contact && (
-                    <div><p className="text-sm text-gray-600 font-semibold">Emergency Contact</p><p className="font-bold text-gray-900">{overtime.emergency_contact}</p></div>
-                  )}
+                  <div><p className="text-sm text-gray-600 font-semibold">Contact Number</p><p className="font-bold text-gray-900">{leave.contact_number}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Emergency Contact</p><p className="font-bold text-gray-900">{leave.emergency_contact || 'Not provided'}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Handover Person</p><p className="font-bold text-gray-900">{leave.handover_to || 'Not specified'}</p></div>
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              {/* Overtime Details */}
+              {/* Leave Details */}
               <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  Overtime Details
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  Leave Details
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${overtimeType.bgColor} border-2 ${overtimeType.borderColor}`}>
-                      {React.createElement(Icon, { className: `h-4 w-4 ${overtimeType.textColor}` })}
+                    <div className={`p-2 rounded-lg ${selectedLeaveType.bgColor} border-2 ${selectedLeaveType.borderColor}`}>
+                      {React.createElement(selectedLeaveType.icon, { className: `h-4 w-4 ${selectedLeaveType.textColor}` })}
                     </div>
-                    <div><p className="text-sm text-gray-600 font-semibold">Overtime Type</p><p className="font-bold text-gray-900">{overtimeType.name}</p></div>
+                    <div><p className="text-sm text-gray-600 font-semibold">Leave Type</p><p className="font-bold text-gray-900">{selectedLeaveType.name}</p></div>
                   </div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Status</p><div className="mt-1"><StatusBadge status={overtime.status} /></div></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Date</p><p className="font-bold text-gray-900">{formatDate(overtime.date)}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Time</p><p className="font-bold text-gray-900">{formatTime(overtime.start_time)} - {formatTime(overtime.end_time)}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Total Hours</p><p className="font-bold text-gray-900">{calculatedHours}h</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Hourly Rate</p><p className="font-bold text-gray-900">${overtime.hourly_rate}/hour</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Status</p><div className="mt-1"><StatusBadge status={leave.status} /></div></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Start Date</p><p className="font-bold text-gray-900">{formatDate(leave.start_date)}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">End Date</p><p className="font-bold text-gray-900">{formatDate(leave.end_date)}</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Total Days</p><p className="font-bold text-gray-900">{leave.total_days} days</p></div>
+                  <div><p className="text-sm text-gray-600 font-semibold">Applied On</p><p className="font-bold text-gray-900">{formatTime(leave.applied_date)}</p></div>
                 </div>
               </div>
 
-              {/* Earnings Calculation */}
-              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-5">
+              {/* Reason for Leave */}
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  Earnings Calculation
+                  <FileText className="h-5 w-5 text-gray-600" />
+                  Reason for Leave
                 </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Base Rate</span>
-                    <span className="font-bold">${overtime.hourly_rate}/h</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Overtime Multiplier</span>
-                    <span className="font-bold">{overtimeType.rate}x</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total Hours</span>
-                    <span className="font-bold">{calculatedHours}h</span>
-                  </div>
-                  <div className="border-t border-green-200 pt-2 mt-2">
-                    <div className="flex justify-between font-bold text-lg">
-                      <span className="text-gray-900">Total Earnings</span>
-                      <span className="text-green-600">${earnings.toFixed(2)}</span>
-                    </div>
-                  </div>
+                <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
+                  <p className="text-gray-700 leading-relaxed font-semibold">{leave.reason}</p>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Reason for Overtime */}
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-              <FileText className="h-5 w-5 text-gray-600" />
-              Reason for Overtime
-            </h3>
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
-              <p className="text-gray-700 leading-relaxed font-semibold">{overtime.reason}</p>
             </div>
           </div>
         </div>
