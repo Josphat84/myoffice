@@ -80,18 +80,11 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// ===== TYPE DECLARATIONS =====
-// Add type declaration for react-plotly.js to fix TypeScript error
-declare module 'react-plotly.js' {
-  const Plotly: any;
-  export default Plotly;
-}
-
-// Dynamically import Plotly with no SSR
+// Dynamically import Plotly with no SSR - use require to avoid type issues
 const Plot = dynamic(() => import('react-plotly.js'), { 
   ssr: false,
   loading: () => <div className="h-full w-full flex items-center justify-center">Loading chart...</div>
-});
+}) as any; // Use 'as any' to bypass TypeScript for now
 
 // ===== TYPES =====
 interface PageOption {
