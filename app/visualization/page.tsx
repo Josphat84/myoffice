@@ -80,11 +80,24 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Dynamically import Plotly with no SSR
-const Plot = dynamic(() => import('react-plotly.js'), { 
-  ssr: false,
-  loading: () => <div className="h-full w-full flex items-center justify-center">Loading chart...</div>
-}) as any;
+// ===== TYPE SAFE PLOTLY WRAPPER =====
+// Create a type-safe wrapper for Plotly
+const PlotComponent = dynamic(
+  () => import('react-plotly.js').then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    ),
+  }
+) as any; // We'll use any for the dynamic import to avoid type issues
+
+// Create a safe Plot component with proper typing
+const Plot = ({ data, layout, config, style }: any) => {
+  return <PlotComponent data={data} layout={layout} config={config} style={style} />;
+};
 
 // ===== TYPES =====
 interface PageOption {
@@ -97,55 +110,9 @@ interface PageOption {
   link: string;
 }
 
-// Flexible PlotData interface to handle different chart types
-interface PlotData {
-  type: string;
-  mode?: string;
-  x?: any[];
-  y?: any[];
-  line?: { color: string };
-  marker?: { 
-    color?: string | any[];
-    size?: number;
-    colorscale?: any[][];
-    showscale?: boolean;
-    colors?: string[];
-  };
-  fill?: string;
-  fillcolor?: string;
-  nbinsx?: number;
-  box?: { visible: boolean };
-  values?: number[];
-  labels?: string[];
-  r?: number[];
-  theta?: string[];
-  z?: number[][];
-  parents?: string[];
-  [key: string]: any; // Allow additional properties
-}
-
-interface PlotLayout {
-  title: string;
-  height?: number;
-  width?: number;
-  xaxis?: { title: string };
-  yaxis?: { title: string };
-  plot_bgcolor?: string;
-  paper_bgcolor?: string;
-  showlegend?: boolean;
-  scene?: {
-    xaxis: { title: string };
-    yaxis: { title: string };
-    zaxis: { title: string };
-  };
-  polar?: {
-    radialaxis: {
-      visible: boolean;
-      range: number[];
-    };
-  };
-  margin?: { t: number; b: number; l: number; r: number };
-}
+// Simplified and flexible types for Plotly data
+type PlotData = Record<string, any>;
+type PlotLayout = Record<string, any>;
 
 interface Visualization {
   data: PlotData[];
@@ -203,7 +170,7 @@ interface AIAnalysis {
   }>;
 }
 
-// ===== PAGE OPTIONS DATA (From your dashboard) =====
+// ===== PAGE OPTIONS DATA =====
 const pageOptions: PageOption[] = [
   // Operations
   {
@@ -395,6 +362,21 @@ const techPackages = [
   },
 ];
 
+// ===== HELPER FUNCTIONS =====
+const getPageConfig = (pageId: string) => {
+  const page = pageOptions.find(p => p.id === pageId) || pageOptions[0];
+  return {
+    id: page.id,
+    name: page.name,
+    description: page.description,
+    color_scheme: page.color.replace('bg-', ''),
+    primary_metrics: ['metric1', 'metric2', 'metric3', 'metric4'],
+    recommended_charts: ['line', 'bar', 'pie', 'scatter'],
+    ai_analysis_type: 'sentiment',
+    data_source: `${page.id}_data`
+  };
+};
+
 // ===== MAIN COMPONENT =====
 export default function VisualizationPage() {
   const searchParams = useSearchParams();
@@ -410,7 +392,6 @@ export default function VisualizationPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [fullscreenChart, setFullscreenChart] = useState<string | null>(null);
   const [chartScale, setChartScale] = useState(1);
-  const [filters, setFilters] = useState<Record<string, any>>({});
   const [activeCategory, setActiveCategory] = useState<'all' | 'operations' | 'personnel' | 'safety' | 'analytics'>('all');
   const [activeChartKey, setActiveChartKey] = useState<string>('');
 
@@ -424,7 +405,6 @@ export default function VisualizationPage() {
         loadPageData(page.id);
       }
     } else {
-      // Default to breakdowns
       loadPageData('breakdowns');
     }
   }, [searchParams]);
@@ -435,10 +415,6 @@ export default function VisualizationPage() {
     setAiAnalysis(null);
     
     try {
-      // In production, call your API
-      // const response = await fetch(`/api/visualizations/${pageId}`);
-      // const data = await response.json();
-      
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -473,7 +449,6 @@ export default function VisualizationPage() {
   };
 
   const generateMockPageData = (pageId: string): PageData => {
-    const page = pageOptions.find(p => p.id === pageId) || pageOptions[0];
     const config = getPageConfig(pageId);
     
     // Generate mock visualizations based on page type
@@ -508,11 +483,6 @@ export default function VisualizationPage() {
       visualizations.correlation = generateMockChart('heatmap', '🔥 Correlation Analysis', config.color_scheme);
       visualizations.comparison = generateMockChart('bar', '📦 Comparison View', config.color_scheme);
     }
-    
-    // Standard charts
-    visualizations.correlation_heatmap = generateMockChart('heatmap', '📊 Correlation Heatmap', 'Viridis');
-    visualizations.time_series = generateMockChart('line', '📈 Time Series Analysis', 'Plotly3');
-    visualizations.ai_clusters = generateMockChart('scatter3d', '🤖 AI Cluster Analysis', 'Rainbow');
     
     // Set active chart
     if (Object.keys(visualizations).length > 0) {
@@ -596,20 +566,6 @@ export default function VisualizationPage() {
     };
   };
 
-  const getPageConfig = (pageId: string) => {
-    const page = pageOptions.find(p => p.id === pageId) || pageOptions[0];
-    return {
-      id: page.id,
-      name: page.name,
-      description: page.description,
-      color_scheme: page.color.replace('bg-', ''),
-      primary_metrics: ['metric1', 'metric2', 'metric3', 'metric4'],
-      recommended_charts: ['line', 'bar', 'pie', 'scatter'],
-      ai_analysis_type: 'sentiment',
-      data_source: `${page.id}_data`
-    };
-  };
-
   const generateMockChart = (type: string, title: string, colorScheme: string = 'Viridis'): Visualization => {
     const colors: Record<string, string> = {
       'red': '#ef4444',
@@ -690,10 +646,7 @@ export default function VisualizationPage() {
             marker: {
               size: 6,
               color: Array.from({ length: 50 }, () => Math.random() * 100),
-              colorscale: [
-                [0, color],
-                [1, `${color}80`]
-              ],
+              colorscale: [[0, color], [1, `${color}80`]],
               showscale: true
             }
           }],
@@ -714,10 +667,7 @@ export default function VisualizationPage() {
             z: Array.from({ length: 8 }, () => 
               Array.from({ length: 8 }, () => Math.random() * 100)
             ),
-            colorscale: [
-              [0, color],
-              [1, `${color}80`]
-            ]
+            colorscale: [[0, color], [1, `${color}80`]]
           }],
           layout: {
             title,
@@ -732,7 +682,7 @@ export default function VisualizationPage() {
             value: Math.random() * 100,
             title: { text: title },
             gauge: {
-              axis: { range: [null, 100] },
+              axis: { range: [0, 100] },
               bar: { color },
               steps: [
                 { range: [0, 50], color: "#ef4444" },
@@ -866,7 +816,6 @@ export default function VisualizationPage() {
   const handlePageSelect = (page: PageOption) => {
     setSelectedPage(page);
     setActiveTab('dashboard');
-    setFilters({});
     loadPageData(page.id);
     router.push(`/visualization?page=${page.id}`);
   };
