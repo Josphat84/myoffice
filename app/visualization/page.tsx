@@ -80,8 +80,18 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// ===== TYPE DECLARATIONS =====
+// Add type declaration for react-plotly.js to fix TypeScript error
+declare module 'react-plotly.js' {
+  const Plotly: any;
+  export default Plotly;
+}
+
 // Dynamically import Plotly with no SSR
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+const Plot = dynamic(() => import('react-plotly.js'), { 
+  ssr: false,
+  loading: () => <div className="h-full w-full flex items-center justify-center">Loading chart...</div>
+});
 
 // ===== TYPES =====
 interface PageOption {
@@ -94,12 +104,56 @@ interface PageOption {
   link: string;
 }
 
-interface Visualization {
-  id: string;
-  title: string;
+interface PlotData {
   type: string;
-  data: any;
-  layout: any;
+  mode?: string;
+  x: any[];
+  y: any[];
+  line?: { color: string };
+  marker?: { 
+    color: string | any[];
+    size?: number;
+    colorscale?: any[][];
+    showscale?: boolean;
+  };
+  fill?: string;
+  fillcolor?: string;
+  nbinsx?: number;
+  box?: { visible: boolean };
+  values?: number[];
+  labels?: string[];
+  r?: number[];
+  theta?: string[];
+  z?: number[][];
+  parents?: string[];
+}
+
+interface PlotLayout {
+  title: string;
+  height?: number;
+  width?: number;
+  xaxis?: { title: string };
+  yaxis?: { title: string };
+  plot_bgcolor?: string;
+  paper_bgcolor?: string;
+  showlegend?: boolean;
+  scene?: {
+    xaxis: { title: string };
+    yaxis: { title: string };
+    zaxis: { title: string };
+  };
+  polar?: {
+    radialaxis: {
+      visible: boolean;
+      range: number[];
+    };
+  };
+  margin?: { t: number; b: number; l: number; r: number };
+}
+
+interface Visualization {
+  data: PlotData[];
+  layout: PlotLayout;
 }
 
 interface PageData {
@@ -118,7 +172,7 @@ interface PageData {
     columns: string[];
     sample_data: any[];
   };
-  visualizations: Record<string, any>;
+  visualizations: Record<string, Visualization>;
   generated_at: string;
 }
 
@@ -427,7 +481,7 @@ export default function VisualizationPage() {
     const config = getPageConfig(pageId);
     
     // Generate mock visualizations based on page type
-    const visualizations: Record<string, any> = {};
+    const visualizations: Record<string, Visualization> = {};
     
     // Page-specific charts
     if (pageId === 'breakdowns') {
@@ -560,8 +614,8 @@ export default function VisualizationPage() {
     };
   };
 
-  const generateMockChart = (type: string, title: string, colorScheme: string = 'Viridis'): any => {
-    const colors = {
+  const generateMockChart = (type: string, title: string, colorScheme: string = 'Viridis'): Visualization => {
+    const colors: Record<string, string> = {
       'red': '#ef4444',
       'orange': '#f97316',
       'blue': '#3b82f6',
@@ -571,7 +625,10 @@ export default function VisualizationPage() {
       'teal': '#14b8a6',
       'pink': '#ec4899',
       'yellow': '#f59e0b',
-      'cyan': '#06b6d4'
+      'cyan': '#06b6d4',
+      'Viridis': '#3b82f6',
+      'Plotly3': '#3b82f6',
+      'Rainbow': '#3b82f6'
     };
     
     const color = colors[colorScheme as keyof typeof colors] || '#3b82f6';
@@ -580,12 +637,12 @@ export default function VisualizationPage() {
       case 'line':
         return {
           data: [{
-            x: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-            y: Array.from({ length: 30 }, () => Math.random() * 100),
             type: 'scatter',
             mode: 'lines+markers',
+            x: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
+            y: Array.from({ length: 30 }, () => Math.random() * 100),
             line: { color }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -598,11 +655,11 @@ export default function VisualizationPage() {
       case 'bar':
         return {
           data: [{
+            type: 'bar',
             x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
             y: Array.from({ length: 6 }, () => Math.random() * 100),
-            type: 'bar',
             marker: { color }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -613,13 +670,13 @@ export default function VisualizationPage() {
       case 'pie':
         return {
           data: [{
+            type: 'pie',
             values: [35, 25, 20, 15, 5],
             labels: ['Category A', 'Category B', 'Category C', 'Category D', 'Category E'],
-            type: 'pie',
             marker: { 
               colors: [color, `${color}80`, `${color}60`, `${color}40`, `${color}20`]
             }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -643,7 +700,7 @@ export default function VisualizationPage() {
               ],
               showscale: true
             }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 500,
@@ -657,15 +714,15 @@ export default function VisualizationPage() {
       case 'heatmap':
         return {
           data: [{
+            type: 'heatmap',
             z: Array.from({ length: 8 }, () => 
               Array.from({ length: 8 }, () => Math.random() * 100)
             ),
-            type: 'heatmap',
             colorscale: [
               [0, color],
               [1, `${color}80`]
             ]
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400
@@ -687,7 +744,7 @@ export default function VisualizationPage() {
                 { range: [80, 100], color: "#10b981" }
               ]
             }
-          }],
+          } as PlotData],
           layout: {
             height: 400
           }
@@ -700,7 +757,7 @@ export default function VisualizationPage() {
             theta: ['Metric A', 'Metric B', 'Metric C', 'Metric D'],
             fill: 'toself',
             marker: { color }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -722,7 +779,7 @@ export default function VisualizationPage() {
             marker: { 
               colors: [color, `${color}80`, `${color}60`, `${color}40`, `${color}20`, `${color}10`, `${color}90`, `${color}70`]
             }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 500
@@ -736,7 +793,7 @@ export default function VisualizationPage() {
             box: { visible: true },
             line: { color },
             fillcolor: `${color}20`
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400
@@ -745,14 +802,14 @@ export default function VisualizationPage() {
       case 'area':
         return {
           data: [{
-            x: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-            y: Array.from({ length: 30 }, () => Math.random() * 100),
             type: 'scatter',
             mode: 'lines',
+            x: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
+            y: Array.from({ length: 30 }, () => Math.random() * 100),
             fill: 'tozeroy',
             line: { color },
             fillcolor: `${color}20`
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -763,11 +820,11 @@ export default function VisualizationPage() {
       case 'histogram':
         return {
           data: [{
-            x: Array.from({ length: 100 }, () => Math.random() * 100),
             type: 'histogram',
+            x: Array.from({ length: 100 }, () => Math.random() * 100),
             marker: { color },
             nbinsx: 20
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -778,15 +835,15 @@ export default function VisualizationPage() {
       case 'scatter':
         return {
           data: [{
-            x: Array.from({ length: 50 }, () => Math.random() * 100),
-            y: Array.from({ length: 50 }, () => Math.random() * 100),
             type: 'scatter',
             mode: 'markers',
+            x: Array.from({ length: 50 }, () => Math.random() * 100),
+            y: Array.from({ length: 50 }, () => Math.random() * 100),
             marker: { 
               color,
               size: 10
             }
-          }],
+          } as PlotData],
           layout: {
             title,
             height: 400,
@@ -801,7 +858,7 @@ export default function VisualizationPage() {
             x: [1, 2, 3], 
             y: [1, 2, 3],
             marker: { color }
-          }],
+          } as PlotData],
           layout: { 
             title, 
             height: 400 
