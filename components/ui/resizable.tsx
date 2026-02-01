@@ -1,5 +1,5 @@
 // components/ui/resizable.tsx
-"use client"
+/*"use client"
 
 import { GripVertical } from "lucide-react"
 // Try different import strategies
@@ -57,4 +57,4 @@ const ResizableHandle = ({
   </PanelResizeHandleComponent>
 )
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
+export { ResizablePanelGroup, ResizablePanel, ResizableHandle }*/
