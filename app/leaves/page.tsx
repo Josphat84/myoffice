@@ -698,7 +698,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
                     validationErrors[field] ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder={placeholder}
-                  disabled={field === 'employee_id' && editData}
+                  disabled={field === 'employee_id' && !!editData}
                 />
                 {validationErrors[field] && (
                   <p className="text-red-600 text-sm mt-1">{validationErrors[field]}</p>
