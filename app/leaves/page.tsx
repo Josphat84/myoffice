@@ -8,7 +8,7 @@ import {
   Download, List, LayoutGrid, X, Edit, ArrowUpRight,
   Stethoscope, Shield, Heart, Users, GraduationCap,
   CalendarDays, BookOpen, Database, Layers, Server, Home as HomeIcon,
-  BarChart3, PieChart, Mail, Phone as PhoneIcon, ExternalLink
+  BarChart3, PieChart, Mail, ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 
@@ -74,8 +74,17 @@ interface Stats {
   average_days: number;
 }
 
-// API Configuration
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// API Configuration - Ensure it works in both dev and prod
+const getApiBase = (): string => {
+  if (typeof window !== 'undefined') {
+    // Client-side: Use environment variable or fallback
+    return process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+  }
+  // Server-side: Use environment variable
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+};
+
+const API_BASE = getApiBase();
 const LEAVES_API = `${API_BASE}/api/leaves`;
 
 // Leave Types Constants
@@ -147,6 +156,7 @@ const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return 'Not specified';
   try {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -161,6 +171,7 @@ const formatDateTime = (dateString: string | null | undefined): string => {
   if (!dateString) return '';
   try {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
@@ -172,12 +183,17 @@ const formatDateTime = (dateString: string | null | undefined): string => {
   }
 };
 
-const calculateDays = (startDate: string, endDate: string): number => {
+const calculateDays = (startDate: string | undefined, endDate: string | undefined): number => {
   if (!startDate || !endDate) return 0;
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  } catch {
+    return 0;
+  }
 };
 
 const formatDays = (days: number): string => {
@@ -210,7 +226,8 @@ const fetchLeaves = async (filters: Record<string, string> = {}): Promise<Leave[
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching leaves:', error);
-    throw error;
+    // Return empty array instead of throwing to prevent UI crashes
+    return [];
   }
 };
 
@@ -246,7 +263,7 @@ const createLeave = async (leaveData: Partial<Leave>): Promise<Leave> => {
         ...leaveData,
         applied_date: new Date().toISOString(),
         status: 'pending',
-        total_days: calculateDays(leaveData.start_date || '', leaveData.end_date || '')
+        total_days: calculateDays(leaveData.start_date, leaveData.end_date)
       }),
     });
 
@@ -271,7 +288,7 @@ const updateLeave = async (leaveId: string, leaveData: Partial<Leave>): Promise<
       },
       body: JSON.stringify({
         ...leaveData,
-        total_days: calculateDays(leaveData.start_date || '', leaveData.end_date || '')
+        total_days: calculateDays(leaveData.start_date, leaveData.end_date)
       }),
     });
 
@@ -353,7 +370,11 @@ const StatusBadge = ({ status }: { status: Leave['status'] }) => {
       icon: XCircle, 
       label: 'Rejected' 
     }
-  }[status];
+  }[status] || { 
+    color: 'bg-gray-50 text-gray-700 border-gray-200', 
+    icon: Clock, 
+    label: 'Unknown' 
+  };
 
   const Icon = config.icon;
 
@@ -409,7 +430,7 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   onEdit: (leave: Leave) => void;
   onDelete: (leaveId: string) => Promise<void>;
 }) => {
-  const leaveType = LEAVE_TYPES[leave.leave_type];
+  const leaveType = LEAVE_TYPES[leave.leave_type] || LEAVE_TYPES.annual;
   const Icon = leaveType.icon;
   const [showActions, setShowActions] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -427,6 +448,12 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
       console.error('Error deleting leave:', error);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleViewDocument = () => {
+    if (leave.supporting_docs && leave.supporting_docs.length > 0 && leave.supporting_docs[0]) {
+      window.open(leave.supporting_docs[0], '_blank');
     }
   };
 
@@ -520,9 +547,9 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
           <Eye className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
           View Details
         </button>
-        {leave.supporting_docs && leave.supporting_docs.length > 0 && (
+        {leave.supporting_docs && leave.supporting_docs.length > 0 && leave.supporting_docs[0] && (
           <button 
-            onClick={() => window.open(leave.supporting_docs[0], '_blank')}
+            onClick={handleViewDocument}
             className="px-3 py-2.5 bg-blue-50 text-blue-600 rounded-xl font-semibold hover:bg-blue-100 transition-all duration-200 flex items-center justify-center border-2 border-blue-200 hover:border-blue-300"
             title="View Supporting Documents"
           >
@@ -606,7 +633,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
 
     try {
       let result: Leave;
-      if (editData) {
+      if (editData && editData.id) {
         result = await updateLeave(editData.id, formData);
       } else {
         result = await createLeave(formData);
@@ -621,7 +648,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
     }
   };
 
-  const calculatedDays = calculateDays(formData.start_date || '', formData.end_date || '');
+  const calculatedDays = calculateDays(formData.start_date, formData.end_date);
   const selectedLeaveType = LEAVE_TYPES[formData.leave_type || 'annual'];
 
   return (
@@ -849,7 +876,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
   onDelete: (leaveId: string) => Promise<void>;
   onStatusUpdate: (leaveId: string, status: Leave['status']) => Promise<void>;
 }) => {
-  const selectedLeaveType = LEAVE_TYPES[leave.leave_type];
+  const selectedLeaveType = LEAVE_TYPES[leave.leave_type] || LEAVE_TYPES.annual;
   const [updating, setUpdating] = useState(false);
   const [showStatusActions, setShowStatusActions] = useState(false);
 
@@ -879,6 +906,10 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleViewDocument = (docUrl: string) => {
+    window.open(docUrl, '_blank');
   };
 
   return (
@@ -955,7 +986,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
               {/* Contact Information */}
               <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <PhoneIcon className="h-5 w-5 text-gray-600" />
+                  <Phone className="h-5 w-5 text-gray-600" />
                   Contact Information
                 </h3>
                 <div className="space-y-3">
@@ -1048,21 +1079,23 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
               </h3>
               <div className="space-y-2">
                 {leave.supporting_docs.map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between bg-white border-2 border-blue-200 rounded-lg p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FileText className="h-4 w-4 text-blue-600" />
+                  doc && (
+                    <div key={index} className="flex items-center justify-between bg-white border-2 border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">Document {index + 1}</span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">Document {index + 1}</span>
+                      <button 
+                        onClick={() => handleViewDocument(doc)}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2 transition-all"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        View
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => window.open(doc, '_blank')}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2 transition-all"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      View
-                    </button>
-                  </div>
+                  )
                 ))}
               </div>
             </div>
@@ -1094,7 +1127,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
 
 // Leave Balance Card Component
 const LeaveBalanceCard = ({ type, data }: { type: keyof typeof LEAVE_TYPES; data: LeaveBalanceData }) => {
-  const leaveType = LEAVE_TYPES[type];
+  const leaveType = LEAVE_TYPES[type] || LEAVE_TYPES.annual;
   const Icon = leaveType.icon;
   const percentage = data.total ? (data.used / data.total) * 100 : 0;
   
@@ -1201,7 +1234,7 @@ export default function LeaveManagementPage() {
       const rejectedLeaves = leavesData.filter(leave => leave.status === 'rejected');
       const decided = approvedLeaves.length + rejectedLeaves.length;
       const approvalRate = decided > 0 ? Math.round((approvedLeaves.length / decided) * 100) : 0;
-      const totalDaysRequested = leavesData.reduce((sum, leave) => sum + leave.total_days, 0);
+      const totalDaysRequested = leavesData.reduce((sum, leave) => sum + (leave.total_days || 0), 0);
       const averageDays = leavesData.length > 0 ? Math.round(totalDaysRequested / leavesData.length) : 0;
       
       setStats({
@@ -1279,12 +1312,12 @@ export default function LeaveManagementPage() {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(leave => 
-        leave.employee_name?.toLowerCase().includes(searchLower) ||
-        leave.leave_type?.toLowerCase().includes(searchLower) ||
-        leave.employee_id?.toLowerCase().includes(searchLower) ||
-        leave.position?.toLowerCase().includes(searchLower) ||
-        leave.department?.toLowerCase().includes(searchLower) ||
-        leave.contact_number?.includes(searchTerm)
+        (leave.employee_name?.toLowerCase() || '').includes(searchLower) ||
+        (leave.leave_type?.toLowerCase() || '').includes(searchLower) ||
+        (leave.employee_id?.toLowerCase() || '').includes(searchLower) ||
+        (leave.position?.toLowerCase() || '').includes(searchLower) ||
+        (leave.department?.toLowerCase() || '').includes(searchLower) ||
+        (leave.contact_number || '').includes(searchTerm)
       );
     }
     
@@ -1635,13 +1668,13 @@ export default function LeaveManagementPage() {
                               </td>
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
-                                  <div className={`p-1.5 rounded-lg ${LEAVE_TYPES[leave.leave_type].bgColor} border-2 ${LEAVE_TYPES[leave.leave_type].borderColor}`}>
-                                    {React.createElement(LEAVE_TYPES[leave.leave_type].icon, { 
-                                      className: `h-3.5 w-3.5 ${LEAVE_TYPES[leave.leave_type].textColor}` 
+                                  <div className={`p-1.5 rounded-lg ${LEAVE_TYPES[leave.leave_type]?.bgColor || 'bg-gray-50'} border-2 ${LEAVE_TYPES[leave.leave_type]?.borderColor || 'border-gray-200'}`}>
+                                    {React.createElement(LEAVE_TYPES[leave.leave_type]?.icon || FileText, { 
+                                      className: `h-3.5 w-3.5 ${LEAVE_TYPES[leave.leave_type]?.textColor || 'text-gray-600'}` 
                                     })}
                                   </div>
                                   <span className="text-sm font-semibold text-gray-900">
-                                    {LEAVE_TYPES[leave.leave_type].shortName}
+                                    {LEAVE_TYPES[leave.leave_type]?.shortName || leave.leave_type}
                                   </span>
                                 </div>
                               </td>
