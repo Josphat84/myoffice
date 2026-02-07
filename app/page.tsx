@@ -278,7 +278,7 @@ function AuthForm() {
   );
 }
 
-// Helper function for colors - UPDATED with softer color palette
+// Helper function for colors
 function getColorClasses(color: ColorType) {
   const colorMap = {
     indigo: { 
@@ -366,7 +366,7 @@ function getColorClasses(color: ColorType) {
   return colorMap[color] || colorMap.indigo;
 }
 
-// Module Card Component with slow fly-in from far right - SEMI-TRANSPARENT
+// Module Card Component with slow fly-in from far right
 function ModuleCard({ module, index, isVisible }: { module: ModuleItem; index: number; isVisible: boolean }) {
   const colors = getColorClasses(module.color);
   const IconComponent = module.icon;
@@ -400,7 +400,7 @@ function ModuleCard({ module, index, isVisible }: { module: ModuleItem; index: n
   );
 }
 
-// Category Accordion Component - SEMI-TRANSPARENT
+// Category Accordion Component
 function CategoryAccordion({ 
   category, 
   isExpanded, 
@@ -483,7 +483,9 @@ export default function HomePage() {
     'safety-compliance': true,
     'analytics': true,
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // FASTER LOADING - Remove setTimeout for initial auth check
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -492,6 +494,7 @@ export default function HomePage() {
       setIsLoggedIn(true);
       setUser(JSON.parse(userData));
     }
+    // Set loading to false immediately - no artificial delay
     setLoading(false);
   }, []);
 
@@ -599,7 +602,7 @@ export default function HomePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-indigo-600" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-indigo-600" />
           <p className="text-white text-sm font-medium drop-shadow-lg">Loading MyOffice...</p>
         </div>
       </div>
@@ -610,26 +613,23 @@ export default function HomePage() {
     <>
       <style jsx global>{animationStyles}</style>
       <div className="min-h-screen">
-        {/* Stunning Icelandic Waterfall Background */}
+        {/* Stunning Icelandic Waterfall Background - OPTIMIZED LOADING */}
         <div className="fixed inset-0 z-0">
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-teal-900/20"
             style={{
-              backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=3000')",
+              backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=60&w=800')",
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              backgroundAttachment: 'fixed',
               opacity: 0.9,
               filter: 'brightness(1.05) contrast(1.05) saturate(1.05)'
             }}
           />
-          {/* Subtle overlay for better text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-blue-900/10" />
         </div>
 
         <div className="relative z-10">
-          {/* Header - TRANSPARENT WITH BLUR */}
-          <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-white/10 backdrop-blur-xl backdrop-saturate-150">
+          {/* Header - IMPROVED VISIBILITY ON MOBILE */}
+          <header className="sticky top-0 z-50 w-full border-b border-white/30 bg-black/40 backdrop-blur-xl backdrop-saturate-150">
             <div className="container mx-auto px-4">
               <div className="flex h-16 items-center justify-between">
                 {/* Logo */}
@@ -640,14 +640,26 @@ export default function HomePage() {
                   <span className="font-bold text-white text-lg drop-shadow-lg">MyOffice</span>
                 </Link>
 
-                {/* Desktop Navigation */}
+                {/* MOBILE MENU BUTTON - ALWAYS VISIBLE */}
+                <div className="lg:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="text-white hover:bg-white/10"
+                  >
+                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  </Button>
+                </div>
+
+                {/* Desktop Navigation - HIDDEN ON MOBILE */}
                 <nav className="hidden lg:flex items-center gap-1">
-                  <Link href="/" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                  <Link href="/" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                     Home
                   </Link>
                   
                   <div className="relative group">
-                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                       Core
                       <ChevronDown className="h-4 w-4" />
                     </button>
@@ -665,7 +677,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="relative group">
-                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                       Operations
                       <ChevronDown className="h-4 w-4" />
                     </button>
@@ -682,18 +694,18 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <Link href="/timesheets" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                  <Link href="/timesheets" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                     Timesheets
                   </Link>
-                  <Link href="/sheq" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                  <Link href="/sheq" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                     SHEQ
                   </Link>
                 </nav>
 
-                {/* Right Side Actions */}
-                <div className="flex items-center gap-3">
+                {/* Right Side Actions - Desktop */}
+                <div className="hidden lg:flex items-center gap-3">
                   {isLoggedIn ? (
-                    <div className="hidden lg:flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8 border-2 border-white/30">
                           <AvatarFallback className="bg-gradient-to-br from-indigo-500/80 to-purple-500/80 text-white text-sm">
@@ -707,10 +719,10 @@ export default function HomePage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="hidden lg:flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-sm bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white transition-all duration-300">
+                          <Button variant="outline" size="sm" className="text-sm bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white transition-all duration-300 font-medium">
                             <LogIn className="h-4 w-4 mr-2" /> Sign In
                           </Button>
                         </DialogTrigger>
@@ -720,7 +732,7 @@ export default function HomePage() {
                       </Dialog>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button size="sm" className="bg-gradient-to-r from-indigo-600/90 to-purple-600/90 hover:from-indigo-700 hover:to-purple-700 text-sm transition-all duration-300 shadow-lg hover:shadow-xl text-white">
+                          <Button size="sm" className="bg-gradient-to-r from-indigo-600/90 to-purple-600/90 hover:from-indigo-700 hover:to-purple-700 text-sm transition-all duration-300 shadow-lg hover:shadow-xl text-white font-medium">
                             <UserPlus className="h-4 w-4 mr-2" /> Sign Up
                           </Button>
                         </DialogTrigger>
@@ -732,13 +744,142 @@ export default function HomePage() {
                   )}
                 </div>
               </div>
+
+              {/* MOBILE MENU - VISIBLE WHEN TOGGLED */}
+              {mobileMenuOpen && (
+                <div className="lg:hidden border-t border-white/20 mt-2 pb-4">
+                  <div className="flex flex-col space-y-2 pt-4">
+                    <Link 
+                      href="/" 
+                      className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Home
+                    </Link>
+                    
+                    <div className="px-4 py-2">
+                      <div className="text-sm text-white/90 font-medium mb-2">Core Modules</div>
+                      <div className="flex flex-col space-y-2 pl-4">
+                        {coreModules.slice(0, 3).map((module) => {
+                          const Icon = module.icon;
+                          return (
+                            <Link 
+                              key={module.link} 
+                              href={module.link} 
+                              className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4 inline mr-2" />
+                              {module.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-2">
+                      <div className="text-sm text-white/90 font-medium mb-2">Operations</div>
+                      <div className="flex flex-col space-y-2 pl-4">
+                        {operationsModules.slice(0, 3).map((module) => {
+                          const Icon = module.icon;
+                          return (
+                            <Link 
+                              key={module.link} 
+                              href={module.link} 
+                              className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4 inline mr-2" />
+                              {module.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <Link 
+                      href="/timesheets" 
+                      className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Timesheets
+                    </Link>
+                    <Link 
+                      href="/sheq" 
+                      className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      SHEQ
+                    </Link>
+
+                    {/* Mobile Auth Buttons */}
+                    <div className="pt-4 border-t border-white/20">
+                      {isLoggedIn ? (
+                        <div className="flex flex-col space-y-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8 border-2 border-white/30">
+                              <AvatarFallback className="bg-gradient-to-br from-indigo-500/80 to-purple-500/80 text-white text-sm">
+                                {user?.name?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-white font-medium">{user?.name || 'User'}</span>
+                          </div>
+                          <Button 
+                            onClick={() => {
+                              handleLogout();
+                              setMobileMenuOpen(false);
+                            }} 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm w-full"
+                          >
+                            Sign Out
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col space-y-3 px-4">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-sm bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white transition-all duration-300 font-medium w-full"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                <LogIn className="h-4 w-4 mr-2" /> Sign In
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                              <AuthForm />
+                            </DialogContent>
+                          </Dialog>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                className="bg-gradient-to-r from-indigo-600/90 to-purple-600/90 hover:from-indigo-700 hover:to-purple-700 text-sm transition-all duration-300 shadow-lg hover:shadow-xl text-white font-medium w-full"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                <UserPlus className="h-4 w-4 mr-2" /> Sign Up
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                              <AuthForm />
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </header>
 
           <main className="flex-1">
             {/* Hero Section */}
-            <section className="py-12 md:py-20">
-              <div className="container mx-auto px-4">
+            <section className="py-12 md:py-20 px-4">
+              <div className="container mx-auto">
                 <div className="text-center mb-12">
                   <div className="flex justify-center items-center gap-3 mb-6 animate-float-slow">
                     <Database className="h-8 w-8 text-white drop-shadow-lg" />
@@ -798,8 +939,8 @@ export default function HomePage() {
             </section>
 
             {/* All Modules Tabs */}
-            <section className="pb-12 md:pb-20">
-              <div className="container mx-auto px-4">
+            <section className="pb-12 md:pb-20 px-4">
+              <div className="container mx-auto">
                 <div className="text-center mb-8">
                   <h2 className="text-2xl font-bold text-white mb-3 animate-fade-in-slow drop-shadow-lg">
                     Database-Powered Modules
@@ -915,8 +1056,8 @@ export default function HomePage() {
             </section>
 
             {/* CTA Section */}
-            <section className="py-12">
-              <div className="container mx-auto px-4">
+            <section className="py-12 px-4">
+              <div className="container mx-auto">
                 <Card className="border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-2xl animate-fade-in-up-slow">
                   <CardContent className="p-8 text-center">
                     <div className="flex justify-center mb-4">
@@ -1025,7 +1166,7 @@ export default function HomePage() {
               
               <div className="text-center">
                 <p className="text-xs text-slate-400">
-                  © {new Date().getFullYear()} MyOffice Management System • Database Architecture
+                  © {new Date().getFullYear()} MyOffice Management System is a product of Ozech Investments Inc
                 </p>
               </div>
             </div>
