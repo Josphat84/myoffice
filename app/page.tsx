@@ -7,7 +7,6 @@ import {
   Users, 
   ToolCase, 
   Shield, 
-  CheckCircle,
   ArrowRight,
   Menu,
   X,
@@ -27,10 +26,19 @@ import {
   FileText,
   MessageSquare,
   FileCheck,
-  Home,
   Database,
   Layers,
-  Server
+  Server,
+  ChevronUp,
+  Folder,
+  HardHat,
+  Wrench,
+  LineChart,
+  Clock4,
+  Megaphone,
+  Building,
+  Cpu,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,17 +54,100 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// =============== ANIMATION STYLES ===============
+const animationStyles = `
+  @keyframes fly-in-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(120px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fade-in-up-slow {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float-slow {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes fade-in-slow {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-fly-in-from-right {
+    animation: fly-in-from-right 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  .animate-fade-in-up-slow {
+    animation: fade-in-up-slow 1.8s ease-out forwards;
+  }
+
+  .animate-float-slow {
+    animation: float-slow 4s ease-in-out infinite;
+  }
+
+  .animate-fade-in-slow {
+    animation: fade-in-slow 1.5s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 2.5s ease-in-out infinite;
+  }
+`;
+
+// =============== TYPES ===============
 type ColorType = 'indigo' | 'cyan' | 'green' | 'amber' | 'blue' | 'purple' | 'orange' | 'pink' | 'red';
 
 interface ModuleItem {
-  icon: React.ComponentType<any>;
+  icon: any;
   title: string;
   description: string;
   color: ColorType;
   link: string;
 }
 
-// Auth Form Component (Dialog version)
+interface Category {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  color: ColorType;
+  modules: ModuleItem[];
+}
+
+// =============== COMPONENTS ===============
 function AuthForm() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -71,7 +162,6 @@ function AuthForm() {
     setError('');
     setLoading(true);
 
-    // Simulate API call
     setTimeout(() => {
       const userData = {
         id: 1,
@@ -94,7 +184,7 @@ function AuthForm() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg">
+    <div className="bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-2xl border border-white/30">
       <div className="text-center mb-4">
         <h2 className="text-lg font-bold text-gray-900">
           {mode === 'login' ? 'Sign In' : 'Create Account'}
@@ -109,7 +199,7 @@ function AuthForm() {
               placeholder="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded text-sm"
+              className="w-full px-3 py-2 border border-gray-300/50 rounded text-sm bg-white/80 backdrop-blur-sm text-gray-900"
               required
             />
           </div>
@@ -121,7 +211,7 @@ function AuthForm() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border rounded text-sm"
+            className="w-full px-3 py-2 border border-gray-300/50 rounded text-sm bg-white/80 backdrop-blur-sm text-gray-900"
             required
           />
         </div>
@@ -132,7 +222,7 @@ function AuthForm() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border rounded text-sm"
+            className="w-full px-3 py-2 border border-gray-300/50 rounded text-sm bg-white/80 backdrop-blur-sm text-gray-900"
             required
           />
         </div>
@@ -144,14 +234,14 @@ function AuthForm() {
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border rounded text-sm"
+              className="w-full px-3 py-2 border border-gray-300/50 rounded text-sm bg-white/80 backdrop-blur-sm text-gray-900"
               required
             />
           </div>
         )}
 
         {error && (
-          <div className="p-2 bg-red-50 text-red-700 rounded text-xs">
+          <div className="p-2 bg-red-50/80 backdrop-blur-sm text-red-700 rounded text-xs border border-red-200/50">
             {error}
           </div>
         )}
@@ -159,7 +249,7 @@ function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 disabled:opacity-50 text-sm"
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-sm shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {loading ? (
             <span className="flex items-center justify-center">
@@ -175,7 +265,7 @@ function AuthForm() {
           <button
             type="button"
             onClick={toggleMode}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-300"
           >
             {mode === 'login' 
               ? "Need an account? Sign up" 
@@ -188,230 +278,211 @@ function AuthForm() {
   );
 }
 
-// Mobile Navigation Component with Top Nav Links
-function MobileNav({ isLoggedIn, onLogout, user }: { isLoggedIn: boolean; onLogout: () => void; user: any }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const topNavLinks = [
-    { href: "/timesheets", label: "Timesheets", icon: ClockIcon },
-    { href: "/sheq", label: "SHEQ", icon: FileCheck },
-  ];
-
-  const allModules = [
-    { href: "/employees", label: "Personnel", icon: Users },
-    { href: "/equipment", label: "Assets", icon: ToolCase },
-    { href: "/inventory", label: "Inventory", icon: Package },
-    { href: "/overtime", label: "Overtime", icon: Calculator },
-    { href: "/leaves", label: "Leaves", icon: CalendarDays },
-    { href: "/ppe", label: "PPE", icon: Shield },
-    { href: "/maintenance", label: "Maintenance", icon: ClipboardCheck },
-    { href: "/standby", label: "Standby", icon: Clock },
-    { href: "/breakdowns", label: "Breakdowns", icon: AlertTriangle },
-    { href: "/spares", label: "Spares", icon: Package },
-    { href: "/compressors", label: "Compressors", icon: Fan },
-    { href: "/reports", label: "Reports", icon: BarChart3 },
-    { href: "/visualization", label: "Visualization", icon: Eye },
-    { href: "/documents", label: "Documents", icon: FileText },
-    { href: "/noticeboard", label: "Notice Board", icon: MessageSquare },
-  ];
-
-  return (
-    <div className="lg:hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded text-gray-600 hover:bg-gray-100"
-        aria-label="Toggle menu"
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 top-16 z-50">
-          <div 
-            className="absolute inset-0 bg-black/50" 
-            onClick={() => setIsOpen(false)} 
-          />
-          <div className="absolute right-0 top-0 h-full w-full max-w-xs bg-white shadow-lg overflow-y-auto">
-            <div className="flex flex-col h-full">
-              <div className="p-4">
-                <div className="flex items-center gap-3 mb-4 p-2 bg-gray-50 rounded">
-                  <Avatar>
-                    <AvatarFallback className="bg-indigo-600 text-white text-sm">
-                      {isLoggedIn ? (user?.name?.charAt(0) || 'U') : 'MO'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {isLoggedIn ? (user?.name || 'User') : 'MyOffice'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Top Nav Links - Visible in Mobile */}
-                <div className="mb-4 pb-4 border-b">
-                  <div className="flex gap-2">
-                    {topNavLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setIsOpen(false)}
-                        className="flex-1 flex flex-col items-center p-2 text-sm hover:bg-gray-50 rounded"
-                      >
-                        <link.icon className="h-4 w-4 text-gray-500 mb-1" />
-                        <span className="text-xs">{link.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  {allModules.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
-                    >
-                      <link.icon className="h-4 w-4 text-gray-500" />
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="mt-auto p-4 border-t">
-                <div className="space-y-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-sm">
-                        <LogIn className="h-3 w-3 mr-2" />
-                        Sign In / Sign Up
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-sm">
-                      <DialogHeader>
-                        <DialogTitle className="text-sm">MyOffice Access</DialogTitle>
-                      </DialogHeader>
-                      <AuthForm />
-                    </DialogContent>
-                  </Dialog>
-                  
-                  {isLoggedIn && (
-                    <Button 
-                      onClick={() => {
-                        onLogout();
-                        setIsOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full text-sm"
-                    >
-                      Sign Out
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Helper function for colors
+// Helper function for colors - UPDATED with softer color palette
 function getColorClasses(color: ColorType) {
   const colorMap = {
-    indigo: {
-      bg: 'bg-indigo-600',
-      hover: 'hover:bg-indigo-700',
-      light: 'bg-indigo-50',
-      text: 'text-indigo-600',
+    indigo: { 
+      bg: 'bg-indigo-600', 
+      hover: 'hover:bg-indigo-700', 
+      light: 'bg-indigo-100/60', 
+      text: 'text-indigo-800', 
+      border: 'border-indigo-200/60',
+      icon: 'text-indigo-700',
+      card: 'bg-slate-50/80'
     },
-    cyan: {
-      bg: 'bg-cyan-600',
-      hover: 'hover:bg-cyan-700',
-      light: 'bg-cyan-50',
-      text: 'text-cyan-600',
+    cyan: { 
+      bg: 'bg-cyan-600', 
+      hover: 'hover:bg-cyan-700', 
+      light: 'bg-cyan-100/60', 
+      text: 'text-cyan-800', 
+      border: 'border-cyan-200/60',
+      icon: 'text-cyan-700',
+      card: 'bg-slate-50/80'
     },
-    green: {
-      bg: 'bg-green-600',
-      hover: 'hover:bg-green-700',
-      light: 'bg-green-50',
-      text: 'text-green-600',
+    green: { 
+      bg: 'bg-green-600', 
+      hover: 'hover:bg-green-700', 
+      light: 'bg-green-100/60', 
+      text: 'text-green-800', 
+      border: 'border-green-200/60',
+      icon: 'text-green-700',
+      card: 'bg-slate-50/80'
     },
-    amber: {
-      bg: 'bg-amber-600',
-      hover: 'hover:bg-amber-700',
-      light: 'bg-amber-50',
-      text: 'text-amber-600',
+    amber: { 
+      bg: 'bg-amber-600', 
+      hover: 'hover:bg-amber-700', 
+      light: 'bg-amber-100/60', 
+      text: 'text-amber-800', 
+      border: 'border-amber-200/60',
+      icon: 'text-amber-700',
+      card: 'bg-slate-50/80'
     },
-    blue: {
-      bg: 'bg-blue-600',
-      hover: 'hover:bg-blue-700',
-      light: 'bg-blue-50',
-      text: 'text-blue-600',
+    blue: { 
+      bg: 'bg-blue-600', 
+      hover: 'hover:bg-blue-700', 
+      light: 'bg-blue-100/60', 
+      text: 'text-blue-800', 
+      border: 'border-blue-200/60',
+      icon: 'text-blue-700',
+      card: 'bg-slate-50/80'
     },
-    purple: {
-      bg: 'bg-purple-600',
-      hover: 'hover:bg-purple-700',
-      light: 'bg-purple-50',
-      text: 'text-purple-600',
+    purple: { 
+      bg: 'bg-purple-600', 
+      hover: 'hover:bg-purple-700', 
+      light: 'bg-purple-100/60', 
+      text: 'text-purple-800', 
+      border: 'border-purple-200/60',
+      icon: 'text-purple-700',
+      card: 'bg-slate-50/80'
     },
-    orange: {
-      bg: 'bg-orange-600',
-      hover: 'hover:bg-orange-700',
-      light: 'bg-orange-50',
-      text: 'text-orange-600',
+    orange: { 
+      bg: 'bg-orange-600', 
+      hover: 'hover:bg-orange-700', 
+      light: 'bg-orange-100/60', 
+      text: 'text-orange-800', 
+      border: 'border-orange-200/60',
+      icon: 'text-orange-700',
+      card: 'bg-slate-50/80'
     },
-    pink: {
-      bg: 'bg-pink-600',
-      hover: 'hover:bg-pink-700',
-      light: 'bg-pink-50',
-      text: 'text-pink-600',
+    pink: { 
+      bg: 'bg-pink-600', 
+      hover: 'hover:bg-pink-700', 
+      light: 'bg-pink-100/60', 
+      text: 'text-pink-800', 
+      border: 'border-pink-200/60',
+      icon: 'text-pink-700',
+      card: 'bg-slate-50/80'
     },
-    red: {
-      bg: 'bg-red-600',
-      hover: 'hover:bg-red-700',
-      light: 'bg-red-50',
-      text: 'text-red-600',
+    red: { 
+      bg: 'bg-red-600', 
+      hover: 'hover:bg-red-700', 
+      light: 'bg-red-100/60', 
+      text: 'text-red-800', 
+      border: 'border-red-200/60',
+      icon: 'text-red-700',
+      card: 'bg-slate-50/80'
     },
   };
   return colorMap[color] || colorMap.indigo;
 }
 
-// Small Module Card Component
-function ModuleCard({ module }: { module: ModuleItem }) {
+// Module Card Component with slow fly-in from far right - SEMI-TRANSPARENT
+function ModuleCard({ module, index, isVisible }: { module: ModuleItem; index: number; isVisible: boolean }) {
   const colors = getColorClasses(module.color);
-
+  const IconComponent = module.icon;
+  
   return (
-    <Link href={module.link} className="block">
-      <Card className="hover:shadow transition-all duration-200 border h-full">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <div className={`p-2 rounded-lg ${colors.light} flex-shrink-0`}>
-              <module.icon className={`h-4 w-4 ${colors.text}`} />
+    <Link href={module.link} className="block group">
+      <div className={`h-full transition-all duration-1500 ease-out ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-60'}`}
+        style={{ 
+          transitionDelay: `${index * 250}ms`,
+          transitionTimingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+        }}>
+        <Card className={`border ${colors.border} h-full hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2 ${colors.card} backdrop-blur-sm`}>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={`p-2.5 rounded-lg ${colors.light} flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm`}>
+                <IconComponent className={`h-5 w-5 ${colors.icon} transition-all duration-500 group-hover:scale-110`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-800 text-sm mb-1 truncate group-hover:text-gray-900 transition-colors duration-300">
+                  {module.title}
+                </h3>
+                <p className="text-gray-700/90 text-xs line-clamp-2">
+                  {module.description}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 text-sm mb-1 truncate">
-                {module.title}
-              </h3>
-              <p className="text-gray-600 text-xs line-clamp-2">
-                {module.description}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </Link>
   );
 }
 
-// Main Page Component
+// Category Accordion Component - SEMI-TRANSPARENT
+function CategoryAccordion({ 
+  category, 
+  isExpanded, 
+  onToggle,
+  index 
+}: { 
+  category: Category; 
+  isExpanded: boolean; 
+  onToggle: () => void;
+  index: number;
+}) {
+  const colors = getColorClasses(category.color);
+  const [modulesVisible, setModulesVisible] = useState(false);
+  const CategoryIcon = category.icon;
+  
+  useEffect(() => {
+    if (isExpanded) {
+      const timer = setTimeout(() => {
+        setModulesVisible(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setModulesVisible(false);
+    }
+  }, [isExpanded]);
+  
+  return (
+    <div className="rounded-xl border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-xl hover:shadow-2xl mb-6 transition-all duration-500">
+      <button
+        onClick={onToggle}
+        className="w-full p-5 flex items-center justify-between hover:bg-slate-200/50 rounded-t-xl transition-all duration-500"
+      >
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl ${colors.light} transition-all duration-500 ${isExpanded ? 'scale-110 shadow-lg' : 'shadow-md'} backdrop-blur-sm`}>
+            <CategoryIcon className={`h-6 w-6 ${colors.icon}`} />
+          </div>
+          <div className="text-left">
+            <h3 className="font-bold text-gray-800 text-base">{category.title}</h3>
+            <p className="text-gray-700/90 text-sm">{category.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className={`text-xs ${colors.text} ${colors.border} bg-white/60 backdrop-blur-sm transition-all duration-500 ${isExpanded ? 'scale-110' : ''}`}>
+            {category.modules.length} modules
+          </Badge>
+          <div className={`p-2 rounded-full ${colors.light} transition-all duration-500 shadow-md backdrop-blur-sm`}>
+            <ChevronDown className={`h-5 w-5 ${colors.icon} transition-transform duration-700 ${isExpanded ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+      </button>
+
+      <div className={`overflow-hidden transition-all duration-1000 ease-in-out ${isExpanded ? 'max-h-[2000px]' : 'max-h-0'}`}>
+        <div className="p-5 pt-0 border-t border-slate-300/40">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 pt-5">
+            {category.modules.map((module, moduleIndex) => (
+              <ModuleCard 
+                key={module.link} 
+                module={module} 
+                index={moduleIndex}
+                isVisible={modulesVisible}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============== MAIN PAGE ===============
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    'core': true,
+    'operations': true,
+    'time-attendance': true,
+    'safety-compliance': true,
+    'analytics': true,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -432,566 +503,535 @@ export default function HomePage() {
     window.location.reload();
   };
 
-  // All modules organized by category
-  const allModules: ModuleItem[] = [
-    // Core Management
-    { 
-      icon: Users, 
-      title: "Personnel", 
-      description: "Employee profiles and team management", 
-      color: "indigo", 
-      link: "/employees"
+  // Define categories
+  const categories: Category[] = [
+    {
+      id: 'core',
+      title: 'Core Management',
+      description: 'Essential business management modules',
+      icon: Building,
+      color: 'indigo',
+      modules: [
+        { icon: Users, title: "Personnel", description: "Employee profiles and team management", color: "indigo", link: "/employees" },
+        { icon: ToolCase, title: "Assets", description: "Equipment tracking and maintenance", color: "cyan", link: "/equipment" },
+        { icon: Package, title: "Inventory", description: "Stock management and reordering", color: "green", link: "/inventory" },
+        { icon: Folder, title: "Documents", description: "Centralized document storage", color: "blue", link: "/documents" },
+      ]
     },
-    { 
-      icon: ToolCase, 
-      title: "Assets", 
-      description: "Equipment tracking and maintenance", 
-      color: "cyan", 
-      link: "/equipment"
+    {
+      id: 'operations',
+      title: 'Operations & Maintenance',
+      description: 'Daily operations and equipment management',
+      icon: Settings,
+      color: 'orange',
+      modules: [
+        { icon: ClipboardCheck, title: "Maintenance", description: "Work orders and preventive maintenance", color: "orange", link: "/maintenance" },
+        { icon: AlertTriangle, title: "Breakdowns", description: "Track equipment breakdowns", color: "red", link: "/breakdowns" },
+        { icon: Package, title: "Spares", description: "Spare parts inventory management", color: "green", link: "/spares" },
+        { icon: Fan, title: "Compressors", description: "Monitor compressor performance", color: "cyan", link: "/compressors" },
+        { icon: Clock, title: "Standby", description: "On-call schedules and coverage", color: "purple", link: "/standby" },
+      ]
     },
-    { 
-      icon: Package, 
-      title: "Inventory", 
-      description: "Stock management and reordering", 
-      color: "green", 
-      link: "/inventory"
+    {
+      id: 'time-attendance',
+      title: 'Time & Attendance',
+      description: 'Employee time tracking and leave management',
+      icon: Clock4,
+      color: 'purple',
+      modules: [
+        { icon: ClockIcon, title: "Timesheets", description: "Time tracking and payroll integration", color: "purple", link: "/timesheets" },
+        { icon: Calculator, title: "Overtime", description: "Track and approve overtime requests", color: "amber", link: "/overtime" },
+        { icon: CalendarDays, title: "Leaves", description: "Employee time off management", color: "pink", link: "/leaves" },
+      ]
     },
-    { 
-      icon: Clock, 
-      title: "Standby", 
-      description: "On-call schedules and coverage", 
-      color: "orange", 
-      link: "/standby"
+    {
+      id: 'safety-compliance',
+      title: 'Safety & Compliance',
+      description: 'Safety, health, and regulatory compliance',
+      icon: Shield,
+      color: 'blue',
+      modules: [
+        { icon: Shield, title: "PPE", description: "Protective equipment tracking", color: "blue", link: "/ppe" },
+        { icon: FileCheck, title: "SHEQ", description: "Safety, Health, Environment & Quality", color: "green", link: "/sheq" },
+      ]
     },
-    { 
-      icon: Calculator, 
-      title: "Overtime", 
-      description: "Track and approve overtime requests", 
-      color: "purple", 
-      link: "/overtime"
-    },
-    
-    // Maintenance
-    { 
-      icon: ClipboardCheck, 
-      title: "Maintenance", 
-      description: "Work orders and preventive maintenance", 
-      color: "orange", 
-      link: "/maintenance"
-    },
-    { 
-      icon: AlertTriangle, 
-      title: "Breakdowns", 
-      description: "Track equipment breakdowns", 
-      color: "red", 
-      link: "/breakdowns"
-    },
-    { 
-      icon: Package, 
-      title: "Spares", 
-      description: "Spare parts inventory management", 
-      color: "green", 
-      link: "/spares"
-    },
-    { 
-      icon: Fan, 
-      title: "Compressors", 
-      description: "Monitor compressor performance", 
-      color: "cyan", 
-      link: "/compressors"
-    },
-    
-    // Time & Leave
-    { 
-      icon: CalendarDays, 
-      title: "Leaves", 
-      description: "Employee time off management", 
-      color: "pink", 
-      link: "/leaves"
-    },
-    { 
-      icon: ClockIcon, 
-      title: "Timesheets", 
-      description: "Time tracking and payroll integration", 
-      color: "purple", 
-      link: "/timesheets"
-    },
-    
-    // Safety & Compliance
-    { 
-      icon: Shield, 
-      title: "PPE", 
-      description: "Protective equipment tracking", 
-      color: "blue", 
-      link: "/ppe"
-    },
-    { 
-      icon: FileCheck, 
-      title: "SHEQ", 
-      description: "Safety, Health, Environment & Quality", 
-      color: "green", 
-      link: "/sheq"
-    },
-    
-    // Analytics
-    { 
-      icon: Eye, 
-      title: "Visualization", 
-      description: "Interactive dashboards and reports", 
-      color: "indigo", 
-      link: "/visualization"
-    },
-    { 
-      icon: BarChart3, 
-      title: "Reports", 
-      description: "Generate operational reports", 
-      color: "green", 
-      link: "/reports"
-    },
-    { 
-      icon: FileText, 
-      title: "Documents", 
-      description: "Centralized document storage", 
-      color: "blue", 
-      link: "/documents"
-    },
-    { 
-      icon: MessageSquare, 
-      title: "Notice Board", 
-      description: "Company announcements", 
-      color: "green", 
-      link: "/noticeboard"
+    {
+      id: 'analytics',
+      title: 'Analytics & Insights',
+      description: 'Reporting and data visualization',
+      icon: LineChart,
+      color: 'green',
+      modules: [
+        { icon: Eye, title: "Visualization", description: "Interactive dashboards and reports", color: "indigo", link: "/visualization" },
+        { icon: BarChart3, title: "Reports", description: "Generate operational reports", color: "green", link: "/reports" },
+        { icon: Megaphone, title: "Notice Board", description: "Company announcements", color: "pink", link: "/noticeboard" },
+      ]
     },
   ];
 
-  const coreModules = allModules.filter(module => ['Personnel', 'Assets', 'Inventory', 'Overtime', 'Leaves', 'PPE'].some(keyword => 
-    module.title.includes(keyword)
-  ));
-  const operationsModules = allModules.filter(module => ['Maintenance', 'Breakdown', 'Spares', 'Compressor', 'Standby'].some(keyword => 
-    module.title.includes(keyword)
-  ));
-  const analyticsModules = allModules.filter(module => ['Visualization', 'Reports', 'Document', 'Notice'].some(keyword => 
-    module.title.includes(keyword)
-  ));
+  const coreModules = categories.find(cat => cat.id === 'core')?.modules || [];
+  const operationsModules = categories.find(cat => cat.id === 'operations')?.modules || [];
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  const expandAll = () => {
+    const allExpanded: Record<string, boolean> = {};
+    categories.forEach(cat => {
+      allExpanded[cat.id] = true;
+    });
+    setExpandedCategories(allExpanded);
+  };
+
+  const collapseAll = () => {
+    const allCollapsed: Record<string, boolean> = {};
+    categories.forEach(cat => {
+      allCollapsed[cat.id] = false;
+    });
+    setExpandedCategories(allCollapsed);
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-6 w-6 animate-spin rounded-full border-3 border-gray-300 border-t-indigo-600" />
-          <p className="text-gray-500 text-sm">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-indigo-600" />
+          <p className="text-white text-sm font-medium drop-shadow-lg">Loading MyOffice...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Clear Background Image - Not Blurred */}
-      <div className="fixed inset-0 z-0">
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.1
-          }}
-        />
-      </div>
+    <>
+      <style jsx global>{animationStyles}</style>
+      <div className="min-h-screen">
+        {/* Stunning Icelandic Waterfall Background */}
+        <div className="fixed inset-0 z-0">
+          <div 
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=3000')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundAttachment: 'fixed',
+              opacity: 0.9,
+              filter: 'brightness(1.05) contrast(1.05) saturate(1.05)'
+            }}
+          />
+          {/* Subtle overlay for better text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-blue-900/10" />
+        </div>
 
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
-            <div className="flex h-14 items-center justify-between">
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded bg-indigo-600">
-                  <Database className="h-4 w-4 text-white" />
-                </div>
-                <span className="font-bold text-gray-900">MyOffice</span>
-              </Link>
-
-              {/* Desktop Navigation */}
-              <nav className="hidden lg:flex items-center gap-2">
-                <Link 
-                  href="/" 
-                  className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50"
-                >
-                  Home
+        <div className="relative z-10">
+          {/* Header - TRANSPARENT WITH BLUR */}
+          <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-white/10 backdrop-blur-xl backdrop-saturate-150">
+            <div className="container mx-auto px-4">
+              <div className="flex h-16 items-center justify-between">
+                {/* Logo */}
+                <Link href="/" className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600/90 to-purple-600/90 shadow-lg">
+                    <Database className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-bold text-white text-lg drop-shadow-lg">MyOffice</span>
                 </Link>
-                
-                <div className="relative group">
-                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
-                    Core
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
-                    {coreModules.slice(0, 5).map((module) => (
-                      <Link
-                        key={module.link}
-                        href={module.link}
-                        className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
-                      >
-                        <module.icon className="h-3 w-3 text-gray-500" />
-                        {module.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
 
-                <div className="relative group">
-                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
-                    Operations
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
-                    {operationsModules.slice(0, 5).map((module) => (
-                      <Link
-                        key={module.link}
-                        href={module.link}
-                        className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
-                      >
-                        <module.icon className="h-3 w-3 text-gray-500" />
-                        {module.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative group">
-                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
-                    Analytics
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
-                    {analyticsModules.map((module) => (
-                      <Link
-                        key={module.link}
-                        href={module.link}
-                        className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded"
-                      >
-                        <module.icon className="h-3 w-3 text-gray-500" />
-                        {module.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Timesheets and SHEQ in dropdowns */}
-                <div className="relative group">
-                  <button className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50">
-                    Time & Safety
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block w-40 bg-white rounded shadow-lg border p-1 z-50">
-                    <Link href="/timesheets" className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded">
-                      <ClockIcon className="h-3 w-3 text-gray-500" />
-                      Timesheets
-                    </Link>
-                    <Link href="/sheq" className="flex items-center gap-2 p-2 text-sm hover:bg-gray-50 rounded">
-                      <FileCheck className="h-3 w-3 text-gray-500" />
-                      SHEQ
-                    </Link>
-                  </div>
-                </div>
-              </nav>
-
-              {/* Right Side Actions */}
-              <div className="flex items-center gap-2">
-                {isLoggedIn ? (
-                  <div className="hidden lg:flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        <AvatarFallback className="bg-indigo-100 text-indigo-600 text-xs">
-                          {user?.name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-gray-700">{user?.name || 'User'}</span>
+                {/* Desktop Navigation */}
+                <nav className="hidden lg:flex items-center gap-1">
+                  <Link href="/" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                    Home
+                  </Link>
+                  
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                      Core
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
+                      {coreModules.slice(0, 5).map((module) => {
+                        const Icon = module.icon;
+                        return (
+                          <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                            <Icon className="h-4 w-4 text-white/70" />
+                            {module.title}
+                          </Link>
+                        );
+                      })}
                     </div>
-                    <Button 
-                      onClick={handleLogout}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      Sign Out
-                    </Button>
                   </div>
-                ) : (
-                  <div className="hidden lg:flex items-center gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-sm">
-                          <LogIn className="h-3 w-3 mr-1" />
-                          Sign In
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-sm">Sign In</DialogTitle>
-                        </DialogHeader>
-                        <AuthForm />
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-sm">
-                          <UserPlus className="h-3 w-3 mr-1" />
-                          Sign Up
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-sm">Create Account</DialogTitle>
-                        </DialogHeader>
-                        <AuthForm />
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                )}
-                
-                <MobileNav isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
-              </div>
-            </div>
-          </div>
-        </header>
 
-        <main className="flex-1">
-          {/* Hero Section */}
-          <section className="py-8 md:py-12">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-8">
-                <div className="flex justify-center items-center gap-2 mb-4">
-                  <Database className="h-6 w-6 text-indigo-600" />
-                  <Layers className="h-6 w-6 text-indigo-500" />
-                  <Server className="h-6 w-6 text-indigo-400" />
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                      Operations
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
+                      {operationsModules.slice(0, 5).map((module) => {
+                        const Icon = module.icon;
+                        return (
+                          <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                            <Icon className="h-4 w-4 text-white/70" />
+                            {module.title}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <Link href="/timesheets" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                    Timesheets
+                  </Link>
+                  <Link href="/sheq" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm">
+                    SHEQ
+                  </Link>
+                </nav>
+
+                {/* Right Side Actions */}
+                <div className="flex items-center gap-3">
+                  {isLoggedIn ? (
+                    <div className="hidden lg:flex items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 border-2 border-white/30">
+                          <AvatarFallback className="bg-gradient-to-br from-indigo-500/80 to-purple-500/80 text-white text-sm">
+                            {user?.name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-white font-medium drop-shadow-sm">{user?.name || 'User'}</span>
+                      </div>
+                      <Button onClick={handleLogout} variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
+                        Sign Out
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="hidden lg:flex items-center gap-3">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-sm bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white transition-all duration-300">
+                            <LogIn className="h-4 w-4 mr-2" /> Sign In
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                          <AuthForm />
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="bg-gradient-to-r from-indigo-600/90 to-purple-600/90 hover:from-indigo-700 hover:to-purple-700 text-sm transition-all duration-300 shadow-lg hover:shadow-xl text-white">
+                            <UserPlus className="h-4 w-4 mr-2" /> Sign Up
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                          <AuthForm />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  )}
                 </div>
-                
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                  Organize Your Information
-                </h1>
-                <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-                  Structured database architecture powers our platform to organize your personnel, 
-                  assets, operations, and analytics in one unified system. Every module connects 
-                  to a centralized database ensuring data integrity and seamless access.
-                </p>
-              </div>
-
-              <div className="flex justify-center gap-3 mb-8">
-                {isLoggedIn ? (
-                  <>
-                    <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                      <Link href="/employees">
-                        Start Managing
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/leaves">
-                        Manage Leaves
-                      </Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                          Get Started
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-sm">Get Started</DialogTitle>
-                        </DialogHeader>
-                        <AuthForm />
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Sign In
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-sm">Sign In</DialogTitle>
-                        </DialogHeader>
-                        <AuthForm />
-                      </DialogContent>
-                    </Dialog>
-                  </>
-                )}
               </div>
             </div>
-          </section>
+          </header>
 
-          {/* All Modules Tabs */}
-          <section className="pb-8 md:pb-12">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  Database-Powered Modules
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Each module connects to our structured database architecture
-                </p>
-              </div>
-
-              <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-                <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 mb-6">
-                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                  <TabsTrigger value="core" className="text-xs">Core</TabsTrigger>
-                  <TabsTrigger value="operations" className="text-xs">Operations</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="all" className="mt-0">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {allModules.map((module, index) => (
-                      <ModuleCard key={index} module={module} />
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="core" className="mt-0">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {coreModules.map((module, index) => (
-                      <ModuleCard key={index} module={module} />
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="operations" className="mt-0">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {operationsModules.map((module, index) => (
-                      <ModuleCard key={index} module={module} />
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </section>
-
-          {/* CTA Section */}
-          <section className="py-8">
-            <div className="container mx-auto px-4">
-              <Card className="border bg-white">
-                <CardContent className="p-6 text-center">
-                  <div className="flex justify-center mb-3">
-                    <Database className="h-8 w-8 text-indigo-600" />
+          <main className="flex-1">
+            {/* Hero Section */}
+            <section className="py-12 md:py-20">
+              <div className="container mx-auto px-4">
+                <div className="text-center mb-12">
+                  <div className="flex justify-center items-center gap-3 mb-6 animate-float-slow">
+                    <Database className="h-8 w-8 text-white drop-shadow-lg" />
+                    <Layers className="h-8 w-8 text-white drop-shadow-lg" />
+                    <Server className="h-8 w-8 text-white drop-shadow-lg" />
                   </div>
                   
-                  <h3 className="font-bold text-gray-900 mb-3">
-                    Database-Driven Organization
-                  </h3>
-                  
-                  <p className="text-gray-600 text-sm mb-4">
-                    Our structured database architecture ensures your information is organized, 
-                    connected, and easily accessible across all modules.
+                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 animate-fade-in-slow drop-shadow-lg">
+                    Organize Your Information
+                  </h1>
+                  <p className="text-white/95 text-base md:text-lg max-w-2xl mx-auto animate-fade-in-slow drop-shadow-lg" style={{ animationDelay: '200ms' }}>
+                    Structured database architecture powers our platform to organize your personnel, 
+                    assets, operations, and analytics in one unified system.
                   </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    {isLoggedIn ? (
-                      <>
-                        <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                          <Link href="/employees">
-                            Manage Personnel
-                          </Link>
+                </div>
+
+                <div className="flex justify-center gap-4 mb-12">
+                  {isLoggedIn ? (
+                    <>
+                      <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 animate-fade-in-slow shadow-xl hover:shadow-2xl text-white" style={{ animationDelay: '400ms' }}>
+                        <Link href="/employees">
+                          Start Managing
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" size="lg" className="bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-white animate-fade-in-slow" style={{ animationDelay: '500ms' }}>
+                        <Link href="/leaves">
+                          Manage Leaves
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 animate-fade-in-slow shadow-xl hover:shadow-2xl text-white" style={{ animationDelay: '400ms' }}>
+                            Get Started
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                          <AuthForm />
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="lg" className="bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-white animate-fade-in-slow" style={{ animationDelay: '500ms' }}>
+                            Sign In
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                          <AuthForm />
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* All Modules Tabs */}
+            <section className="pb-12 md:pb-20">
+              <div className="container mx-auto px-4">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-3 animate-fade-in-slow drop-shadow-lg">
+                    Database-Powered Modules
+                  </h2>
+                  <p className="text-white/90 text-sm animate-fade-in-slow drop-shadow-lg" style={{ animationDelay: '100ms' }}>
+                    Each module connects to our structured database architecture
+                  </p>
+                </div>
+
+                <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+                    <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 bg-slate-100/80 backdrop-blur-sm border-slate-300/40 shadow-lg">
+                      <TabsTrigger value="all" className="text-sm text-gray-800 data-[state=active]:bg-indigo-600/80 data-[state=active]:text-white">All</TabsTrigger>
+                      <TabsTrigger value="core" className="text-sm text-gray-800 data-[state=active]:bg-indigo-600/80 data-[state=active]:text-white">Core</TabsTrigger>
+                      <TabsTrigger value="operations" className="text-sm text-gray-800 data-[state=active]:bg-indigo-600/80 data-[state=active]:text-white">Operations</TabsTrigger>
+                    </TabsList>
+                    
+                    {activeTab === 'all' && (
+                      <div className="flex gap-3 animate-fade-in-slow" style={{ animationDelay: '200ms' }}>
+                        <Button variant="outline" size="sm" onClick={expandAll} className="bg-slate-100/80 backdrop-blur-sm border-slate-300/40 hover:bg-slate-200/80 text-gray-800 text-sm hover:scale-105 transition-all duration-300 shadow-md">
+                          Expand All
                         </Button>
-                        <Button asChild variant="outline" size="sm">
-                          <Link href="/sheq">
-                            SHEQ Module
-                          </Link>
+                        <Button variant="outline" size="sm" onClick={collapseAll} className="bg-slate-100/80 backdrop-blur-sm border-slate-300/40 hover:bg-slate-200/80 text-gray-800 text-sm hover:scale-105 transition-all duration-300 shadow-md">
+                          Collapse All
                         </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                              Get Started
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-sm">
-                            <DialogHeader>
-                              <DialogTitle className="text-sm">Get Started</DialogTitle>
-                            </DialogHeader>
-                            <AuthForm />
-                          </DialogContent>
-                        </Dialog>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              Sign In
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-sm">
-                            <DialogHeader>
-                              <DialogTitle className="text-sm">Sign In</DialogTitle>
-                            </DialogHeader>
-                            <AuthForm />
-                          </DialogContent>
-                        </Dialog>
-                      </>
+                      </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
-        </main>
 
-        {/* Footer */}
-        <footer className="bg-gray-900 text-gray-300 border-t">
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Database className="h-5 w-5 text-indigo-400" />
-                  <span className="font-bold text-white">MyOffice</span>
+                  <TabsContent value="all" className="mt-0">
+                    {categories.map((category, index) => (
+                      <CategoryAccordion
+                        key={category.id}
+                        category={category}
+                        isExpanded={expandedCategories[category.id]}
+                        onToggle={() => toggleCategory(category.id)}
+                        index={index}
+                      />
+                    ))}
+                  </TabsContent>
+
+                  <TabsContent value="core" className="mt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {coreModules.map((module, index) => {
+                        const Icon = module.icon;
+                        const colors = getColorClasses(module.color);
+                        return (
+                          <div key={module.link} className="animate-fly-in-from-right" style={{ 
+                            animationDelay: `${index * 250}ms`,
+                            animationFillMode: 'both'
+                          }}>
+                            <Link href={module.link} className="block group">
+                              <Card className="border border-slate-300/40 hover:shadow-2xl transition-all duration-500 h-full hover:scale-[1.04] hover:-translate-y-2 bg-slate-50/80 backdrop-blur-sm shadow-lg">
+                                <CardContent className="p-5">
+                                  <div className="flex items-start gap-3">
+                                    <div className={`p-3 rounded-xl ${colors.light} flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm`}>
+                                      <Icon className={`h-5 w-5 ${colors.icon}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h3 className="font-semibold text-gray-800 text-sm mb-1 truncate group-hover:text-gray-900">
+                                        {module.title}
+                                      </h3>
+                                      <p className="text-gray-700/90 text-xs line-clamp-2">
+                                        {module.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="operations" className="mt-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {operationsModules.map((module, index) => {
+                        const Icon = module.icon;
+                        const colors = getColorClasses(module.color);
+                        return (
+                          <div key={module.link} className="animate-fly-in-from-right" style={{ 
+                            animationDelay: `${index * 250}ms`,
+                            animationFillMode: 'both'
+                          }}>
+                            <Link href={module.link} className="block group">
+                              <Card className="border border-slate-300/40 hover:shadow-2xl transition-all duration-500 h-full hover:scale-[1.04] hover:-translate-y-2 bg-slate-50/80 backdrop-blur-sm shadow-lg">
+                                <CardContent className="p-5">
+                                  <div className="flex items-start gap-3">
+                                    <div className={`p-3 rounded-xl ${colors.light} flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm`}>
+                                      <Icon className={`h-5 w-5 ${colors.icon}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h3 className="font-semibold text-gray-800 text-sm mb-1 truncate group-hover:text-gray-900">
+                                        {module.title}
+                                      </h3>
+                                      <p className="text-gray-700/90 text-xs line-clamp-2">
+                                        {module.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-12">
+              <div className="container mx-auto px-4">
+                <Card className="border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-2xl animate-fade-in-up-slow">
+                  <CardContent className="p-8 text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600/80 to-purple-600/80 shadow-lg backdrop-blur-sm">
+                        <Database className="h-6 w-6 text-white animate-pulse-slow" />
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-bold text-gray-800 text-xl mb-4">
+                      Database-Driven Organization
+                    </h3>
+                    
+                    <p className="text-gray-700/90 text-sm mb-6 max-w-2xl mx-auto">
+                      Our structured database architecture ensures your information is organized, 
+                      connected, and easily accessible across all modules.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      {isLoggedIn ? (
+                        <>
+                          <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl hover:shadow-2xl text-white">
+                            <Link href="/employees">
+                              Manage Personnel
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" size="lg" className="bg-slate-100/80 backdrop-blur-sm border-slate-300/40 hover:bg-slate-200/80 text-gray-800">
+                            <Link href="/sheq">
+                              SHEQ Module
+                            </Link>
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl hover:shadow-2xl text-white">
+                                Get Started
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                              <AuthForm />
+                            </DialogContent>
+                          </Dialog>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="lg" className="bg-slate-100/80 backdrop-blur-sm border-slate-300/40 hover:bg-slate-200/80 text-gray-800">
+                                Sign In
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
+                              <AuthForm />
+                            </DialogContent>
+                          </Dialog>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          </main>
+
+          {/* Footer */}
+          <footer className="bg-gradient-to-t from-slate-900/90 to-slate-800/80 text-white border-t border-white/10 backdrop-blur-xl">
+            <div className="container mx-auto px-4 py-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600/80 to-purple-600/80">
+                      <Database className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="font-bold text-white text-lg">MyOffice</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">
+                    Database-driven office management platform
+                  </p>
                 </div>
-                <p className="text-gray-400 text-xs">
-                  Database-driven office management platform
+                
+                <div>
+                  <h4 className="font-medium text-white mb-3 text-sm">Modules</h4>
+                  <ul className="space-y-2">
+                    <li><Link href="/employees" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Personnel</Link></li>
+                    <li><Link href="/leaves" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Leaves</Link></li>
+                    <li><Link href="/sheq" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">SHEQ</Link></li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-white mb-3 text-sm">Resources</h4>
+                  <ul className="space-y-2">
+                    <li><Link href="/support" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Support</Link></li>
+                    <li><Link href="/contact" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Contact</Link></li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-white mb-3 text-sm">Legal</h4>
+                  <ul className="space-y-2">
+                    <li><Link href="/privacy" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Privacy</Link></li>
+                    <li><Link href="/terms" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Terms</Link></li>
+                  </ul>
+                </div>
+              </div>
+              
+              <Separator className="my-6 bg-slate-700" />
+              
+              <div className="text-center">
+                <p className="text-xs text-slate-400">
+                  © {new Date().getFullYear()} MyOffice Management System • Database Architecture
                 </p>
               </div>
-              
-              <div>
-                <h4 className="font-medium text-white mb-2 text-sm">Modules</h4>
-                <ul className="space-y-1">
-                  <li><Link href="/employees" className="text-xs text-gray-400 hover:text-white">Personnel</Link></li>
-                  <li><Link href="/leaves" className="text-xs text-gray-400 hover:text-white">Leaves</Link></li>
-                  <li><Link href="/sheq" className="text-xs text-gray-400 hover:text-white">SHEQ</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-white mb-2 text-sm">Resources</h4>
-                <ul className="space-y-1">
-                  <li><Link href="/support" className="text-xs text-gray-400 hover:text-white">Support</Link></li>
-                  <li><Link href="/contact" className="text-xs text-gray-400 hover:text-white">Contact</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-white mb-2 text-sm">Legal</h4>
-                <ul className="space-y-1">
-                  <li><Link href="/privacy" className="text-xs text-gray-400 hover:text-white">Privacy</Link></li>
-                  <li><Link href="/terms" className="text-xs text-gray-400 hover:text-white">Terms</Link></li>
-                </ul>
-              </div>
             </div>
-            
-            <Separator className="my-4 bg-gray-800" />
-            
-            <div className="text-center">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} MyOffice Management System • Database Architecture
-              </p>
-            </div>
-          </div>
-        </footer>
+          </footer>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
