@@ -1166,7 +1166,7 @@ export default function HomePage() {
               
               <div className="text-center">
                 <p className="text-xs text-slate-400">
-                  © {new Date().getFullYear()} MyOffice Management System is a product of Ozech Investments Inc
+                  © {new Date().getFullYear()} MyOffice Management System is a product of Ozech Investments Inc. All rights reserved.
                 </p>
               </div>
             </div>
