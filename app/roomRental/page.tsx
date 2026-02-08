@@ -54,7 +54,7 @@ import {
   MessageSquare,
   BookOpen,
   HelpCircle,
-  Badge,
+  Badge as BadgeIcon,
   CircleDollarSign,
   ShieldCheck,
   CreditCard,
@@ -108,6 +108,21 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
+
+// Custom Badge component
+const Badge = ({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+}) => {
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className || ''}`}>
+      {children}
+    </span>
+  );
+};
 
 // =============== ANIMATION STYLES ===============
 const animationStyles = `
@@ -735,7 +750,7 @@ function SearchBar({ onSearch }: { onSearch: (query: string) => void }) {
 // Dropdown Menu Component
 function DropdownMenu({ title, items }: { title: string; items: { name: string; icon: React.ReactNode; href: string }[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -747,6 +762,14 @@ function DropdownMenu({ title, items }: { title: string; items: { name: string; 
       setIsOpen(false);
     }, 200);
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div 
@@ -1318,124 +1341,246 @@ export default function RentalPage() {
             ))}
           </div>
 
-          {/* Main Content */}
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar */}
-            <div className="lg:w-1/4">
-              <div className="sticky top-24">
-                <FilterPanel filters={filters} onFilterChange={setFilters} />
+          {/* Main Content - Updated Layout */}
+          <div className="flex flex-col">
+            {/* Filters at the top (horizontal scroll on mobile) */}
+            <div className="mb-6">
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {filteredProperties.length} Properties Found
+                    </h2>
+                    <p className="text-gray-600">In {filters.propertyTypes.length > 0 ? filters.propertyTypes.join(', ') : 'all categories'}</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className={`px-3 ${viewMode === 'grid' ? 'bg-white shadow' : 'text-gray-600'}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        variant={viewMode === 'map' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('map')}
+                        className={`px-3 ${viewMode === 'map' ? 'bg-white shadow' : 'text-gray-600'}`}
+                      >
+                        <Map className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Sort Dropdown */}
+                    <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-blue-500">
+                      <option>Sort by: Recommended</option>
+                      <option>Price: Low to High</option>
+                      <option>Price: High to Low</option>
+                      <option>Rating: Highest First</option>
+                      <option>Newest First</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Property Type Tabs */}
+                <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
+                  <TabsList className="bg-blue-50/50 p-1 rounded-xl w-full overflow-x-auto">
+                    <TabsTrigger value="all" className="data-[state=active]:bg-white rounded-lg whitespace-nowrap">All Types</TabsTrigger>
+                    <TabsTrigger value="apartment" className="data-[state=active]:bg-white rounded-lg whitespace-nowrap">Apartments</TabsTrigger>
+                    <TabsTrigger value="house" className="data-[state=active]:bg-white rounded-lg whitespace-nowrap">Houses</TabsTrigger>
+                    <TabsTrigger value="room" className="data-[state=active]:bg-white rounded-lg whitespace-nowrap">Rooms</TabsTrigger>
+                    <TabsTrigger value="studio" className="data-[state=active]:bg-white rounded-lg whitespace-nowrap">Studios</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {/* Quick Filters Bar */}
+                <div className="mb-6">
+                  <div className="bg-white rounded-xl p-4 border border-blue-100">
+                    <div className="flex flex-col space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Price Range Quick Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">Price Range</label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              placeholder="Min"
+                              value={filters.priceRange[0]}
+                              onChange={(e) => setFilters({...filters, priceRange: [parseInt(e.target.value) || 0, filters.priceRange[1]]})}
+                              className="w-full"
+                            />
+                            <span className="text-gray-500">-</span>
+                            <Input
+                              type="number"
+                              placeholder="Max"
+                              value={filters.priceRange[1]}
+                              onChange={(e) => setFilters({...filters, priceRange: [filters.priceRange[0], parseInt(e.target.value) || 10000]})}
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Bedrooms Quick Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">Bedrooms</label>
+                          <div className="flex gap-2">
+                            {[0, 1, 2, 3, 4].map((num) => (
+                              <button
+                                key={num}
+                                onClick={() => setFilters({ ...filters, bedrooms: num })}
+                                className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-300 ${
+                                  filters.bedrooms === num
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                {num === 0 ? 'Any' : `${num}+`}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Instant Book Quick Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">Booking</label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setFilters({ ...filters, instantBook: !filters.instantBook })}
+                              className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-300 ${
+                                filters.instantBook
+                                  ? 'bg-green-500 text-white'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              Instant Book
+                            </button>
+                            <button
+                              onClick={() => setFilters({ ...filters, verifiedOnly: !filters.verifiedOnly })}
+                              className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-300 ${
+                                filters.verifiedOnly
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              Verified Only
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Amenities Quick Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">Top Amenities</label>
+                          <div className="flex gap-2">
+                            {['wifi', 'parking', 'pets'].map((amenity) => (
+                              <button
+                                key={amenity}
+                                onClick={() => {
+                                  const newAmenities = filters.amenities.includes(amenity)
+                                    ? filters.amenities.filter(a => a !== amenity)
+                                    : [...filters.amenities, amenity];
+                                  setFilters({ ...filters, amenities: newAmenities });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-300 flex items-center gap-1 ${
+                                  filters.amenities.includes(amenity)
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'text-gray-700 hover:bg-gray-50 border border-gray-200'
+                                }`}
+                              >
+                                {amenity === 'wifi' && <Wifi className="h-3 w-3" />}
+                                {amenity === 'parking' && <Car className="h-3 w-3" />}
+                                {amenity === 'pets' && <Dog className="h-3 w-3" />}
+                                <span className="capitalize">{amenity}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Show More Filters Button */}
+                      <div className="flex justify-center">
+                        <Button 
+                          variant="outline" 
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                          onClick={() => {
+                            // Scroll to filter panel
+                            const filterPanel = document.getElementById('filter-panel');
+                            if (filterPanel) {
+                              filterPanel.scrollIntoView({ behavior: 'smooth' });
+                            }
+                          }}
+                        >
+                          <Filter className="h-4 w-4 mr-2" /> Show All Filters
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Properties Grid */}
-            <div className="lg:w-3/4">
-              {/* View Controls and Tabs */}
-              <div className="flex flex-col sm:flex-row items-center justify-between mb-6">
-                <div className="mb-4 sm:mb-0">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {filteredProperties.length} Properties Found
-                  </h2>
-                  <p className="text-gray-600">In {filters.propertyTypes.length > 0 ? filters.propertyTypes.join(', ') : 'all categories'}</p>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center bg-gray-100 p-1 rounded-lg">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className={`px-3 ${viewMode === 'grid' ? 'bg-white shadow' : 'text-gray-600'}`}
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                      </svg>
-                    </Button>
-                    <Button
-                      variant={viewMode === 'map' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('map')}
-                      className={`px-3 ${viewMode === 'map' ? 'bg-white shadow' : 'text-gray-600'}`}
-                    >
-                      <Map className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Sort Dropdown */}
-                  <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-blue-500">
-                    <option>Sort by: Recommended</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                    <option>Rating: Highest First</option>
-                    <option>Newest First</option>
-                  </select>
-                </div>
+            {/* Properties Grid or Map View */}
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredProperties.map((property, index) => (
+                  <PropertyCard 
+                    key={property.id} 
+                    property={property}
+                  />
+                ))}
               </div>
-
-              {/* Property Type Tabs */}
-              <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
-                <TabsList className="bg-blue-50/50 p-1 rounded-xl">
-                  <TabsTrigger value="all" className="data-[state=active]:bg-white rounded-lg">All Types</TabsTrigger>
-                  <TabsTrigger value="apartment" className="data-[state=active]:bg-white rounded-lg">Apartments</TabsTrigger>
-                  <TabsTrigger value="house" className="data-[state=active]:bg-white rounded-lg">Houses</TabsTrigger>
-                  <TabsTrigger value="room" className="data-[state=active]:bg-white rounded-lg">Rooms</TabsTrigger>
-                  <TabsTrigger value="studio" className="data-[state=active]:bg-white rounded-lg">Studios</TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              {/* Properties Grid or Map View */}
-              {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredProperties.map((property, index) => (
-                    <PropertyCard 
-                      key={property.id} 
-                      property={property}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="h-[600px] rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50/50 to-indigo-50/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <Map className="h-16 w-16 text-blue-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Interactive Map View</h3>
-                    <p className="text-gray-600 mb-4">View properties on an interactive map</p>
-                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white">
-                      <Navigation className="h-4 w-4 mr-2" /> Open Full Map
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* No Results */}
-              {filteredProperties.length === 0 && (
-                <div className="text-center py-12">
-                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">No properties found</h3>
-                  <p className="text-gray-600 mb-4">Try adjusting your filters or search criteria</p>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setFilters({
-                        priceRange: [500, 5000],
-                        propertyTypes: [],
-                        bedrooms: 0,
-                        bathrooms: 0,
-                        amenities: [],
-                        minStay: 1,
-                        maxStay: 36,
-                        availableFrom: '',
-                        instantBook: false,
-                        verifiedOnly: false,
-                        superhostOnly: false,
-                      });
-                      setSearchQuery('');
-                      setActiveTab('all');
-                    }}
-                  >
-                    <XIcon className="h-4 w-4 mr-2" /> Clear All Filters
+            ) : (
+              <div className="h-[600px] rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50/50 to-indigo-50/50 flex items-center justify-center">
+                <div className="text-center">
+                  <Map className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Interactive Map View</h3>
+                  <p className="text-gray-600 mb-4">View properties on an interactive map</p>
+                  <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white">
+                    <Navigation className="h-4 w-4 mr-2" /> Open Full Map
                   </Button>
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* No Results */}
+            {filteredProperties.length === 0 && (
+              <div className="text-center py-12">
+                <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No properties found</h3>
+                <p className="text-gray-600 mb-4">Try adjusting your filters or search criteria</p>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setFilters({
+                      priceRange: [500, 5000],
+                      propertyTypes: [],
+                      bedrooms: 0,
+                      bathrooms: 0,
+                      amenities: [],
+                      minStay: 1,
+                      maxStay: 36,
+                      availableFrom: '',
+                      instantBook: false,
+                      verifiedOnly: false,
+                      superhostOnly: false,
+                    });
+                    setSearchQuery('');
+                    setActiveTab('all');
+                  }}
+                >
+                  <XIcon className="h-4 w-4 mr-2" /> Clear All Filters
+                </Button>
+              </div>
+            )}
+
+            {/* Full Filter Panel (Initially hidden, can be accessed via "Show All Filters") */}
+            <div id="filter-panel" className="mt-12">
+              <FilterPanel filters={filters} onFilterChange={setFilters} />
             </div>
           </div>
         </div>
