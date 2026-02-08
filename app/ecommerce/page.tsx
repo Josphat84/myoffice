@@ -186,6 +186,21 @@ type Review = {
   verified: boolean;
 };
 
+// Simple Badge component
+const Badge = ({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+}) => {
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className || ''}`}>
+      {children}
+    </span>
+  );
+};
+
 // =============== COMPONENTS ===============
 function ProductCard({ product }: { product: Product }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -349,7 +364,7 @@ function ReviewCard({ review }: { review: Review }) {
 // Dropdown Menu Component
 function DropdownMenu({ title, items }: { title: string; items: { name: string; icon: React.ReactNode; href: string }[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -361,6 +376,14 @@ function DropdownMenu({ title, items }: { title: string; items: { name: string; 
       setIsOpen(false);
     }, 200);
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div 
@@ -405,7 +428,7 @@ export default function EcommercePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
-  const heroIntervalRef = useRef<NodeJS.Timeout>();
+  const heroIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Product data with optimized images (no shimmer animation)
   const products: Product[] = [
@@ -668,10 +691,12 @@ export default function EcommercePage() {
     // Auto-rotate hero slides (slower)
     heroIntervalRef.current = setInterval(() => {
       setCurrentHeroSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 8000); // Changed from 5000ms to 8000ms for slower rotation
+    }, 8000);
 
     return () => {
-      if (heroIntervalRef.current) clearInterval(heroIntervalRef.current);
+      if (heroIntervalRef.current) {
+        clearInterval(heroIntervalRef.current);
+      }
     };
   }, []);
 
