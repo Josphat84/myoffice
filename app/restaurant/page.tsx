@@ -418,7 +418,7 @@ function ReviewCard({ review }: { review: Review }) {
 // Dropdown Menu Component for Restaurant
 function RestaurantDropdownMenu({ title, items }: { title: string; items: { name: string; icon: React.ReactNode; href: string }[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
