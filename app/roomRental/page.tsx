@@ -65,7 +65,6 @@ import {
   Check,
   X as XIcon,
   Briefcase,
-  Suitcase,
   CalendarDays,
   CalendarRange,
   UsersRound,
