@@ -71,10 +71,24 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-//import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Custom Badge component (since Badge icon conflicts with component name)
+const StatusBadge = ({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+}) => {
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className || ''}`}>
+      {children}
+    </span>
+  );
+};
 
 // =============== ANIMATION STYLES ===============
 const animationStyles = `
@@ -186,21 +200,6 @@ type Review = {
   verified: boolean;
 };
 
-// Simple Badge component
-const Badge = ({ 
-  children, 
-  className 
-}: { 
-  children: React.ReactNode; 
-  className?: string;
-}) => {
-  return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className || ''}`}>
-      {children}
-    </span>
-  );
-};
-
 // =============== COMPONENTS ===============
 function ProductCard({ product }: { product: Product }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -216,19 +215,19 @@ function ProductCard({ product }: { product: Product }) {
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
           {product.isNew && (
-            <Badge className="bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 shadow-lg">
               <Sparkles className="h-3 w-3 mr-1" /> New
-            </Badge>
+            </StatusBadge>
           )}
           {product.isBestseller && (
-            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg">
               <TrendingUp className="h-3 w-3 mr-1" /> Bestseller
-            </Badge>
+            </StatusBadge>
           )}
           {product.isSale && (
-            <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-lg">
               <Percent className="h-3 w-3 mr-1" /> Sale
-            </Badge>
+            </StatusBadge>
           )}
         </div>
 
@@ -986,9 +985,9 @@ export default function EcommercePage() {
                 
                 <div className="relative container mx-auto h-full px-8 flex items-center">
                   <div className="max-w-xl text-white animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                    <Badge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
+                    <StatusBadge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
                       {slide.subtitle}
-                    </Badge>
+                    </StatusBadge>
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight">
                       {slide.title}
                     </h1>
@@ -1118,9 +1117,9 @@ export default function EcommercePage() {
           <section className="mb-16">
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-500/90 to-pink-500/90 p-8 md:p-12">
               <div className="relative z-10 max-w-xl">
-                <Badge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
+                <StatusBadge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
                   Limited Time Offer
-                </Badge>
+                </StatusBadge>
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                   Summer Sale! Up to 50% Off
                 </h2>
