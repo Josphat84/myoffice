@@ -46,9 +46,6 @@ import {
   Square,
   MoveVertical,
   ArrowRight,
-  BathIcon,
-  HomeIcon,
-  BuildingIcon,
   Sparkles,
   Award,
   MessageSquare,
@@ -67,43 +64,15 @@ import {
   Navigation,
   Check,
   X as XIcon,
-  CoffeeIcon,
-  WifiIcon,
-  CarIcon,
-  DogIcon,
-  UtensilsIcon,
-  TvIcon,
-  SnowflakeIcon,
-  ThermometerSunIcon,
-  ShowerHead,
-  Sofa,
-  Chair,
-  Lamp,
-  Refrigerator,
-  Microwave,
-  Oven,
-  WashingMachine,
-  Dryer,
-  ParkingSquare,
-  Gym,
-  Pool,
-  Trees,
-  ConciergeBell,
-  Luggage,
   Briefcase,
   Suitcase,
-  Clock3,
   CalendarDays,
   CalendarRange,
-  BedDouble,
-  BedSingle,
-  KeyIcon,
   UsersRound,
   ShieldIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-//import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -256,17 +225,6 @@ type FilterOptions = {
   instantBook: boolean;
   verifiedOnly: boolean;
   superhostOnly: boolean;
-};
-
-type Review = {
-  id: number;
-  name: string;
-  avatar: string;
-  rating: number;
-  comment: string;
-  date: string;
-  stayType: string;
-  verified: boolean;
 };
 
 // =============== COMPONENTS ===============
@@ -443,7 +401,7 @@ function FilterPanel({ filters, onFilterChange }: { filters: FilterOptions; onFi
     { id: 'ac', label: 'Air Conditioning', icon: <Snowflake className="h-4 w-4" /> },
     { id: 'heating', label: 'Heating', icon: <ThermometerSun className="h-4 w-4" /> },
     { id: 'tv', label: 'TV', icon: <Tv className="h-4 w-4" /> },
-    { id: 'laundry', label: 'Laundry', icon: <WashingMachine className="h-4 w-4" /> },
+    { id: 'laundry', label: 'Laundry', icon: <Snowflake className="h-4 w-4" /> }, // Replaced WashingMachine
   ];
 
   return (
@@ -1269,7 +1227,7 @@ export default function RentalPage() {
                     <Building className="h-4 w-4 inline mr-2" /> Properties
                   </Link>
                   <Link href="/services" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                    <ConciergeBell className="h-4 w-4 inline mr-2" /> Services
+                    <HelpCircle className="h-4 w-4 inline mr-2" /> Services
                   </Link>
                   <Link href="/how-it-works" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
                     <HelpCircle className="h-4 w-4 inline mr-2" /> How it Works
