@@ -65,7 +65,6 @@ import {
   Wine,
   Coffee,
   Pizza,
-  Burger,
   Salad,
   Sandwich,
   Soup,
