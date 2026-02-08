@@ -114,6 +114,21 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Custom Badge component
+const StatusBadge = ({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+}) => {
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className || ''}`}>
+      {children}
+    </span>
+  );
+};
+
 // =============== ANIMATION STYLES ===============
 const animationStyles = `
   @keyframes fade-in-up {
@@ -269,24 +284,24 @@ function MenuItemCard({ item }: { item: MenuItem }) {
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
           {item.isNew && (
-            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg">
               <Sparkles className="h-3 w-3 mr-1" /> New
-            </Badge>
+            </StatusBadge>
           )}
           {item.isChefspecial && (
-            <Badge className="bg-gradient-to-r from-red-500 to-rose-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-red-500 to-rose-500 text-white border-0 shadow-lg">
               <ChefHat className="h-3 w-3 mr-1" /> Chef's Special
-            </Badge>
+            </StatusBadge>
           )}
           {item.isVegetarian && (
-            <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white border-0 shadow-lg">
               <Leaf className="h-3 w-3 mr-1" /> Vegetarian
-            </Badge>
+            </StatusBadge>
           )}
           {item.isSpicy && (
-            <Badge className="bg-gradient-to-r from-red-600 to-orange-500 text-white border-0 shadow-lg">
+            <StatusBadge className="bg-gradient-to-r from-red-600 to-orange-500 text-white border-0 shadow-lg">
               <FlameIcon className="h-3 w-3 mr-1" /> Spicy
-            </Badge>
+            </StatusBadge>
           )}
         </div>
 
@@ -431,6 +446,14 @@ function RestaurantDropdownMenu({ title, items }: { title: string; items: { name
     }, 200);
   };
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div 
       className="relative group"
@@ -492,7 +515,7 @@ export default function RestaurantPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
-  const heroIntervalRef = useRef<NodeJS.Timeout>();
+  const heroIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [reservationDate, setReservationDate] = useState('');
   const [partySize, setPartySize] = useState(2);
   const [selectedTime, setSelectedTime] = useState('');
@@ -823,7 +846,9 @@ export default function RestaurantPage() {
     }, 8000);
 
     return () => {
-      if (heroIntervalRef.current) clearInterval(heroIntervalRef.current);
+      if (heroIntervalRef.current) {
+        clearInterval(heroIntervalRef.current);
+      }
     };
   }, []);
 
@@ -1031,9 +1056,9 @@ export default function RestaurantPage() {
                 
                 <div className="relative container mx-auto h-full px-8 flex items-center">
                   <div className="max-w-xl text-white animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                    <Badge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
+                    <StatusBadge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
                       {slide.subtitle}
-                    </Badge>
+                    </StatusBadge>
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight">
                       {slide.title}
                     </h1>
@@ -1103,9 +1128,9 @@ export default function RestaurantPage() {
             <div className="bg-gradient-to-r from-amber-900/90 to-orange-900/90 rounded-3xl p-8 md:p-12 overflow-hidden">
               <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
                 <div className="lg:w-1/2">
-                  <Badge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
+                  <StatusBadge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
                     Reserve Your Table
-                  </Badge>
+                  </StatusBadge>
                   <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                     Book a Memorable Dining Experience
                   </h2>
@@ -1257,9 +1282,9 @@ export default function RestaurantPage() {
           <section className="mb-16">
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-500/90 to-orange-500/90 p-8 md:p-12">
               <div className="relative z-10 max-w-xl">
-                <Badge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
+                <StatusBadge className="mb-4 bg-white/20 backdrop-blur-sm border-white/30 text-white">
                   Limited Time Offer
-                </Badge>
+                </StatusBadge>
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                   Weekend Brunch Special
                 </h2>
