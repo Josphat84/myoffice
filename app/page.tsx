@@ -38,7 +38,12 @@ import {
   Megaphone,
   Building,
   Cpu,
-  Settings
+  Settings,
+  Home,
+  ShoppingCart,
+  Utensils,
+  Sprout,
+  Church
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -482,6 +487,7 @@ export default function HomePage() {
     'time-attendance': true,
     'safety-compliance': true,
     'analytics': true,
+    'other-products': true, // Added Other Products category
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -570,6 +576,21 @@ export default function HomePage() {
         { icon: Megaphone, title: "Notice Board", description: "Company announcements", color: "pink", link: "/noticeboard" },
       ]
     },
+    // NEW: Other Products Category
+    {
+      id: 'other-products',
+      title: 'Other Products',
+      description: 'Specialized platforms for different industries',
+      icon: Package,
+      color: 'pink',
+      modules: [
+        { icon: Home, title: "Room Rental", description: "Property rental and management platform", color: "pink", link: "/roomRental" },
+        { icon: ShoppingCart, title: "E-commerce", description: "Online store and shopping platform", color: "purple", link: "/ecommerce" },
+        { icon: Utensils, title: "Restaurant", description: "Restaurant management and ordering system", color: "orange", link: "/restaurant" },
+        { icon: Sprout, title: "Farm", description: "Farm management and agricultural tracking", color: "green", link: "/farm" },
+        { icon: Church, title: "Church", description: "Church management and community platform", color: "blue", link: "/church" },
+      ]
+    }
   ];
 
   const coreModules = categories.find(cat => cat.id === 'core')?.modules || [];
@@ -700,6 +721,28 @@ export default function HomePage() {
                   <Link href="/sheq" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                     SHEQ
                   </Link>
+
+                  {/* New: Other Products Dropdown */}
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
+                      Other Products
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
+                      <Link href="/roomRental" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                        <Home className="h-4 w-4 text-white/70" />
+                        Room Rental
+                      </Link>
+                      <Link href="/ecommerce" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                        <ShoppingCart className="h-4 w-4 text-white/70" />
+                        E-commerce
+                      </Link>
+                      <Link href="/restaurant" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                        <Utensils className="h-4 w-4 text-white/70" />
+                        Restaurant
+                      </Link>
+                    </div>
+                  </div>
                 </nav>
 
                 {/* Right Side Actions - Desktop */}
@@ -811,6 +854,37 @@ export default function HomePage() {
                     >
                       SHEQ
                     </Link>
+
+                    {/* New: Other Products in Mobile Menu */}
+                    <div className="px-4 py-2">
+                      <div className="text-sm text-white/90 font-medium mb-2">Other Products</div>
+                      <div className="flex flex-col space-y-2 pl-4">
+                        <Link 
+                          href="/roomRental" 
+                          className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Home className="h-4 w-4 inline mr-2" />
+                          Room Rental
+                        </Link>
+                        <Link 
+                          href="/ecommerce" 
+                          className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <ShoppingCart className="h-4 w-4 inline mr-2" />
+                          E-commerce
+                        </Link>
+                        <Link 
+                          href="/restaurant" 
+                          className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Utensils className="h-4 w-4 inline mr-2" />
+                          Restaurant
+                        </Link>
+                      </div>
+                    </div>
 
                     {/* Mobile Auth Buttons */}
                     <div className="pt-4 border-t border-white/20">
@@ -1146,10 +1220,11 @@ export default function HomePage() {
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-white mb-3 text-sm">Resources</h4>
+                  <h4 className="font-medium text-white mb-3 text-sm">Other Products</h4>
                   <ul className="space-y-2">
-                    <li><Link href="/support" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Support</Link></li>
-                    <li><Link href="/contact" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Contact</Link></li>
+                    <li><Link href="/roomRental" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Room Rental</Link></li>
+                    <li><Link href="/ecommerce" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">E-commerce</Link></li>
+                    <li><Link href="/restaurant" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Restaurant</Link></li>
                   </ul>
                 </div>
                 
