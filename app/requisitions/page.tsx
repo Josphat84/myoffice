@@ -133,14 +133,12 @@ const PRIORITIES: Array<Requisition['priority']> = ["Critical", "High", "Medium"
 const SECTIONS: Array<Requisition['section']> = ["Electrical", "Mechanical"];
 
 // ============= API Service - Fixed Base URL Handling =============
-// Use environment variable for server base, then append the requisitions path
 const SERVER_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const API_BASE_URL = `${SERVER_URL}/api/requisitions`;
 
 console.log('🔍 SERVER_URL:', SERVER_URL);
 console.log('🔍 API_BASE_URL (requisitions):', API_BASE_URL);
 
-// Simple URL builder: appends path with a slash
 const buildUrl = (path: string = ''): string => {
   if (!path) return API_BASE_URL;
   return `${API_BASE_URL}/${path}`;
@@ -237,12 +235,18 @@ const requisitionsApi = {
 
       const url = buildUrl(id);
       console.log('✏️ Updating requisition at:', url);
+      console.log('📦 Update payload:', JSON.stringify(formattedData, null, 2));
+
       const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formattedData)
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Update response error:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
       const result = await response.json();
       return transformRequisitionFromBackend(result);
     } catch (error) {
@@ -306,7 +310,6 @@ const requisitionsApi = {
   }
 };
 
-// Transform backend snake_case to frontend camelCase
 function transformRequisitionFromBackend(data: any): Requisition {
   return {
     id: data.id.toString(),
@@ -1310,7 +1313,6 @@ const EditRequisitionModal: React.FC<EditRequisitionModalProps> = ({
     newItems[index] = { ...newItems[index], [field]: value };
     setFormData(prev => ({ ...prev, items: newItems }));
     
-    // Clear error for this field if it exists
     if (errors[`item_${index}_${field}`]) {
       setErrors(prev => ({ ...prev, [`item_${index}_${field}`]: '' }));
     }
@@ -1899,13 +1901,30 @@ export default function RequisitionsManagement() {
     }
   };
 
-  const handleSaveRequisition = async (requisitionData: Omit<Requisition, 'id' | 'lineNumber' | 'createdAt' | 'updatedAt'>) => {
+  const handleSaveRequisition = async (formData: Omit<Requisition, 'id' | 'lineNumber' | 'createdAt' | 'updatedAt'>) => {
     setIsLoading(true);
     try {
       if (editingRequisition) {
-        await requisitionsApi.updateRequisition(editingRequisition.id, requisitionData);
+        // Only send changed fields
+        const changedData: Partial<typeof formData> = {};
+        
+        if (formData.date !== editingRequisition.date) changedData.date = formData.date;
+        if (formData.requester !== editingRequisition.requester) changedData.requester = formData.requester;
+        if (formData.section !== editingRequisition.section) changedData.section = formData.section;
+        if (formData.required_for !== editingRequisition.required_for) changedData.required_for = formData.required_for;
+        if (formData.priority !== editingRequisition.priority) changedData.priority = formData.priority;
+        if (formData.status !== editingRequisition.status) changedData.status = formData.status;
+        if (formData.requisitionNumber !== editingRequisition.requisitionNumber) changedData.requisitionNumber = formData.requisitionNumber;
+        if (formData.notes !== editingRequisition.notes) changedData.notes = formData.notes;
+        
+        // Compare items (simple JSON stringify for demo – for production use a deep equality check)
+        if (JSON.stringify(formData.items) !== JSON.stringify(editingRequisition.items)) {
+          changedData.items = formData.items;
+        }
+        
+        await requisitionsApi.updateRequisition(editingRequisition.id, changedData);
       } else {
-        await requisitionsApi.createRequisition(requisitionData);
+        await requisitionsApi.createRequisition(formData);
       }
       await fetchRequisitions();
       await fetchStats();
