@@ -334,7 +334,7 @@ function transformRequisitionFromBackend(data: any): Requisition {
 // ============= Helper Functions =============
 interface PriorityStyle {
   badge: string;
-  icon: React.ReactNode;  // Changed from JSX.Element to React.ReactNode
+  icon: React.ReactNode;
   color: string;
 }
 
@@ -1310,12 +1310,9 @@ const EditRequisitionModal: React.FC<EditRequisitionModalProps> = ({
     newItems[index] = { ...newItems[index], [field]: value };
     setFormData(prev => ({ ...prev, items: newItems }));
     
+    // Clear error for this field if it exists
     if (errors[`item_${index}_${field}`]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`item_${index}_${field}`];
-        return newErrors;
-      });
+      setErrors(prev => ({ ...prev, [`item_${index}_${field}`]: '' }));
     }
   };
 
@@ -1392,7 +1389,7 @@ const EditRequisitionModal: React.FC<EditRequisitionModalProps> = ({
                       value={formData.requisitionNumber}
                       onChange={(e) => {
                         setFormData(prev => ({ ...prev, requisitionNumber: e.target.value }));
-                        if (errors.requisitionNumber) setErrors(prev => ({ ...prev, requisitionNumber: undefined }));
+                        if (errors.requisitionNumber) setErrors(prev => ({ ...prev, requisitionNumber: '' }));
                       }}
                       placeholder="Enter requisition number (e.g., REQ-2024-001)"
                       className={errors.requisitionNumber ? 'border-red-500' : ''}
@@ -1418,7 +1415,7 @@ const EditRequisitionModal: React.FC<EditRequisitionModalProps> = ({
                       value={formData.date}
                       onChange={(e) => {
                         setFormData(prev => ({ ...prev, date: e.target.value }));
-                        if (errors.date) setErrors(prev => ({ ...prev, date: undefined }));
+                        if (errors.date) setErrors(prev => ({ ...prev, date: '' }));
                       }}
                       className={errors.date ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
@@ -1441,7 +1438,7 @@ const EditRequisitionModal: React.FC<EditRequisitionModalProps> = ({
                       value={formData.requester}
                       onChange={(e) => {
                         setFormData(prev => ({ ...prev, requester: e.target.value }));
-                        if (errors.requester) setErrors(prev => ({ ...prev, requester: undefined }));
+                        if (errors.requester) setErrors(prev => ({ ...prev, requester: '' }));
                       }}
                       placeholder="Enter requester name"
                       className={errors.requester ? 'border-red-500' : ''}
