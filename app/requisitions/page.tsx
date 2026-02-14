@@ -334,7 +334,7 @@ function transformRequisitionFromBackend(data: any): Requisition {
 // ============= Helper Functions =============
 interface PriorityStyle {
   badge: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;  // Changed from JSX.Element to React.ReactNode
   color: string;
 }
 
