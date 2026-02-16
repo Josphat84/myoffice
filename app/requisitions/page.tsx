@@ -15,7 +15,8 @@ import {
   HelpCircle, Briefcase, Users, Zap,
   Wrench, LayoutGrid, Table as TableIcon,
   CalendarRange, HardDrive, ChevronUp,
-  ChevronRight, ChevronLeft, Database
+  ChevronRight, ChevronLeft, Database,
+  Maximize2, Minimize2
 } from 'lucide-react';
 
 import {
@@ -125,7 +126,7 @@ export interface Filters {
   search?: string;
 }
 
-export type ViewMode = 'grid' | 'table';
+export type ViewMode = 'grid' | 'list';
 
 // ============= Constants (match SQL check constraints) =============
 const STATUSES: Array<Requisition['status']> = ["Draft", "Pending", "Approved", "Rejected", "Processing", "Completed"];
@@ -446,6 +447,8 @@ interface RequisitionTableRowProps {
   onView: (requisition: Requisition) => void;
   onEdit: (requisition: Requisition) => void;
   onDelete: (id: string) => Promise<void>;
+  expanded: boolean;
+  onExpandChange: (id: string, expanded: boolean) => void;
 }
 
 interface EditRequisitionModalProps {
@@ -914,6 +917,7 @@ const RequisitionCard: React.FC<RequisitionCardProps> = ({ requisition, onView, 
     return sum + (item.costPerUnit * item.quantity);
   }, 0) || 0;
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showFullDetails, setShowFullDetails] = useState(false);
 
   const sectionIcon = requisition.section === 'Electrical' ? 
     <Zap className="h-3 w-3" /> : 
@@ -1008,8 +1012,8 @@ const RequisitionCard: React.FC<RequisitionCardProps> = ({ requisition, onView, 
         )}
       </CardContent>
       
-      <CardFooter className="pt-2 border-t">
-        <div className="flex w-full items-center justify-between">
+      <CardFooter className="pt-2 border-t flex flex-col">
+        <div className="flex w-full items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Badge className={statusStyle}>
               {requisition.status}
@@ -1061,30 +1065,90 @@ const RequisitionCard: React.FC<RequisitionCardProps> = ({ requisition, onView, 
             </DropdownMenu>
           </div>
         </div>
+
+        {/* Expandable full details button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full mt-1 gap-2 text-xs"
+          onClick={() => setShowFullDetails(!showFullDetails)}
+        >
+          {showFullDetails ? (
+            <>
+              <ChevronUp className="h-3 w-3" />
+              Hide Details
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3 w-3" />
+              Show Details
+            </>
+          )}
+        </Button>
+
+        {showFullDetails && (
+          <div className="mt-4 pt-4 border-t space-y-4">
+            {/* Full description / required_for */}
+            {requisition.required_for && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Required For</p>
+                <p className="text-sm whitespace-pre-wrap break-words">{requisition.required_for}</p>
+              </div>
+            )}
+            {/* All items (full list) */}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">All Items ({requisition.items.length})</p>
+              <div className="space-y-2">
+                {requisition.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-start py-1 text-sm border-b border-dashed last:border-0">
+                    <div className="flex-1">
+                      <span className="font-medium">{idx + 1}. {item.description}</span>
+                      {item.reason && <p className="text-xs text-muted-foreground mt-0.5">{item.reason}</p>}
+                    </div>
+                    <div className="text-right">
+                      <span className="font-medium">{item.quantity} × {formatCurrency(item.costPerUnit)}</span>
+                      <p className="text-xs text-muted-foreground">= {formatCurrency(item.costPerUnit * item.quantity)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Notes */}
+            {requisition.notes && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Notes</p>
+                <p className="text-sm whitespace-pre-wrap break-words">{requisition.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </CardFooter>
     </Card>
   );
 };
 
-// ============= Requisition Table Row Component (Table View) =============
+// ============= Requisition Table Row Component (List View) =============
 const RequisitionTableRow: React.FC<RequisitionTableRowProps> = ({ 
   requisition, 
   index, 
   onView, 
   onEdit, 
-  onDelete 
+  onDelete,
+  expanded,
+  onExpandChange
 }) => {
   const priorityStyle = getPriorityStyle(requisition.priority);
   const statusStyle = getStatusStyle(requisition.status);
   const totalCost = requisition.items?.reduce((sum, item) => 
     sum + (item.costPerUnit * item.quantity), 0) || 0;
-  const [isExpanded, setIsExpanded] = useState(false);
   
   const sectionIcon = requisition.section === 'Electrical' ? 
     <Zap className="h-3 w-3" /> : 
     <Wrench className="h-3 w-3" />;
 
-  const hasMultipleItems = requisition.items?.length > 1;
+  const toggleExpand = () => {
+    onExpandChange(requisition.id, !expanded);
+  };
 
   return (
     <>
@@ -1122,21 +1186,20 @@ const RequisitionTableRow: React.FC<RequisitionTableRowProps> = ({
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
-            {hasMultipleItems && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="h-8 w-8 p-0"
-                title={isExpanded ? "Hide items" : "Show all items"}
-              >
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            )}
+            {/* Always show expand/collapse button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleExpand}
+              className="h-8 w-8 p-0"
+              title={expanded ? "Hide items" : "Show all items"}
+            >
+              {expanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -1166,7 +1229,7 @@ const RequisitionTableRow: React.FC<RequisitionTableRowProps> = ({
           </div>
         </TableCell>
       </TableRow>
-      {isExpanded && requisition.items.length > 1 && (
+      {expanded && (
         <TableRow className="bg-muted/30">
           <TableCell colSpan={8} className="p-0">
             <div className="px-6 py-4">
@@ -1807,7 +1870,7 @@ export default function RequisitionsManagement() {
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition | null>(null);
   const [editingRequisition, setEditingRequisition] = useState<Requisition | null>(null);
   const [search, setSearch] = useState<string>('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list'); // Default to list view
   const [filters, setFilters] = useState<Filters>({
     status: 'all',
     priority: 'all',
@@ -1827,6 +1890,8 @@ export default function RequisitionsManagement() {
     electricalCount: 0,
     mechanicalCount: 0
   });
+  // State for expanded rows in list view
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // Test connection on mount
   useEffect(() => {
@@ -1996,6 +2061,26 @@ export default function RequisitionsManagement() {
 
   const uniqueRequesters = [...new Set(data.map(req => req.requester))];
 
+  // Handlers for expand/collapse all in list view
+  const handleExpandAll = () => {
+    const allExpanded: Record<string, boolean> = {};
+    data.forEach(req => {
+      allExpanded[req.id] = true;
+    });
+    setExpandedRows(allExpanded);
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedRows({});
+  };
+
+  const handleRowExpandChange = (id: string, expanded: boolean) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [id]: expanded
+    }));
+  };
+
   if (!isMounted) {
     return (
       <div className="container mx-auto py-6 space-y-6">
@@ -2097,23 +2182,42 @@ export default function RequisitionsManagement() {
             </div>
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-auto">
               <TabsList>
+                <TabsTrigger value="list" className="gap-2"><TableIcon className="h-4 w-4" /> List View</TabsTrigger>
                 <TabsTrigger value="grid" className="gap-2"><LayoutGrid className="h-4 w-4" /> Grid</TabsTrigger>
-                <TabsTrigger value="table" className="gap-2"><TableIcon className="h-4 w-4" /> Table</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
         </CardHeader>
+        
         <CardContent>
           <div className="space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search requisitions by number, requester, or item..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
-              {search && <Button variant="ghost" size="sm" className="absolute right-2 top-2 h-6 w-6 p-0" onClick={() => setSearch('')}><X className="h-4 w-4" /></Button>}
+              <Input
+                placeholder="Search requisitions by number, requester, or item..."
+                className="pl-10"
+                value={search}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              />
+              {search && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-2 h-6 w-6 p-0"
+                  onClick={() => setSearch('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs">Status</Label>
-                <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+                <Select
+                  value={filters.status}
+                  onValueChange={(value: string) => setFilters(prev => ({ ...prev, status: value }))}
+                >
                   <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
@@ -2121,9 +2225,13 @@ export default function RequisitionsManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              
               <div className="space-y-2">
                 <Label className="text-xs">Priority</Label>
-                <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+                <Select
+                  value={filters.priority}
+                  onValueChange={(value: string) => setFilters(prev => ({ ...prev, priority: value }))}
+                >
                   <SelectTrigger><SelectValue placeholder="All priorities" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Priorities</SelectItem>
@@ -2131,9 +2239,13 @@ export default function RequisitionsManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              
               <div className="space-y-2">
                 <Label className="text-xs">Section</Label>
-                <Select value={filters.section} onValueChange={(value) => setFilters(prev => ({ ...prev, section: value }))}>
+                <Select
+                  value={filters.section}
+                  onValueChange={(value: string) => setFilters(prev => ({ ...prev, section: value }))}
+                >
                   <SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Sections</SelectItem>
@@ -2141,6 +2253,7 @@ export default function RequisitionsManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              
               <div className="space-y-2">
                 <Label className="text-xs">Date Range</Label>
                 <Popover>
@@ -2151,13 +2264,22 @@ export default function RequisitionsManagement() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent mode="range" selected={{ from: filters.dateRange.from || undefined, to: filters.dateRange.to || undefined }} onSelect={(range) => setFilters(prev => ({ ...prev, dateRange: { from: range?.from || null, to: range?.to || null } }))} initialFocus />
+                    <CalendarComponent
+                      mode="range"
+                      selected={{ from: filters.dateRange.from || undefined, to: filters.dateRange.to || undefined }}
+                      onSelect={(range) => setFilters(prev => ({ ...prev, dateRange: { from: range?.from || null, to: range?.to || null } }))}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
+              
               <div className="space-y-2">
                 <Label className="text-xs">Requester</Label>
-                <Select value={filters.requester} onValueChange={(value) => setFilters(prev => ({ ...prev, requester: value }))}>
+                <Select
+                  value={filters.requester}
+                  onValueChange={(value: string) => setFilters(prev => ({ ...prev, requester: value }))}
+                >
                   <SelectTrigger><SelectValue placeholder="All requesters" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Requesters</SelectItem>
@@ -2166,14 +2288,44 @@ export default function RequisitionsManagement() {
                 </Select>
               </div>
             </div>
+            
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setFilters({ status: 'all', priority: 'all', section: 'all', dateRange: { from: null, to: null }, requester: 'all' }); setSearch(''); }} className="gap-2"><X className="h-4 w-4" /> Clear Filters</Button>
-              {filters.dateRange.from && <Button variant="outline" size="sm" onClick={clearDateRange} className="gap-2"><CalendarRange className="h-4 w-4" /> Clear Date Range</Button>}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFilters({
+                    status: 'all',
+                    priority: 'all',
+                    section: 'all',
+                    dateRange: { from: null, to: null },
+                    requester: 'all'
+                  });
+                  setSearch('');
+                }}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Clear Filters
+              </Button>
+              
+              {filters.dateRange.from && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearDateRange}
+                  className="gap-2"
+                >
+                  <CalendarRange className="h-4 w-4" />
+                  Clear Date Range
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Daily Total Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -2203,67 +2355,146 @@ export default function RequisitionsManagement() {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
               <CardTitle>Requisitions ({data.length})</CardTitle>
-              <CardDescription>{isLoading ? 'Loading...' : `Showing ${data.length} requisition${data.length !== 1 ? 's' : ''}`}</CardDescription>
+              <CardDescription>
+                {isLoading ? 'Loading...' : `Showing ${data.length} requisition${data.length !== 1 ? 's' : ''}`}
+              </CardDescription>
             </div>
-            <div className="text-sm text-muted-foreground">Total Value: {formatCurrency(stats.totalCost)}</div>
+            
+            <div className="text-sm text-muted-foreground">
+              Total Value: {formatCurrency(stats.totalCost)}
+            </div>
           </div>
+          {/* Expand/Collapse All buttons for list view */}
+          {viewMode === 'list' && data.length > 0 && (
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" size="sm" onClick={handleExpandAll} className="gap-2">
+                <Maximize2 className="h-4 w-4" />
+                Expand All
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCollapseAll} className="gap-2">
+                <Minimize2 className="h-4 w-4" />
+                Collapse All
+              </Button>
+            </div>
+          )}
         </CardHeader>
+        
         <CardContent>
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mb-4" /><p className="text-muted-foreground">Loading requisitions...</p></div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mb-4" />
+              <p className="text-muted-foreground">Loading requisitions...</p>
+            </div>
           ) : data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No requisitions found</h3>
               <p className="text-muted-foreground text-center mb-4">
-                {search || Object.values(filters).some(f => typeof f === 'object' && f !== null ? f.from !== null || f.to !== null : f !== 'all')
+                {search || Object.values(filters).some(f => {
+                  if (typeof f === 'object' && f !== null) {
+                    return f.from !== null || f.to !== null;
+                  }
+                  return f !== 'all';
+                }) 
                   ? 'Try adjusting your search or filters'
                   : 'Get started by creating your first requisition'}
               </p>
-              <Button onClick={() => { setEditingRequisition(null); setIsModalOpen(true); }}><Plus className="h-4 w-4 mr-2" /> Create Your First Requisition</Button>
+              <Button onClick={() => { setEditingRequisition(null); setIsModalOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Requisition
+              </Button>
             </div>
           ) : (
-            viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.map(requisition => <RequisitionCard key={requisition.id} requisition={requisition} onView={handleViewDetails} onEdit={handleEditRequisition} onDelete={handleDeleteRequisition} />)}
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">#</TableHead>
-                      <TableHead>Requisition #</TableHead>
-                      <TableHead>Section</TableHead>
-                      <TableHead>Requester</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="w-32">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map(requisition => <RequisitionTableRow key={requisition.id} requisition={requisition} index={requisition.lineNumber} onView={handleViewDetails} onEdit={handleEditRequisition} onDelete={handleDeleteRequisition} />)}
-                  </TableBody>
-                </Table>
-              </div>
-            )
+            <>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {data.map(requisition => (
+                    <RequisitionCard
+                      key={requisition.id}
+                      requisition={requisition}
+                      onView={handleViewDetails}
+                      onEdit={handleEditRequisition}
+                      onDelete={handleDeleteRequisition}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16">#</TableHead>
+                        <TableHead>Requisition #</TableHead>
+                        <TableHead>Section</TableHead>
+                        <TableHead>Requester</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="w-32">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.map((requisition) => (
+                        <RequisitionTableRow
+                          key={requisition.id}
+                          requisition={requisition}
+                          index={requisition.lineNumber}
+                          onView={handleViewDetails}
+                          onEdit={handleEditRequisition}
+                          onDelete={handleDeleteRequisition}
+                          expanded={expandedRows[requisition.id] || false}
+                          onExpandChange={handleRowExpandChange}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
+        
         {data.length > 0 && !isLoading && (
           <CardFooter className="flex justify-between border-t pt-6">
             <div className="text-sm text-muted-foreground">
-              Showing {data.length} requisition{data.length !== 1 ? 's' : ''} • Total Items: {data.reduce((sum, req) => sum + req.items.length, 0)} • Total Units: {data.reduce((sum, req) => sum + req.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)}
+              Showing {data.length} requisition{data.length !== 1 ? 's' : ''} • 
+              Total Items: {data.reduce((sum, req) => sum + req.items.length, 0)} • 
+              Total Units: {data.reduce((sum, req) => sum + req.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)}
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-2" onClick={handleExportToCSV}><Download className="h-4 w-4" /> Export to CSV</Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleExportToCSV}>
+                <Download className="h-4 w-4" />
+                Export to CSV
+              </Button>
             </div>
           </CardFooter>
         )}
       </Card>
 
-      <EditRequisitionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingRequisition(null); }} requisition={editingRequisition} onSave={handleSaveRequisition} isLoading={isLoading} />
-      <RequisitionDetailsModal isOpen={isDetailsModalOpen} onClose={() => { setIsDetailsModalOpen(false); setSelectedRequisition(null); }} requisition={selectedRequisition} onDelete={handleDeleteRequisition} onEdit={(requisition) => { setIsDetailsModalOpen(false); handleEditRequisition(requisition); }} />
+      <EditRequisitionModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingRequisition(null);
+        }}
+        requisition={editingRequisition}
+        onSave={handleSaveRequisition}
+        isLoading={isLoading}
+      />
+      
+      <RequisitionDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedRequisition(null);
+        }}
+        requisition={selectedRequisition}
+        onDelete={handleDeleteRequisition}
+        onEdit={(requisition) => {
+          setIsDetailsModalOpen(false);
+          handleEditRequisition(requisition);
+        }}
+      />
     </div>
   );
 }

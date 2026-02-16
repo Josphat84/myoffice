@@ -1,77 +1,114 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { 
+import {
   Calendar, Plus, Search, RefreshCw, Filter, ChevronDown, ChevronUp,
   CheckCircle2, XCircle, User, FileText, Eye, Loader2,
-  Clock, AlertCircle, Send, Phone, Trash2, MoreVertical,
-  Download, Edit, X, Clock as ClockIcon, DollarSign, ArrowUpRight,
+  Clock, AlertCircle, Send, Trash2, MoreVertical,
+  Download, Edit, X, ArrowUpRight,
   TrendingUp, BarChart3, Users, Briefcase, Zap, FileDown,
   List, LayoutGrid, Home as HomeIcon, Database, Layers, Server,
-  Link as LinkIcon, Calculator
+  Link as LinkIcon
 } from "lucide-react";
 import Link from "next/link";
+
+// shadcn/ui imports
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 // API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const OVERTIME_API = `${API_BASE}/api/overtime`;
 
-// Enhanced Overtime Types with elegant styling
+// Overtime Types (no rate info in UI)
 const OVERTIME_TYPES = {
-  regular: { 
-    name: 'Regular Overtime', 
-    shortName: 'Regular', 
-    color: '#2563eb', 
-    rate: 1.5, 
-    icon: ClockIcon,
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-    borderColor: 'border-blue-200',
-    description: 'Standard overtime hours'
+  regular: {
+    name: 'Regular Overtime',
+    shortName: 'Regular',
+    icon: Clock,
+    variant: 'default',
   },
-  weekend: { 
-    name: 'Weekend Overtime', 
-    shortName: 'Weekend', 
-    color: '#dc2626', 
-    rate: 2.0, 
+  weekend: {
+    name: 'Weekend Overtime',
+    shortName: 'Weekend',
     icon: Calendar,
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700',
-    borderColor: 'border-red-200',
-    description: 'Weekend and holiday work'
+    variant: 'secondary',
   },
-  emergency: { 
-    name: 'Emergency Overtime', 
-    shortName: 'Emergency', 
-    color: '#d97706', 
-    rate: 2.5, 
+  emergency: {
+    name: 'Emergency Overtime',
+    shortName: 'Emergency',
     icon: AlertCircle,
-    bgColor: 'bg-amber-50',
-    textColor: 'text-amber-700',
-    borderColor: 'border-amber-200',
-    description: 'Urgent and critical work'
+    variant: 'destructive',
   },
-  project: { 
-    name: 'Project Overtime', 
-    shortName: 'Project', 
-    color: '#7c3aed', 
-    rate: 1.75, 
+  project: {
+    name: 'Project Overtime',
+    shortName: 'Project',
     icon: FileText,
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-700',
-    borderColor: 'border-purple-200',
-    description: 'Project-based overtime'
-  }
+    variant: 'outline',
+  },
 };
 
-// Enhanced Utility Functions
+// Status configurations
+const STATUS_CONFIG = {
+  pending: { label: 'Pending', variant: 'secondary', icon: Clock },
+  approved: { label: 'Approved', variant: 'success', icon: CheckCircle2 },
+  rejected: { label: 'Rejected', variant: 'destructive', icon: XCircle },
+  paid: { label: 'Paid', variant: 'default', icon: TrendingUp },
+};
+
+// Utility Functions
 const formatDate = (dateString) => {
   if (!dateString) return 'Not specified';
   try {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   } catch {
     return dateString;
@@ -81,10 +118,10 @@ const formatDate = (dateString) => {
 const formatTime = (timeString) => {
   if (!timeString) return '';
   try {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: true 
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
     });
   } catch {
     return timeString;
@@ -104,1356 +141,925 @@ const calculateHours = (startTime, endTime, date) => {
   }
 };
 
-const calculateEarnings = (hours, rate, hourlyRate = 25) => {
-  return hours * rate * hourlyRate;
-};
-
-// API Functions
+// API Functions (replace with real ones)
 const fetchOvertime = async (filters = {}) => {
-  try {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== 'all') params.append(key, value);
-    });
-
-    const url = params.toString() ? `${OVERTIME_API}?${params.toString()}` : OVERTIME_API;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    return await response.json();
-  } catch (error) {
-    console.error('❌ Error fetching overtime:', error);
-    throw error;
-  }
-};
-
-const createOvertime = async (overtimeData) => {
-  try {
-    const response = await fetch(OVERTIME_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(overtimeData),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to create: ${response.status} - ${errorText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('❌ Error creating overtime:', error);
-    throw error;
-  }
-};
-
-const updateOvertime = async (overtimeId, overtimeData) => {
-  try {
-    const response = await fetch(`${OVERTIME_API}/${overtimeId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(overtimeData),
-    });
-
-    if (!response.ok) throw new Error(`Failed to update: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('❌ Error updating overtime:', error);
-    throw error;
-  }
-};
-
-const updateOvertimeStatus = async (overtimeId, status) => {
-  try {
-    const response = await fetch(`${OVERTIME_API}/${overtimeId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-
-    if (!response.ok) throw new Error(`Failed to update status: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('❌ Error updating overtime status:', error);
-    throw error;
-  }
-};
-
-const deleteOvertime = async (overtimeId) => {
-  try {
-    const response = await fetch(`${OVERTIME_API}/${overtimeId}`, { 
-      method: 'DELETE' 
-    });
-    
-    if (!response.ok) throw new Error(`Failed to delete: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('❌ Error deleting overtime:', error);
-    throw error;
-  }
-};
-
-// Enhanced Status Badge Component
-const StatusBadge = ({ status }) => {
-  const config = {
-    pending: { 
-      color: 'bg-amber-50 text-amber-700 border-amber-200', 
-      icon: Clock, 
-      label: 'Under Review' 
-    },
-    approved: { 
-      color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      icon: CheckCircle2, 
-      label: 'Approved' 
-    },
-    rejected: { 
-      color: 'bg-rose-50 text-rose-700 border-rose-200',
-      icon: XCircle, 
-      label: 'Not Approved' 
-    },
-    paid: { 
-      color: 'bg-green-50 text-green-700 border-green-200',
-      icon: DollarSign, 
-      label: 'Paid' 
-    }
-  }[status] || config.pending;
-
-  const Icon = config.icon;
-
-  return (
-    <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${config.color} transition-colors`}>
-      <Icon className="h-3.5 w-3.5" />
-      <span className="text-sm font-medium tracking-wide">{config.label}</span>
-    </span>
-  );
-};
-
-// Elegant Stat Card Component (Matches home page style)
-const StatCard = ({ title, value, icon, onClick, subtitle }) => {
-  const Icon = icon;
+  // Build query string from filters
+  const params = new URLSearchParams();
+  if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+  if (filters.overtime_type && filters.overtime_type !== 'all') params.append('overtime_type', filters.overtime_type);
   
-  return (
-    <div 
-      className="group bg-white rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:shadow-lg hover:border-gray-300 cursor-pointer hover:scale-[1.02]"
-      onClick={onClick}
-    >
-      <div className="flex items-start justify-between">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-50 rounded-xl border border-gray-200 group-hover:scale-110 transition-transform">
-              <Icon className="h-5 w-5 text-gray-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-600 tracking-wide">{title}</span>
-          </div>
-          <div className="space-y-1">
-            <p className="text-3xl font-bold text-gray-900 tracking-tight">{value}</p>
-            {subtitle && <p className="text-sm text-gray-500 font-medium">{subtitle}</p>}
-          </div>
-        </div>
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <ArrowUpRight className="h-5 w-5 text-gray-400" />
-        </div>
-      </div>
-    </div>
-  );
+  const url = params.toString() ? `${OVERTIME_API}?${params.toString()}` : OVERTIME_API;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch overtime');
+  return res.json();
 };
 
-// Enhanced Overtime Card Component
-const OvertimeCard = ({ overtime, onView, onEdit, onDelete, onDownload }) => {
-  const overtimeType = OVERTIME_TYPES[overtime.overtime_type] || OVERTIME_TYPES.regular;
-  const Icon = overtimeType.icon;
-  const [showActions, setShowActions] = useState(false);
-  
-  const calculatedHours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
-  const earnings = calculateEarnings(calculatedHours, overtimeType.rate, overtime.hourly_rate);
-
-  return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 transition-all duration-300 hover:shadow-xl hover:border-gray-300 group hover:scale-[1.02]">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${overtimeType.bgColor} border-2 ${overtimeType.borderColor} group-hover:scale-110 transition-transform`}>
-            <Icon className={`h-4 w-4 ${overtimeType.textColor}`} />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg tracking-wide">{overtime.employee_name}</h3>
-            <p className="text-sm text-gray-500 font-medium">{overtime.position} • {overtime.employee_id}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <StatusBadge status={overtime.status} />
-          <div className="relative">
-            <button 
-              onClick={() => setShowActions(!showActions)}
-              className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-400 hover:text-gray-600 border border-gray-200"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </button>
-            {showActions && (
-              <div className="absolute right-0 top-10 bg-white border-2 border-gray-200 rounded-xl shadow-xl z-10 min-w-[180px] overflow-hidden">
-                <button 
-                  onClick={() => { onView(overtime); setShowActions(false); }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-100 font-medium"
-                >
-                  <Eye className="h-4 w-4" /> View Details
-                </button>
-                <button 
-                  onClick={() => { onEdit(overtime); setShowActions(false); }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-100 font-medium"
-                >
-                  <Edit className="h-4 w-4" /> Edit Request
-                </button>
-                <button 
-                  onClick={() => { onDownload(overtime); setShowActions(false); }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-100 font-medium"
-                >
-                  <Download className="h-4 w-4" /> Download
-                </button>
-                <div className="border-t border-gray-200">
-                  <button 
-                    onClick={() => { onDelete(overtime.id); setShowActions(false); }}
-                    className="w-full px-4 py-3 text-left text-sm text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors font-medium"
-                  >
-                    <Trash2 className="h-4 w-4" /> Delete
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
-          <Calendar className="h-4 w-4" />
-          <span>{formatDate(overtime.date)}</span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Time</span>
-          <span className="font-bold text-gray-900">
-            {formatTime(overtime.start_time)} - {formatTime(overtime.end_time)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Hours</span>
-          <span className="font-bold text-gray-900">{calculatedHours}h</span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Earnings</span>
-          <span className="font-bold text-green-600">${earnings.toFixed(2)}</span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 font-semibold">Rate</span>
-          <span className="font-medium">${overtime.hourly_rate || 25}/hour × {overtimeType.rate}x</span>
-        </div>
-      </div>
-
-      {overtime.reason && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed font-medium">{overtime.reason}</p>
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        <button 
-          onClick={() => onView(overtime)}
-          className="flex-1 py-2.5 bg-gray-50 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2 group/btn border-2 border-gray-200 hover:border-gray-300"
-        >
-          <Eye className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
-          View Details
-        </button>
-        <button 
-          onClick={() => onDownload(overtime)}
-          className="px-3 py-2.5 bg-blue-50 text-blue-600 rounded-xl font-semibold hover:bg-blue-100 transition-all duration-200 flex items-center justify-center border-2 border-blue-200 hover:border-blue-300"
-          title="Download Report"
-        >
-          <Download className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Enhanced Overtime Application Form
-const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
-  const [formData, setFormData] = useState(editData || {
-    employee_name: '', employee_id: '', position: '', overtime_type: 'regular',
-    date: new Date().toISOString().split('T')[0], start_time: '18:00', end_time: '20:00',
-    reason: '', contact_number: '', emergency_contact: '', hourly_rate: 25
+const createOvertime = async (data) => {
+  const res = await fetch(OVERTIME_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
   });
+  if (!res.ok) throw new Error('Failed to create overtime');
+  return res.json();
+};
+
+const updateOvertime = async (id, data) => {
+  const res = await fetch(`${OVERTIME_API}/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update overtime');
+  return res.json();
+};
+
+const updateOvertimeStatus = async (id, status) => {
+  return updateOvertime(id, { status });
+};
+
+const deleteOvertime = async (id) => {
+  const res = await fetch(`${OVERTIME_API}/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete overtime');
+  return res.json();
+};
+
+// ============= Export to Excel (CSV) =============
+const exportToExcel = (data, filename = `overtime-${new Date().toISOString().split('T')[0]}.csv`) => {
+  if (!data || data.length === 0) {
+    toast.warning('No data to export');
+    return;
+  }
+
+  // Define CSV headers (matching SQL columns)
+  const headers = [
+    'ID',
+    'Employee Name',
+    'Employee ID',
+    'Position',
+    'Overtime Type',
+    'Date',
+    'Start Time',
+    'End Time',
+    'Hours',
+    'Reason',
+    'Contact Number',
+    'Emergency Contact',
+    'Status',
+    'Applied Date',
+    'Notes',
+    'Hourly Rate',
+    'Created At',
+  ];
+
+  // Prepare rows
+  const rows = data.map((item) => {
+    const hours = calculateHours(item.start_time, item.end_time, item.date);
+    return [
+      item.id,
+      item.employee_name,
+      item.employee_id,
+      item.position,
+      item.overtime_type,
+      item.date,
+      item.start_time,
+      item.end_time,
+      hours.toFixed(2),
+      item.reason,
+      item.contact_number,
+      item.emergency_contact || '',
+      item.status,
+      item.applied_date || '',
+      item.notes || '',
+      item.hourly_rate || '',
+      item.created_at || '',
+    ];
+  });
+
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) =>
+      row
+        .map((cell) => {
+          // Escape commas and quotes
+          if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
+            return `"${cell.replace(/"/g, '""')}"`;
+          }
+          return cell;
+        })
+        .join(',')
+    ),
+  ].join('\n');
+
+  // Create download link
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // UTF-8 BOM for Excel
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+  toast.success(`Exported ${data.length} records`);
+};
+
+// ============= Component Sub‑components =============
+
+// Status Badge using shadcn Badge
+const StatusBadge = ({ status }) => {
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const Icon = config.icon;
+  return (
+    <Badge variant={config.variant} className="gap-1 px-2 py-1">
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </Badge>
+  );
+};
+
+// Type Badge using shadcn Badge
+const TypeBadge = ({ type }) => {
+  const config = OVERTIME_TYPES[type] || OVERTIME_TYPES.regular;
+  const Icon = config.icon;
+  return (
+    <Badge variant={config.variant} className="gap-1 px-2 py-1">
+      <Icon className="h-3 w-3" />
+      {config.shortName}
+    </Badge>
+  );
+};
+
+// Stat Card using shadcn Card
+const StatCard = ({ title, value, icon: Icon, onClick }) => (
+  <Card
+    className={`cursor-pointer transition-all hover:shadow-lg ${onClick ? '' : 'cursor-default'}`}
+    onClick={onClick}
+  >
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-3xl font-bold tracking-tight">{value}</p>
+        </div>
+        <div className="rounded-full bg-primary/10 p-3 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// Overtime Card (Grid View) – earnings/rate hidden
+const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
+  const typeConfig = OVERTIME_TYPES[overtime.overtime_type];
+  const Icon = typeConfig.icon;
+  const hours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
+
+  return (
+    <Card className="group relative hover:shadow-lg transition-all">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-2 text-primary">
+              <Icon className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold">{overtime.employee_name}</CardTitle>
+              <CardDescription className="text-xs">
+                {overtime.position} • {overtime.employee_id}
+              </CardDescription>
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onView(overtime)}>
+                <Eye className="h-4 w-4 mr-2" /> View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(overtime)}>
+                <Edit className="h-4 w-4 mr-2" /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDelete(overtime.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Date</span>
+            <span className="font-medium">{formatDate(overtime.date)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Time</span>
+            <span className="font-medium">
+              {formatTime(overtime.start_time)} – {formatTime(overtime.end_time)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Hours</span>
+            <span className="font-medium">{hours} h</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Type</span>
+            <TypeBadge type={overtime.overtime_type} />
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Status</span>
+            <StatusBadge status={overtime.status} />
+          </div>
+        </div>
+        {overtime.reason && (
+          <div className="mt-3 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground line-clamp-2">
+            {overtime.reason}
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="pt-2">
+        <Button variant="outline" size="sm" className="w-full" onClick={() => onView(overtime)}>
+          <Eye className="h-3.5 w-3.5 mr-2" /> View Details
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+// Overtime Application Form (shadcn dialog) – earnings/rate fields present but hidden
+const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
+  const [formData, setFormData] = useState(
+    editData || {
+      employee_name: '',
+      employee_id: '',
+      position: '',
+      overtime_type: 'regular',
+      date: new Date().toISOString().split('T')[0],
+      start_time: '18:00',
+      end_time: '20:00',
+      reason: '',
+      contact_number: '',
+      emergency_contact: '',
+      hourly_rate: 25, // kept for DB
+    }
+  );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-
     try {
-      if (!formData.employee_name || !formData.employee_id || !formData.position || 
-          !formData.date || !formData.start_time || !formData.end_time || !formData.reason || !formData.contact_number) {
-        throw new Error('Please fill in all required fields');
-      }
-
       if (editData) {
         await onUpdate(editData.id, formData);
+        toast.success('Overtime application updated');
       } else {
         await createOvertime(formData);
+        toast.success('Overtime application submitted');
       }
-      
-      onSuccess(editData ? 'Overtime application updated successfully!' : 'Overtime application submitted successfully!');
+      onSuccess();
       onClose();
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculatedHours = calculateHours(formData.start_time, formData.end_time, formData.date);
-  const selectedOvertimeType = OVERTIME_TYPES[formData.overtime_type];
-  const earnings = calculateEarnings(calculatedHours, selectedOvertimeType.rate, formData.hourly_rate);
+  const hours = calculateHours(formData.start_time, formData.end_time, formData.date);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-gray-200">
-        <div className="p-6 border-b-2 border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 tracking-wide">
-              {editData ? 'Edit Overtime Application' : 'New Overtime Request'}
-            </h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-50 rounded-lg transition-colors border-2 border-gray-200">
-              <X className="h-5 w-5 text-gray-500" />
-            </button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-              <div>
-                <p className="text-red-800 font-bold tracking-wide">Error</p>
-                <p className="text-red-700 text-sm font-semibold">{error}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { label: 'Full Name', field: 'employee_name', type: 'text', placeholder: 'Enter your full name', required: true },
-              { label: 'Employee ID', field: 'employee_id', type: 'text', placeholder: 'e.g., EMP001', required: true },
-              { label: 'Position', field: 'position', type: 'text', placeholder: 'e.g., Senior Technician', required: true },
-              { label: 'Contact Number', field: 'contact_number', type: 'tel', placeholder: '+263 XXX XXX XXX', required: true }
-            ].map(({ label, field, type, placeholder, required }) => (
-              <div key={field} className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                  {label} {required && <span className="text-red-500">*</span>}
-                </label>
-                <input 
-                  type={type} 
-                  required={required}
-                  value={formData[field]} 
-                  onChange={(e) => handleChange(field, e.target.value)} 
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
-                  placeholder={placeholder} 
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{editData ? 'Edit' : 'New'} Overtime Request</DialogTitle>
+          <DialogDescription>
+            Fill in the details below. All fields marked * are required.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Employee Name */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                Overtime Type <span className="text-red-500">*</span>
-              </label>
-              <select 
-                required 
-                value={formData.overtime_type} 
-                onChange={(e) => handleChange('overtime_type', e.target.value)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
+              <label className="text-sm font-medium">Full Name *</label>
+              <Input
+                required
+                value={formData.employee_name}
+                onChange={(e) => handleChange('employee_name', e.target.value)}
+                placeholder="e.g., John Smith"
+              />
+            </div>
+            {/* Employee ID */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Employee ID *</label>
+              <Input
+                required
+                value={formData.employee_id}
+                onChange={(e) => handleChange('employee_id', e.target.value)}
+                placeholder="e.g., EMP001"
+              />
+            </div>
+            {/* Position */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Position *</label>
+              <Input
+                required
+                value={formData.position}
+                onChange={(e) => handleChange('position', e.target.value)}
+                placeholder="e.g., Technician"
+              />
+            </div>
+            {/* Contact Number */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Contact Number *</label>
+              <Input
+                required
+                value={formData.contact_number}
+                onChange={(e) => handleChange('contact_number', e.target.value)}
+                placeholder="+1 234 567 890"
+              />
+            </div>
+            {/* Overtime Type */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Overtime Type *</label>
+              <Select
+                value={formData.overtime_type}
+                onValueChange={(val) => handleChange('overtime_type', val)}
               >
-                {Object.entries(OVERTIME_TYPES).map(([key, type]) => 
-                  <option key={key} value={key}>{type.name} ({type.rate}x rate)</option>
-                )}
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(OVERTIME_TYPES).map(([key, type]) => (
+                    <SelectItem key={key} value={key}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${selectedOvertimeType.bgColor} border-2 ${selectedOvertimeType.borderColor}`}>
-                  {React.createElement(selectedOvertimeType.icon, { className: `h-5 w-5 ${selectedOvertimeType.textColor}` })}
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900">{selectedOvertimeType.name}</p>
-                  <p className="text-sm text-gray-600 font-medium">{selectedOvertimeType.description}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Date */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                Date <span className="text-red-500">*</span>
-              </label>
-              <input 
-                type="date" 
-                required 
-                value={formData.date} 
-                onChange={(e) => handleChange('date', e.target.value)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
+              <label className="text-sm font-medium">Date *</label>
+              <Input
+                type="date"
+                required
+                value={formData.date}
+                onChange={(e) => handleChange('date', e.target.value)}
               />
             </div>
+            {/* Start Time */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                Start Time <span className="text-red-500">*</span>
-              </label>
-              <input 
-                type="time" 
-                required 
-                value={formData.start_time} 
-                onChange={(e) => handleChange('start_time', e.target.value)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
+              <label className="text-sm font-medium">Start Time *</label>
+              <Input
+                type="time"
+                required
+                value={formData.start_time}
+                onChange={(e) => handleChange('start_time', e.target.value)}
               />
             </div>
+            {/* End Time */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-                End Time <span className="text-red-500">*</span>
-              </label>
-              <input 
-                type="time" 
-                required 
-                value={formData.end_time} 
-                onChange={(e) => handleChange('end_time', e.target.value)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
+              <label className="text-sm font-medium">End Time *</label>
+              <Input
+                type="time"
+                required
+                value={formData.end_time}
+                onChange={(e) => handleChange('end_time', e.target.value)}
               />
             </div>
           </div>
 
-          {calculatedHours > 0 && (
-            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">Total Hours</p>
-                  <p className="text-lg font-bold text-emerald-600">{calculatedHours}h</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">Rate Multiplier</p>
-                  <p className="text-lg font-bold text-emerald-600">{selectedOvertimeType.rate}x</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">Estimated Earnings</p>
-                  <p className="text-lg font-bold text-emerald-600">${earnings.toFixed(2)}</p>
-                </div>
-              </div>
+          {hours > 0 && (
+            <div className="rounded-lg bg-muted p-4 text-center">
+              <p className="text-sm text-muted-foreground">Total Hours</p>
+              <p className="text-2xl font-bold">{hours} h</p>
             </div>
           )}
 
+          {/* Reason */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 tracking-wide">
-              Reason for Overtime <span className="text-red-500">*</span>
-            </label>
-            <textarea 
-              required 
-              value={formData.reason} 
-              onChange={(e) => handleChange('reason', e.target.value)} 
-              rows={4} 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
-              placeholder="Please provide details about why overtime is required..." 
+            <label className="text-sm font-medium">Reason for Overtime *</label>
+            <Textarea
+              required
+              rows={4}
+              value={formData.reason}
+              onChange={(e) => handleChange('reason', e.target.value)}
+              placeholder="Please provide details about why overtime is required..."
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Hourly Rate ($)</label>
-              <input 
-                type="number" 
-                step="0.01"
-                min="0"
-                value={formData.hourly_rate} 
-                onChange={(e) => handleChange('hourly_rate', parseFloat(e.target.value) || 25)} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
-              />
-            </div>
+          {/* Emergency Contact (optional) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Emergency Contact (optional)</label>
+            <Input
+              value={formData.emergency_contact}
+              onChange={(e) => handleChange('emergency_contact', e.target.value)}
+              placeholder="Name and phone number"
+            />
           </div>
 
-          <div className="border-2 border-gray-200 rounded-xl overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <span className="font-bold text-gray-900">Additional Information</span>
-              {showAdvanced ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </button>
-            
-            {showAdvanced && (
-              <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Emergency Contact</label>
-                    <input 
-                      type="text" 
-                      value={formData.emergency_contact} 
-                      onChange={(e) => handleChange('emergency_contact', e.target.value)} 
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold" 
-                      placeholder="Name and phone number" 
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Hidden fields for DB compatibility */}
+          <input type="hidden" name="hourly_rate" value={formData.hourly_rate} />
 
-          <div className="flex gap-3 pt-6 border-t-2 border-gray-200">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold tracking-wide"
-            >
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold tracking-wide transition-all shadow-lg hover:shadow-xl"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {editData ? 'Update Request' : 'Submit Request'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editData ? 'Update' : 'Submit'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-// Main Component - Elegant Professional Design
-export default function OvertimeManagement() {
-  const [overtime, setOvertime] = useState([]);
-  const [selectedOvertime, setSelectedOvertime] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editData, setEditData] = useState(null);
-  const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [success, setSuccess] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState({ overtime: false });
-  const [viewMode, setViewMode] = useState('grid');
-
-  // Enhanced data fetching
-  const fetchAllData = async () => {
-    try {
-      setError(null);
-      setLoading({ overtime: true });
-      
-      const data = await fetchOvertime();
-      setOvertime(data);
-      setLoading({ overtime: false });
-    } catch (err) {
-      setError(err.message);
-      setLoading({ overtime: false });
-    }
-  };
-
-  // Enhanced form success handler
-  const handleFormSuccess = (message) => {
-    setSuccess(message);
-    fetchAllData();
-    setTimeout(() => setSuccess(null), 5000);
-  };
-
-  // Enhanced status update
-  const handleStatusUpdate = async (overtimeId, newStatus) => {
-    try {
-      await updateOvertimeStatus(overtimeId, newStatus);
-      setOvertime(prev => prev.map(ot => 
-        ot.id === overtimeId ? { ...ot, status: newStatus } : ot
-      ));
-      setSuccess(`Overtime status updated to ${newStatus}`);
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      setError(`Failed to update overtime status: ${error.message}`);
-    }
-  };
-
-  // Enhanced overtime update handler
-  const handleOvertimeUpdate = async (overtimeId, overtimeData) => {
-    try {
-      const updatedOvertime = await updateOvertime(overtimeId, overtimeData);
-      setOvertime(prev => prev.map(ot => 
-        ot.id === overtimeId ? { ...ot, ...updatedOvertime } : ot
-      ));
-      setEditData(null);
-      setSuccess('Overtime application updated successfully');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      setError(`Failed to update overtime: ${error.message}`);
-    }
-  };
-
-  // Enhanced delete handler with confirmation
-  const handleDeleteOvertime = async (overtimeId) => {
-    if (!confirm('Are you sure you want to delete this overtime application? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await deleteOvertime(overtimeId);
-      setOvertime(prev => prev.filter(ot => ot.id !== overtimeId));
-      setSelectedOvertime(null);
-      setSuccess('Overtime application deleted successfully');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      setError(`Failed to delete overtime: ${error.message}`);
-    }
-  };
-
-  // Enhanced filtering with better search
-  const filteredOvertime = useMemo(() => {
-    let filtered = overtime;
-    
-    // Status filter
-    if (filter !== 'all') {
-      filtered = filtered.filter(ot => ot.status === filter);
-    }
-    
-    // Enhanced search
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(ot => 
-        ot.employee_name?.toLowerCase().includes(searchLower) ||
-        ot.overtime_type?.toLowerCase().includes(searchLower) ||
-        ot.employee_id?.toLowerCase().includes(searchLower) ||
-        ot.position?.toLowerCase().includes(searchLower) ||
-        ot.contact_number?.includes(searchTerm)
-      );
-    }
-    
-    return filtered;
-  }, [overtime, filter, searchTerm]);
-
-  // Calculate real-time stats from actual data
-  const stats = useMemo(() => {
-    const total = overtime.length;
-    const pending = overtime.filter(ot => ot.status === 'pending').length;
-    const approved = overtime.filter(ot => ot.status === 'approved').length;
-    const rejected = overtime.filter(ot => ot.status === 'rejected').length;
-    
-    // Calculate total hours and earnings
-    const totalHours = overtime.reduce((sum, ot) => {
-      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-      return sum + hours;
-    }, 0);
-    
-    const totalEarnings = overtime.reduce((sum, ot) => {
-      const overtimeType = OVERTIME_TYPES[ot.overtime_type] || OVERTIME_TYPES.regular;
-      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-      const earnings = calculateEarnings(hours, overtimeType.rate, ot.hourly_rate);
-      return sum + earnings;
-    }, 0);
-
-    return { 
-      total, 
-      pending, 
-      approved, 
-      rejected, 
-      totalHours: Math.round(totalHours * 100) / 100,
-      totalEarnings: Math.round(totalEarnings * 100) / 100
-    };
-  }, [overtime]);
-
-  // Initial data fetch
-  useEffect(() => { 
-    fetchAllData();
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Clear Background Image */}
-      <div className="fixed inset-0 z-0">
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.1
-          }}
-        />
-      </div>
-
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
-            <div className="flex h-14 items-center justify-between">
-              {/* Logo and Navigation */}
-              <div className="flex items-center gap-4">
-                <Link href="/" className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded bg-indigo-600">
-                    <Database className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="font-bold text-gray-900">MyOffice</span>
-                </Link>
-                
-                <div className="hidden md:flex items-center gap-1">
-                  <Link href="/" className="text-sm text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1">
-                    <HomeIcon className="h-3 w-3" />
-                    Home
-                  </Link>
-                  <div className="text-sm text-gray-500">/</div>
-                  <span className="text-sm font-medium text-gray-900 px-2">Overtime Management</span>
-                </div>
-              </div>
-
-              {/* Right Side Actions */}
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => {
-                    // Export functionality
-                    alert('Export functionality would be implemented here');
-                  }}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold tracking-wide shadow-sm hover:shadow-md"
-                >
-                  <Download className="h-4 w-4" />
-                  Export Data
-                </button>
-                <button 
-                  onClick={fetchAllData}
-                  disabled={loading.overtime}
-                  className="p-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm hover:shadow-md"
-                >
-                  {loading.overtime ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                </button>
-                <button 
-                  onClick={() => setShowForm(true)}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-bold tracking-wide"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Overtime
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1">
-          {/* Hero Section */}
-          <section className="py-8">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-8">
-                <div className="flex justify-center items-center gap-2 mb-4">
-                  <ClockIcon className="h-8 w-8 text-indigo-600" />
-                  <Layers className="h-8 w-8 text-indigo-500" />
-                  <Server className="h-8 w-8 text-indigo-400" />
-                </div>
-                
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                  Professional Overtime Management
-                </h1>
-                <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-                  Track, approve, and calculate overtime earnings with our structured database system. 
-                  All overtime data is securely stored and easily accessible.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Enhanced Alerts */}
-          {error && (
-            <div className="container mx-auto px-4 mb-6">
-              <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-                <div className="flex-1">
-                  <p className="text-red-800 font-bold tracking-wide">Error</p>
-                  <p className="text-red-700 text-sm font-medium">{error}</p>
-                </div>
-                <button onClick={fetchAllData} className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors font-semibold">
-                  Retry
-                </button>
-              </div>
-            </div>
-          )}
-
-          {success && (
-            <div className="container mx-auto px-4 mb-6">
-              <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                <div className="flex-1">
-                  <p className="text-emerald-800 font-bold tracking-wide">Success</p>
-                  <p className="text-emerald-700 text-sm font-medium">{success}</p>
-                </div>
-                <button onClick={() => setSuccess(null)} className="p-1 hover:bg-emerald-200 rounded transition-colors">
-                  <X className="h-4 w-4 text-emerald-600" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Enhanced Statistics Overview */}
-          <section className="pb-8">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  Overtime Analytics
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Real-time overview of overtime requests and earnings
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard 
-                  title="Total Requests" 
-                  value={stats.total} 
-                  icon={FileText} 
-                  onClick={() => setFilter('all')}
-                />
-                <StatCard 
-                  title="Pending Review" 
-                  value={stats.pending} 
-                  icon={Clock} 
-                  onClick={() => setFilter('pending')}
-                />
-                <StatCard 
-                  title="Approved" 
-                  value={stats.approved} 
-                  icon={CheckCircle2} 
-                  onClick={() => setFilter('approved')}
-                />
-                <StatCard 
-                  title="Total Earnings" 
-                  value={`$${stats.totalEarnings}`} 
-                  icon={DollarSign} 
-                  subtitle={`${stats.totalHours} hours`}
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Enhanced Overtime Records Section */}
-          <section className="pb-12">
-            <div className="container mx-auto px-4">
-              <div className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden shadow-sm">
-                <div className="p-8 border-b-2 border-gray-200">
-                  <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold text-gray-900 tracking-wide">Overtime Requests</h2>
-                      <p className="text-sm text-gray-600 font-medium">Manage and review all overtime applications</p>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-                      {/* Enhanced View Mode Toggle */}
-                      <div className="flex bg-gray-100 rounded-lg p-1 border-2 border-gray-200">
-                        <button
-                          onClick={() => setViewMode('grid')}
-                          className={`px-4 py-2 rounded-md text-sm font-semibold transition-all tracking-wide flex items-center gap-2 ${
-                            viewMode === 'grid' 
-                              ? 'bg-white text-gray-900 shadow-sm border border-gray-300' 
-                              : 'text-gray-600 hover:text-gray-900'
-                          }`}
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                          Grid
-                        </button>
-                        <button
-                          onClick={() => setViewMode('table')}
-                          className={`px-4 py-2 rounded-md text-sm font-semibold transition-all tracking-wide flex items-center gap-2 ${
-                            viewMode === 'table' 
-                              ? 'bg-white text-gray-900 shadow-sm border border-gray-300' 
-                              : 'text-gray-600 hover:text-gray-900'
-                          }`}
-                        >
-                          <List className="h-4 w-4" />
-                          List View
-                        </button>
-                      </div>
-
-                      {/* Enhanced Search */}
-                      <div className="relative flex-1 lg:flex-none min-w-[300px]">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input 
-                          type="text" 
-                          placeholder="Search by name, ID, position, or phone..." 
-                          value={searchTerm} 
-                          onChange={(e) => setSearchTerm(e.target.value)} 
-                          className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
-                        />
-                      </div>
-
-                      {/* Enhanced Filter */}
-                      <select 
-                        value={filter} 
-                        onChange={(e) => setFilter(e.target.value)} 
-                        className="px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all min-w-[180px] font-semibold"
-                      >
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending Review</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Not Approved</option>
-                        <option value="paid">Paid</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-8">
-                  {loading.overtime ? (
-                    <div className="flex items-center justify-center py-16">
-                      <div className="text-center space-y-3">
-                        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-                        <p className="text-gray-600 font-semibold">Loading overtime records...</p>
-                      </div>
-                    </div>
-                  ) : viewMode === 'grid' ? (
-                    // Enhanced Grid View
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {filteredOvertime.map((ot) => (
-                        <OvertimeCard 
-                          key={ot.id} 
-                          overtime={ot} 
-                          onView={setSelectedOvertime}
-                          onEdit={setEditData}
-                          onDelete={handleDeleteOvertime}
-                          onDownload={(data) => {
-                            alert('Download functionality would be implemented here');
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    // Enhanced List View
-                    <div className="overflow-x-auto rounded-xl border-2 border-gray-200">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 border-b-2 border-gray-200">
-                          <tr>
-                            {['Employee', 'Overtime Type', 'Date', 'Time', 'Hours', 'Earnings', 'Status', 'Applied', 'Actions'].map(header => (
-                              <th key={header} className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                {header}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {filteredOvertime.map((ot) => {
-                            const overtimeType = OVERTIME_TYPES[ot.overtime_type] || OVERTIME_TYPES.regular;
-                            const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-                            const earnings = calculateEarnings(hours, overtimeType.rate, ot.hourly_rate);
-                            
-                            return (
-                              <tr key={ot.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4">
-                                  <div>
-                                    <p className="font-bold text-gray-900">{ot.employee_name}</p>
-                                    <p className="text-sm text-gray-500 font-medium">{ot.position} • {ot.employee_id}</p>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <div className={`p-1.5 rounded-lg ${overtimeType.bgColor} border-2 ${overtimeType.borderColor}`}>
-                                      {React.createElement(overtimeType.icon, { 
-                                        className: `h-3.5 w-3.5 ${overtimeType.textColor}` 
-                                      })}
-                                    </div>
-                                    <span className="text-sm font-semibold text-gray-900">
-                                      {overtimeType.shortName}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                  {formatDate(ot.date)}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                                  {formatTime(ot.start_time)} - {formatTime(ot.end_time)}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                  {hours}h
-                                </td>
-                                <td className="px-6 py-4 text-sm font-bold text-green-600">
-                                  ${earnings.toFixed(2)}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <StatusBadge status={ot.status} />
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                                  {formatDate(ot.applied_date)}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <button 
-                                      onClick={() => setSelectedOvertime(ot)}
-                                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold"
-                                    >
-                                      <Eye className="h-3.5 w-3.5" />
-                                      View
-                                    </button>
-                                    <button 
-                                      onClick={() => setEditData(ot)}
-                                      className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold"
-                                    >
-                                      <Edit className="h-3.5 w-3.5" />
-                                      Edit
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {!loading.overtime && filteredOvertime.length === 0 && (
-                    <div className="text-center py-16">
-                      <ClockIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <p className="text-lg font-bold text-gray-900 mb-2 tracking-wide">No overtime requests found</p>
-                      <p className="text-sm text-gray-600 mb-6 font-medium">
-                        {overtime.length === 0 
-                          ? "Get started by creating your first overtime request." 
-                          : "No requests match your current filters."
-                        }
-                      </p>
-                      {overtime.length === 0 && (
-                        <button 
-                          onClick={() => setShowForm(true)} 
-                          className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl font-bold tracking-wide"
-                        >
-                          <Plus className="h-4 w-4 inline mr-2" />
-                          Create First Request
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* CTA Section */}
-          <section className="py-8">
-            <div className="container mx-auto px-4">
-              <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-center">
-                <div className="flex justify-center mb-3">
-                  <Calculator className="h-8 w-8 text-indigo-600" />
-                </div>
-                
-                <h3 className="font-bold text-gray-900 mb-3">
-                  Need Help with Overtime Management?
-                </h3>
-                
-                <p className="text-gray-600 text-sm mb-4 max-w-lg mx-auto">
-                  Our structured database system ensures all your overtime data is organized, 
-                  secure, and easily accessible. Track hours, approve requests, and 
-                  calculate earnings all in one place.
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <button 
-                    onClick={() => setShowForm(true)} 
-                    className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl font-semibold"
-                  >
-                    <Plus className="h-4 w-4 inline mr-2" />
-                    New Overtime Request
-                  </button>
-                  <Link href="/" className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold">
-                    Back to Dashboard
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-gray-300 border-t">
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Database className="h-5 w-5 text-indigo-400" />
-                  <span className="font-bold text-white">MyOffice</span>
-                </div>
-                <p className="text-gray-400 text-xs">
-                  Professional overtime management system
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-white mb-2 text-sm">Modules</h4>
-                <ul className="space-y-1">
-                  <li><Link href="/employees" className="text-xs text-gray-400 hover:text-white">Personnel</Link></li>
-                  <li><Link href="/overtime" className="text-xs text-gray-400 hover:text-white">Overtime</Link></li>
-                  <li><Link href="/leaves" className="text-xs text-gray-400 hover:text-white">Leaves</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-white mb-2 text-sm">Resources</h4>
-                <ul className="space-y-1">
-                  <li><Link href="/support" className="text-xs text-gray-400 hover:text-white">Support</Link></li>
-                  <li><Link href="/contact" className="text-xs text-gray-400 hover:text-white">Contact</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-white mb-2 text-sm">Legal</h4>
-                <ul className="space-y-1">
-                  <li><Link href="/privacy" className="text-xs text-gray-400 hover:text-white">Privacy</Link></li>
-                  <li><Link href="/terms" className="text-xs text-gray-400 hover:text-white">Terms</Link></li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-800 my-4"></div>
-            
-            <div className="text-center">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} MyOffice Overtime Management System • Database Architecture
-              </p>
-            </div>
-          </div>
-        </footer>
-      </div>
-
-      {/* Modals */}
-      {showForm && (
-        <OvertimeApplicationForm 
-          onClose={() => {
-            setShowForm(false);
-            setEditData(null);
-          }} 
-          onSuccess={handleFormSuccess}
-          editData={editData}
-          onUpdate={handleOvertimeUpdate}
-        />
-      )}
-
-      {selectedOvertime && (
-        <OvertimeDetailsModal 
-          overtime={selectedOvertime} 
-          onClose={() => setSelectedOvertime(null)} 
-          onStatusUpdate={handleStatusUpdate} 
-          onDelete={handleDeleteOvertime} 
-          onEdit={setEditData}
-        />
-      )}
-
-      {editData && (
-        <OvertimeApplicationForm 
-          onClose={() => setEditData(null)} 
-          onSuccess={handleFormSuccess}
-          editData={editData}
-          onUpdate={handleOvertimeUpdate}
-        />
-      )}
-    </div>
-  );
-}
-
-// Enhanced Overtime Details Modal
+// Overtime Details Modal – earnings/rate hidden
 const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onEdit }) => {
-  const [showActions, setShowActions] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const overtimeType = OVERTIME_TYPES[overtime.overtime_type] || OVERTIME_TYPES.regular;
-  const Icon = overtimeType.icon;
+  const typeConfig = OVERTIME_TYPES[overtime.overtime_type];
+  const hours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
 
-  const calculatedHours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
-  const earnings = calculateEarnings(calculatedHours, overtimeType.rate, overtime.hourly_rate);
-
-  const handleStatusUpdate = async (newStatus) => {
+  const handleStatusChange = async (newStatus) => {
     setUpdating(true);
     try {
       await onStatusUpdate(overtime.id, newStatus);
-      setShowActions(false);
+      toast.success(`Status updated to ${newStatus}`);
+      onClose();
     } catch (error) {
-      console.error('Error updating status:', error);
+      toast.error(error.message);
     } finally {
       setUpdating(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this overtime application? This action cannot be undone.')) {
-      return;
-    }
-
+    if (!confirm('Delete this overtime request?')) return;
     setUpdating(true);
     try {
       await onDelete(overtime.id);
-      setShowActions(false);
+      toast.success('Request deleted');
+      onClose();
     } catch (error) {
-      console.error('Error deleting overtime:', error);
+      toast.error(error.message);
     } finally {
       setUpdating(false);
     }
   };
 
-  const handleEdit = () => {
-    onEdit(overtime);
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-gray-200">
-        <div className="p-6 border-b-2 border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${overtimeType.bgColor} border-2 ${overtimeType.borderColor}`}>
-                {React.createElement(Icon, { className: `h-6 w-6 ${overtimeType.textColor}` })}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 tracking-wide">Overtime Application Details</h2>
-                <p className="text-sm text-gray-600 font-medium">{overtimeType.name} • {overtime.employee_name}</p>
-              </div>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="rounded-full bg-primary/10 p-2 text-primary">
+              {React.createElement(typeConfig.icon, { className: "h-5 w-5" })}
             </div>
-            <div className="flex items-center gap-2">
-              {/* Edit Button */}
-              <button 
-                onClick={handleEdit}
-                className="px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold tracking-wide"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </button>
-              <div className="relative">
-                <button onClick={() => setShowActions(!showActions)} disabled={updating} className="p-2 hover:bg-gray-50 rounded-lg disabled:opacity-50 transition-colors text-gray-400 hover:text-gray-600 border-2 border-gray-200">
-                  <MoreVertical className="h-5 w-5" />
-                </button>
-                {showActions && (
-                  <div className="absolute right-0 top-10 bg-white border-2 border-gray-200 rounded-xl shadow-2xl z-10 min-w-[200px] overflow-hidden">
-                    <button onClick={() => handleStatusUpdate('approved')} disabled={updating} className="w-full px-4 py-3 text-left text-sm text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 disabled:opacity-50 transition-colors border-b border-gray-100 font-semibold">
-                      <CheckCircle2 className="h-4 w-4" /> Approve Request
-                    </button>
-                    <button onClick={() => handleStatusUpdate('rejected')} disabled={updating} className="w-full px-4 py-3 text-left text-sm text-rose-700 hover:bg-rose-50 flex items-center gap-2 disabled:opacity-50 transition-colors border-b border-gray-100 font-semibold">
-                      <XCircle className="h-4 w-4" /> Decline Request
-                    </button>
-                    <button onClick={() => handleStatusUpdate('pending')} disabled={updating} className="w-full px-4 py-3 text-left text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-2 disabled:opacity-50 transition-colors font-semibold">
-                      <Clock className="h-4 w-4" /> Set as Pending
-                    </button>
-                    <div className="border-t border-gray-200">
-                      <button onClick={handleDelete} disabled={updating} className="w-full px-4 py-3 text-left text-sm text-rose-700 hover:bg-rose-50 flex items-center gap-2 disabled:opacity-50 transition-colors font-semibold">
-                        <Trash2 className="h-4 w-4" /> Delete Application
-                      </button>
-                    </div>
-                  </div>
+            Overtime Request #{overtime.id}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Employee Info */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-4 w-4" /> Employee
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p><span className="text-muted-foreground">Name:</span> {overtime.employee_name}</p>
+                <p><span className="text-muted-foreground">ID:</span> {overtime.employee_id}</p>
+                <p><span className="text-muted-foreground">Position:</span> {overtime.position}</p>
+                <p><span className="text-muted-foreground">Contact:</span> {overtime.contact_number}</p>
+                {overtime.emergency_contact && (
+                  <p><span className="text-muted-foreground">Emergency:</span> {overtime.emergency_contact}</p>
                 )}
-              </div>
-              <button onClick={onClose} disabled={updating} className="p-2 hover:bg-gray-50 rounded-lg disabled:opacity-50 transition-colors text-gray-400 hover:text-gray-600 border-2 border-gray-200">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+              </CardContent>
+            </Card>
+
+            {/* Overtime Details */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4" /> Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Type</span>
+                  <TypeBadge type={overtime.overtime_type} />
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <StatusBadge status={overtime.status} />
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Date</span>
+                  <span className="font-medium">{formatDate(overtime.date)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Time</span>
+                  <span className="font-medium">
+                    {formatTime(overtime.start_time)} – {formatTime(overtime.end_time)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Hours</span>
+                  <span className="font-medium">{hours} h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Applied</span>
+                  <span className="font-medium">{formatDate(overtime.applied_date)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Reason */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Reason
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-wrap text-sm">{overtime.reason}</p>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Button variant="outline" onClick={() => onEdit(overtime)}>
+              <Edit className="h-4 w-4 mr-2" /> Edit
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Update Status <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleStatusChange('approved')}>
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" /> Approve
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('rejected')}>
+                  <XCircle className="h-4 w-4 mr-2 text-destructive" /> Reject
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('pending')}>
+                  <Clock className="h-4 w-4 mr-2 text-muted-foreground" /> Mark Pending
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="destructive" onClick={handleDelete} disabled={updating}>
+              <Trash2 className="h-4 w-4 mr-2" /> Delete
+            </Button>
           </div>
         </div>
-
-        <div className="p-6 space-y-6">
-          {updating && (
-            <div className="flex items-center justify-center p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600 mr-2" />
-              <span className="text-blue-700 font-semibold">Updating request...</span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              {/* Employee Information */}
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <User className="h-5 w-5 text-gray-600" />
-                  Employee Information
-                </h3>
-                <div className="space-y-3">
-                  <div><p className="text-sm text-gray-600 font-semibold">Full Name</p><p className="font-bold text-gray-900">{overtime.employee_name}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Employee ID</p><p className="font-bold text-gray-900">{overtime.employee_id}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Position</p><p className="font-bold text-gray-900">{overtime.position}</p></div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <Phone className="h-5 w-5 text-gray-600" />
-                  Contact Information
-                </h3>
-                <div className="space-y-3">
-                  <div><p className="text-sm text-gray-600 font-semibold">Contact Number</p><p className="font-bold text-gray-900">{overtime.contact_number}</p></div>
-                  {overtime.emergency_contact && (
-                    <div><p className="text-sm text-gray-600 font-semibold">Emergency Contact</p><p className="font-bold text-gray-900">{overtime.emergency_contact}</p></div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Overtime Details */}
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  Overtime Details
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${overtimeType.bgColor} border-2 ${overtimeType.borderColor}`}>
-                      {React.createElement(Icon, { className: `h-4 w-4 ${overtimeType.textColor}` })}
-                    </div>
-                    <div><p className="text-sm text-gray-600 font-semibold">Overtime Type</p><p className="font-bold text-gray-900">{overtimeType.name}</p></div>
-                  </div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Status</p><div className="mt-1"><StatusBadge status={overtime.status} /></div></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Date</p><p className="font-bold text-gray-900">{formatDate(overtime.date)}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Time</p><p className="font-bold text-gray-900">{formatTime(overtime.start_time)} - {formatTime(overtime.end_time)}</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Total Hours</p><p className="font-bold text-gray-900">{calculatedHours}h</p></div>
-                  <div><p className="text-sm text-gray-600 font-semibold">Hourly Rate</p><p className="font-bold text-gray-900">${overtime.hourly_rate}/hour</p></div>
-                </div>
-              </div>
-
-              {/* Earnings Calculation */}
-              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  Earnings Calculation
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Base Rate</span>
-                    <span className="font-bold">${overtime.hourly_rate}/h</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Overtime Multiplier</span>
-                    <span className="font-bold">{overtimeType.rate}x</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total Hours</span>
-                    <span className="font-bold">{calculatedHours}h</span>
-                  </div>
-                  <div className="border-t border-green-200 pt-2 mt-2">
-                    <div className="flex justify-between font-bold text-lg">
-                      <span className="text-gray-900">Total Earnings</span>
-                      <span className="text-green-600">${earnings.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Reason for Overtime */}
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 tracking-wide">
-              <FileText className="h-5 w-5 text-gray-600" />
-              Reason for Overtime
-            </h3>
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
-              <p className="text-gray-700 leading-relaxed font-semibold">{overtime.reason}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
+
+// ============= Main Page =============
+export default function OvertimeManagementPage() {
+  const [overtime, setOvertime] = useState([]);
+  const [selectedOvertime, setSelectedOvertime] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchOvertime({ status: filter === 'all' ? null : filter });
+      setOvertime(data);
+    } catch (error) {
+      toast.error('Failed to load overtime data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllData();
+  }, [filter]); // refetch when filter changes
+
+  const handleCreate = async (data) => {
+    const newItem = await createOvertime(data);
+    setOvertime((prev) => [...prev, newItem]);
+  };
+
+  const handleUpdate = async (id, data) => {
+    const updated = await updateOvertime(id, data);
+    setOvertime((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...updated } : item))
+    );
+  };
+
+  const handleStatusUpdate = async (id, status) => {
+    await updateOvertimeStatus(id, status);
+    setOvertime((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, status } : item))
+    );
+  };
+
+  const handleDelete = async (id) => {
+    await deleteOvertime(id);
+    setOvertime((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Filter logic (client-side search)
+  const filteredOvertime = useMemo(() => {
+    let filtered = overtime;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (ot) =>
+          ot.employee_name?.toLowerCase().includes(term) ||
+          ot.employee_id?.toLowerCase().includes(term) ||
+          ot.position?.toLowerCase().includes(term)
+      );
+    }
+    return filtered;
+  }, [overtime, searchTerm]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = overtime.length;
+    const pending = overtime.filter((ot) => ot.status === 'pending').length;
+    const approved = overtime.filter((ot) => ot.status === 'approved').length;
+    const rejected = overtime.filter((ot) => ot.status === 'rejected').length;
+    const totalHours = overtime.reduce((sum, ot) => {
+      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
+      return sum + hours;
+    }, 0);
+    return { total, pending, approved, rejected, totalHours: Math.round(totalHours * 100) / 100 };
+  }, [overtime]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Toaster position="top-right" richColors />
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="rounded bg-primary p-1.5">
+                <Database className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-bold">MyOffice</span>
+            </Link>
+            <Separator orientation="vertical" className="h-6" />
+            <nav className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/">Home</Link>
+              </Button>
+              <span className="text-sm text-muted-foreground">/</span>
+              <span className="text-sm font-medium">Overtime</span>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToExcel(overtime)}
+              title="Export to Excel"
+            >
+              <FileDown className="h-4 w-4 mr-2" /> Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={fetchAllData} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
+            <Button onClick={() => setShowForm(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" /> New Overtime
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Hero */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Overtime Management</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Track, review, and manage all overtime requests.
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard title="Total Requests" value={stats.total} icon={FileText} />
+          <StatCard
+            title="Pending"
+            value={stats.pending}
+            icon={Clock}
+            onClick={() => setFilter('pending')}
+          />
+          <StatCard
+            title="Approved"
+            value={stats.approved}
+            icon={CheckCircle2}
+            onClick={() => setFilter('approved')}
+          />
+          <StatCard title="Total Hours" value={`${stats.totalHours} h`} icon={TrendingUp} />
+        </div>
+
+        {/* Filters & View Toggle */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Overtime Requests</h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Search */}
+                <div className="relative w-full lg:w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, ID, position..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                {/* Status filter */}
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* View toggle */}
+                <div className="flex rounded-md border">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="rounded-r-none"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="rounded-l-none"
+                    onClick={() => setViewMode('table')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredOvertime.length === 0 ? (
+              <div className="text-center py-12">
+                <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No overtime requests found</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {overtime.length === 0
+                    ? 'Get started by creating your first request.'
+                    : 'Try adjusting your filters.'}
+                </p>
+                {overtime.length === 0 && (
+                  <Button onClick={() => setShowForm(true)}>
+                    <Plus className="h-4 w-4 mr-2" /> New Request
+                  </Button>
+                )}
+              </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredOvertime.map((ot) => (
+                  <OvertimeCard
+                    key={ot.id}
+                    overtime={ot}
+                    onView={setSelectedOvertime}
+                    onEdit={setEditData}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employee</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Hours</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOvertime.map((ot) => {
+                      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
+                      return (
+                        <TableRow key={ot.id}>
+                          <TableCell>
+                            <div className="font-medium">{ot.employee_name}</div>
+                            <div className="text-xs text-muted-foreground">{ot.employee_id}</div>
+                          </TableCell>
+                          <TableCell>
+                            <TypeBadge type={ot.overtime_type} />
+                          </TableCell>
+                          <TableCell>{formatDate(ot.date)}</TableCell>
+                          <TableCell>
+                            {formatTime(ot.start_time)} – {formatTime(ot.end_time)}
+                          </TableCell>
+                          <TableCell>{hours} h</TableCell>
+                          <TableCell>
+                            <StatusBadge status={ot.status} />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedOvertime(ot)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditData(ot)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Modals */}
+      {showForm && (
+        <OvertimeApplicationForm
+          onClose={() => {
+            setShowForm(false);
+            setEditData(null);
+          }}
+          onSuccess={() => {
+            fetchAllData();
+            setShowForm(false);
+            setEditData(null);
+          }}
+          editData={editData}
+          onUpdate={handleUpdate}
+        />
+      )}
+
+      {selectedOvertime && (
+        <OvertimeDetailsModal
+          overtime={selectedOvertime}
+          onClose={() => setSelectedOvertime(null)}
+          onStatusUpdate={handleStatusUpdate}
+          onDelete={handleDelete}
+          onEdit={setEditData}
+        />
+      )}
+    </div>
+  );
+}
