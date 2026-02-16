@@ -16,6 +16,7 @@ import {
   Database, Activity, Gauge, TrendingDown, Thermometer,
   BarChart4, CircleAlert, Percent, Square, Archive, SquareDashed,
   Info, Paperclip, Repeat, Scale, Gavel, FolderOpen,
+  Globe, UserCheck  // <-- Added missing icons
 } from "lucide-react";
 
 // shadcn/ui imports
@@ -520,10 +521,20 @@ const taskFormSchema = z.object({
   findings: z.string().optional(),
 });
 
+type TaskFormData = z.infer<typeof taskFormSchema>;
+
 // ============= Form Component =============
-const TaskForm = ({ isOpen, onClose, onSubmit, initialData, loading = false }) => {
+interface TaskFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: TaskFormData) => void;
+  initialData?: Task | null;
+  loading?: boolean;
+}
+
+const TaskForm = ({ isOpen, onClose, onSubmit, initialData, loading = false }: TaskFormProps) => {
   const category = initialData?.category || 'maintenance';
-  const form = useForm({
+  const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: initialData?.title || '',
@@ -720,7 +731,14 @@ const TaskForm = ({ isOpen, onClose, onSubmit, initialData, loading = false }) =
 };
 
 // ============= Task Card (Grid View) =============
-const TaskCard = ({ task, onView, onEdit, onDelete }: { task: Task; onView: (t: Task) => void; onEdit: (t: Task) => void; onDelete: (id: number) => void }) => {
+interface TaskCardProps {
+  task: Task;
+  onView: (task: Task) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: number) => void;
+}
+
+const TaskCard = ({ task, onView, onEdit, onDelete }: TaskCardProps) => {
   const isOverdueItem = isOverdue(task.next_due, task.status);
   const category = TASK_CATEGORIES[task.category];
 
@@ -775,7 +793,15 @@ const TaskCard = ({ task, onView, onEdit, onDelete }: { task: Task; onView: (t: 
 };
 
 // ============= Task Details Modal =============
-const TaskDetails = ({ task, isOpen, onClose, onEdit, onExport }: { task: Task | null; isOpen: boolean; onClose: () => void; onEdit: (t: Task) => void; onExport: (data: Task[], filename: string) => void }) => {
+interface TaskDetailsProps {
+  task: Task | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: (task: Task) => void;
+  onExport: (data: Task[], filename: string) => void;
+}
+
+const TaskDetails = ({ task, isOpen, onClose, onEdit, onExport }: TaskDetailsProps) => {
   if (!task || !isOpen) return null;
   const category = TASK_CATEGORIES[task.category];
   const isOverdueItem = isOverdue(task.next_due, task.status);
@@ -852,7 +878,15 @@ const TaskDetails = ({ task, isOpen, onClose, onEdit, onExport }: { task: Task |
 };
 
 // ============= Stats Card =============
-const StatsCard = ({ title, value, icon: Icon, trend, progress }: { title: string; value: string | number; icon: React.ElementType; trend?: number; progress?: number }) => (
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  trend?: number;
+  progress?: number;
+}
+
+const StatsCard = ({ title, value, icon: Icon, trend, progress }: StatsCardProps) => (
   <Card>
     <CardContent className="p-5">
       <div className="flex items-start justify-between">
@@ -885,7 +919,18 @@ const StatsCard = ({ title, value, icon: Icon, trend, progress }: { title: strin
 );
 
 // ============= Quick Actions Bar =============
-const QuickActionsBar = ({ onNewTask, onRefresh, onExport, loading, viewMode, onViewModeChange, onClearFilters, filtersActive }) => (
+interface QuickActionsBarProps {
+  onNewTask: (category: string) => void;
+  onRefresh: () => void;
+  onExport: () => void;
+  loading: boolean;
+  viewMode: string;
+  onViewModeChange: (mode: string) => void;
+  onClearFilters: () => void;
+  filtersActive: boolean;
+}
+
+const QuickActionsBar = ({ onNewTask, onRefresh, onExport, loading, viewMode, onViewModeChange, onClearFilters, filtersActive }: QuickActionsBarProps) => (
   <div className="flex flex-wrap items-center justify-between gap-4">
     <div className="flex items-center gap-3">
       <Button onClick={() => onNewTask('maintenance')} className="gap-2">
@@ -992,7 +1037,7 @@ export default function MaintenanceCompliancePage() {
     fetchAllData();
   }, [filters]);
 
-  const handleSubmitForm = async (formData: any) => {
+  const handleSubmitForm = async (formData: TaskFormData) => {
     setFormLoading(true);
     try {
       if (editData) {
