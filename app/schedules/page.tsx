@@ -138,12 +138,33 @@ const PRIORITY_LEVELS = {
   critical: { name: 'Critical', variant: 'destructive', icon: Gauge },
 } as const;
 
+// FIXED: Use className instead of invalid variant
 const STATUS_TYPES = {
-  open: { name: 'Open', variant: 'outline', icon: Clock },
-  in_progress: { name: 'In Progress', variant: 'secondary', icon: RefreshCw },
-  completed: { name: 'Completed', variant: 'success', icon: CheckCircle2 },
-  overdue: { name: 'Overdue', variant: 'destructive', icon: AlertTriangle },
-  cancelled: { name: 'Cancelled', variant: 'outline', icon: XCircle },
+  open: {
+    name: 'Open',
+    className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400',
+    icon: Clock,
+  },
+  in_progress: {
+    name: 'In Progress',
+    className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400',
+    icon: RefreshCw,
+  },
+  completed: {
+    name: 'Completed',
+    className: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400',
+    icon: CheckCircle2,
+  },
+  overdue: {
+    name: 'Overdue',
+    className: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400',
+    icon: AlertTriangle,
+  },
+  cancelled: {
+    name: 'Cancelled',
+    className: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-400',
+    icon: XCircle,
+  },
 } as const;
 
 // ============= Utility Functions =============
@@ -310,9 +331,10 @@ const downloadCSV = (data: Task[], filename: string) => {
 // Badges
 const StatusBadge = ({ status }: { status: string }) => {
   const config = STATUS_TYPES[status as keyof typeof STATUS_TYPES] || STATUS_TYPES.open;
+  const Icon = config.icon;
   return (
-    <Badge variant={config.variant} className="gap-1">
-      {React.createElement(config.icon, { className: "h-3 w-3" })}
+    <Badge variant="outline" className={`gap-1 ${config.className}`}>
+      {React.createElement(Icon, { className: "h-3 w-3" })}
       {config.name}
     </Badge>
   );
