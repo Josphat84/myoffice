@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { 
+import {
   Shield, Plus, Search, RefreshCw, Filter, ChevronDown, ChevronUp,
   CheckCircle2, XCircle, User, FileText, Eye, Loader2,
   Clock, AlertCircle, Send, Phone, Trash2, MoreVertical,
@@ -50,10 +50,10 @@ const COLORS = {
 
 // Enhanced PPE Types with professional styling
 const PPE_TYPES = {
-  helmet: { 
-    name: 'Safety Helmet', 
-    shortName: 'Helmet', 
-    color: '#0f172a', 
+  helmet: {
+    name: 'Safety Helmet',
+    shortName: 'Helmet',
+    color: '#0f172a',
     icon: HardHat,
     bgColor: 'bg-slate-100',
     textColor: 'text-slate-700',
@@ -61,10 +61,10 @@ const PPE_TYPES = {
     gradient: 'from-slate-600 to-slate-700',
     description: 'Head protection for underground and surface operations'
   },
-  gloves: { 
-    name: 'Safety Gloves', 
-    shortName: 'Gloves', 
-    color: '#dc2626', 
+  gloves: {
+    name: 'Safety Gloves',
+    shortName: 'Gloves',
+    color: '#dc2626',
     icon: Shield,
     bgColor: 'bg-rose-50',
     textColor: 'text-rose-700',
@@ -72,10 +72,10 @@ const PPE_TYPES = {
     gradient: 'from-rose-500 to-rose-600',
     description: 'Hand protection for handling materials and chemicals'
   },
-  glasses: { 
-    name: 'Safety Glasses', 
-    shortName: 'Glasses', 
-    color: '#0369a1', 
+  glasses: {
+    name: 'Safety Glasses',
+    shortName: 'Glasses',
+    color: '#0369a1',
     icon: Eye,
     bgColor: 'bg-blue-50',
     textColor: 'text-blue-700',
@@ -83,10 +83,10 @@ const PPE_TYPES = {
     gradient: 'from-blue-500 to-blue-600',
     description: 'Eye protection from dust and debris'
   },
-  vest: { 
-    name: 'High-Vis Vest', 
-    shortName: 'Vest', 
-    color: '#f59e0b', 
+  vest: {
+    name: 'High-Vis Vest',
+    shortName: 'Vest',
+    color: '#f59e0b',
     icon: User,
     bgColor: 'bg-amber-50',
     textColor: 'text-amber-700',
@@ -94,10 +94,10 @@ const PPE_TYPES = {
     gradient: 'from-amber-500 to-amber-600',
     description: 'High visibility clothing for surface operations'
   },
-  gumboots: { 
-    name: 'Safety Gum Boots', 
-    shortName: 'GumBoots', 
-    color: '#7c3aed', 
+  gumboots: {
+    name: 'Safety Gum Boots',
+    shortName: 'GumBoots',
+    color: '#7c3aed',
     icon: Zap,
     bgColor: 'bg-violet-50',
     textColor: 'text-violet-700',
@@ -106,7 +106,7 @@ const PPE_TYPES = {
     description: 'Steel-toe foot protection'
   },
   safety_shoes: {
-    name: 'Safety Shoes', 
+    name: 'Safety Shoes',
     shortName: 'Shoes',
     color: '#2563eb',
     icon: Pickaxe,
@@ -116,11 +116,10 @@ const PPE_TYPES = {
     gradient: 'from-blue-500 to-blue-600',
     description: 'Protective footwear for various work environments'
   },
-
-  harness: { 
-    name: 'Safety Harness', 
-    shortName: 'Harness', 
-    color: '#059669', 
+  harness: {
+    name: 'Safety Harness',
+    shortName: 'Harness',
+    color: '#059669',
     icon: Users,
     bgColor: 'bg-emerald-50',
     textColor: 'text-emerald-700',
@@ -128,10 +127,10 @@ const PPE_TYPES = {
     gradient: 'from-emerald-500 to-emerald-600',
     description: 'Fall protection for heights and shafts'
   },
-  respirator: { 
-    name: 'Respirator', 
-    shortName: 'Respirator', 
-    color: '#0d9488', 
+  respirator: {
+    name: 'Respirator',
+    shortName: 'Respirator',
+    color: '#0d9488',
     icon: Shield,
     bgColor: 'bg-teal-50',
     textColor: 'text-teal-700',
@@ -139,7 +138,6 @@ const PPE_TYPES = {
     gradient: 'from-teal-500 to-teal-600',
     description: 'Respiratory protection from dust and chemicals'
   },
-
   Cap_lamp_belt: {
     name: 'Cap Lamp Belt',
     shortName: 'Lamp belt',
@@ -151,7 +149,6 @@ const PPE_TYPES = {
     gradient: 'from-pink-500 to-pink-600',
     description: 'Lighting for underground operations'
   },
-
   worksuit: {
     name: 'Protective Work Suit ',
     shortName: 'Work Suit',
@@ -163,7 +160,6 @@ const PPE_TYPES = {
     gradient: 'from-orange-500 to-orange-600',
     description: 'Full body protection for various work environments'
   },
-
   rainsuit: {
     name: 'Rain Suit',
     shortName: 'Rain Suit',
@@ -175,7 +171,6 @@ const PPE_TYPES = {
     gradient: 'from-teal-500 to-teal-600',
     description: 'Waterproof protection for wet conditions'
   },
-
   overall:  {
     name: 'Protective Overall',
     shortName: 'Overall',
@@ -187,8 +182,7 @@ const PPE_TYPES = {
     gradient: 'from-violet-500 to-violet-600',
     description: 'Full body protective clothing'
   }
-}
-
+};
 
 // Mine Locations
 const MINE_LOCATIONS = {
@@ -225,10 +219,10 @@ const STATUS_TYPES = {
 const formatDate = (dateString) => {
   if (!dateString) return 'Not specified';
   try {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   } catch {
     return dateString;
@@ -260,7 +254,7 @@ const fetchPPERecords = async (filters = {}) => {
     const url = params.toString() ? `${PPE_API}?${params.toString()}` : PPE_API;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching PPE records:', error);
@@ -310,7 +304,7 @@ const createPPERecord = async (recordData) => {
 
     const response = await fetch(PPE_API, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(formattedData),
@@ -331,7 +325,7 @@ const createPPERecord = async (recordData) => {
     const result = await response.json();
     console.log('✅ PPE record created successfully:', result);
     return result;
-    
+
   } catch (error) {
     console.error('❌ Error creating PPE record:', error);
     throw new Error(`Failed to create PPE record: ${error.message}`);
@@ -362,10 +356,10 @@ const updatePPERecord = async (recordId, recordData) => {
 
 const deletePPERecord = async (recordId) => {
   try {
-    const response = await fetch(`${PPE_API}/${recordId}`, { 
-      method: 'DELETE' 
+    const response = await fetch(`${PPE_API}/${recordId}`, {
+      method: 'DELETE'
     });
-    
+
     if (!response.ok) throw new Error(`Failed to delete: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -421,11 +415,12 @@ const StatCard = ({ title, value, icon, onClick, subtitle, color = "slate" }) =>
     blue: 'from-blue-600 to-blue-700',
     emerald: 'from-emerald-600 to-emerald-700',
     rose: 'from-rose-600 to-rose-700',
+    amber: 'from-amber-600 to-amber-700',
     violet: 'from-violet-600 to-violet-700'
   };
-  
+
   return (
-    <div 
+    <div
       className="group bg-white rounded-xl border border-slate-200 p-6 transition-all duration-300 hover:shadow-lg hover:border-slate-300 cursor-pointer hover:scale-[1.02]"
       onClick={onClick}
     >
@@ -451,7 +446,7 @@ const StatCard = ({ title, value, icon, onClick, subtitle, color = "slate" }) =>
 const PPEItemCard = ({ record, onEdit, onDelete }) => {
   const ppeType = PPE_TYPES[record.ppe_type] || PPE_TYPES.helmet;
   const Icon = ppeType.icon;
-  
+
   const isExpiring = isExpiringSoon(record.expiry_date);
   const isItemExpired = isExpired(record.expiry_date);
 
@@ -486,7 +481,7 @@ const PPEItemCard = ({ record, onEdit, onDelete }) => {
           <div className="flex justify-between">
             <span className="text-slate-600 font-medium">Expires:</span>
             <span className={`font-medium ${
-              isItemExpired ? 'text-rose-600' : 
+              isItemExpired ? 'text-rose-600' :
               isExpiring ? 'text-amber-600' : 'text-slate-900'
             }`}>
               {formatDate(record.expiry_date)}
@@ -504,13 +499,13 @@ const PPEItemCard = ({ record, onEdit, onDelete }) => {
       </div>
 
       <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-        <button 
+        <button
           onClick={() => onEdit(record)}
           className="flex-1 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors border border-slate-200"
         >
           Edit
         </button>
-        <button 
+        <button
           onClick={() => onDelete(record.id)}
           className="flex-1 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-xs font-semibold hover:bg-rose-100 transition-colors border border-rose-200"
         >
@@ -557,14 +552,14 @@ const EmployeePPECard = ({ employee, records, onIssueNew, onEditItem, onDeleteIt
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => onIssueNew(employee)}
             className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold text-sm"
           >
             <Plus className="h-4 w-4" />
             Issue PPE
           </button>
-          <button 
+          <button
             onClick={() => setExpanded(!expanded)}
             className="p-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-400 hover:text-slate-600 border border-slate-200"
           >
@@ -578,9 +573,9 @@ const EmployeePPECard = ({ employee, records, onIssueNew, onEditItem, onDeleteIt
           {records.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {records.map((record) => (
-                <PPEItemCard 
-                  key={record.id} 
-                  record={record} 
+                <PPEItemCard
+                  key={record.id}
+                  record={record}
                   onEdit={onEditItem}
                   onDelete={onDeleteItem}
                 />
@@ -600,11 +595,11 @@ const EmployeePPECard = ({ employee, records, onIssueNew, onEditItem, onDeleteIt
 };
 
 // Autocomplete Input Component
-const AutocompleteInput = ({ 
-  value, 
-  onChange, 
-  options, 
-  placeholder, 
+const AutocompleteInput = ({
+  value,
+  onChange,
+  options,
+  placeholder,
   onSelect,
   field = 'employee_id',
   required = false
@@ -626,7 +621,7 @@ const AutocompleteInput = ({
   const handleInputChange = (e) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    
+
     // Update the form data immediately for validation
     onChange({
       target: {
@@ -634,7 +629,7 @@ const AutocompleteInput = ({
         value: newValue
       }
     });
-    
+
     setIsOpen(true);
   };
 
@@ -650,7 +645,7 @@ const AutocompleteInput = ({
         required={required}
         className="w-full px-4 py-2.5 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium bg-white"
       />
-      
+
       {isOpen && inputValue && filteredOptions.length > 0 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-auto">
           {filteredOptions.map((option, index) => (
@@ -696,7 +691,7 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
   // Validate form before submission
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.employee_id?.trim()) {
       errors.employee_id = 'Employee ID is required';
     }
@@ -725,13 +720,13 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const submitData = {
         ...formData,
@@ -741,7 +736,7 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
         item_name: formData.item_name.trim(),
         expiry_date: formData.expiry_date || null,
       };
-      
+
       await onSubmit(submitData);
       onClose();
     } catch (error) {
@@ -753,11 +748,11 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: value 
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({
@@ -805,8 +800,8 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
                 </p>
               </div>
             </div>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               type="button"
               className="p-2 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200"
             >
@@ -1080,14 +1075,14 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-slate-200">
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-3 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-all font-semibold tracking-wide"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               disabled={loading}
               className="flex-1 px-4 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold tracking-wide transition-all shadow-lg hover:shadow-xl"
@@ -1110,14 +1105,14 @@ const PPEIssueForm = ({ isOpen, onClose, onSubmit, initialData, employee, existi
 const QuickActions = ({ onNewRecord, onRefresh, loading }) => {
   return (
     <div className="flex items-center gap-3">
-      <button 
+      <button
         onClick={onRefresh}
         disabled={loading}
         className="p-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm hover:shadow-md"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
       </button>
-      <button 
+      <button
         onClick={onNewRecord}
         className="px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl font-semibold tracking-wide"
       >
@@ -1128,34 +1123,132 @@ const QuickActions = ({ onNewRecord, onRefresh, loading }) => {
   );
 };
 
-// Main PPE Management Component
+// NEW: Due Items List Component (for expiring-soon and expired filters)
+const DueItemsList = ({ employees, filterType, onEditItem, onDeleteItem }) => {
+  // Collect all relevant items from all employees
+  const dueItems = useMemo(() => {
+    const items = [];
+    employees.forEach(employee => {
+      employee.records.forEach(record => {
+        if (filterType === 'expiring-soon' && isExpiringSoon(record.expiry_date) && record.status === 'active') {
+          items.push({ ...record, employee_name: employee.employee_name, employee_id: employee.employee_id });
+        } else if (filterType === 'expired' && isExpired(record.expiry_date) && record.status === 'active') {
+          items.push({ ...record, employee_name: employee.employee_name, employee_id: employee.employee_id });
+        }
+      });
+    });
+    // Sort by expiry date (soonest first)
+    return items.sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
+  }, [employees, filterType]);
+
+  if (dueItems.length === 0) {
+    return (
+      <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200">
+        <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+        <p className="text-slate-700 font-semibold">No {filterType === 'expiring-soon' ? 'expiring soon' : 'expired'} items</p>
+        <p className="text-slate-600 text-sm mt-1">All PPE is up to date</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Employee</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Item</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Type</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Size</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Expiry Date</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Condition</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Status</th>
+              <th className="px-6 py-3 text-left font-semibold text-slate-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {dueItems.map((item) => {
+              const ppeType = PPE_TYPES[item.ppe_type] || PPE_TYPES.helmet;
+              const Icon = ppeType.icon;
+              return (
+                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900">{item.employee_name}</div>
+                    <div className="text-xs text-slate-500">{item.employee_id}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1 rounded-lg ${ppeType.bgColor}`}>
+                        <Icon className={`h-3.5 w-3.5 ${ppeType.textColor}`} />
+                      </div>
+                      <span className="font-medium">{item.item_name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-slate-700">{ppeType.name}</td>
+                  <td className="px-6 py-4 text-slate-700">{item.size || '—'}</td>
+                  <td className="px-6 py-4">
+                    <span className={`font-medium ${
+                      filterType === 'expired' ? 'text-rose-600' : 'text-amber-600'
+                    }`}>
+                      {formatDate(item.expiry_date)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4"><ConditionBadge condition={item.condition} /></td>
+                  <td className="px-6 py-4"><StatusBadge status={item.status} /></td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onEditItem(item)}
+                        className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteItem(item.id)}
+                        className="p-1 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// ============= Main PPE Management Component =============
 export default function PPEManagement() {
   const [records, setRecords] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'expiring-soon', 'expired', 'active'
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
 
-  // Enhanced data fetching
+  // Fetch all data
   const fetchAllData = async () => {
     try {
       setError(null);
       setLoading(true);
-      
       const [recordsData, statsData] = await Promise.all([
         fetchPPERecords(),
         fetchPPEStats()
       ]);
-      
       setRecords(recordsData);
       setStats(statsData);
-      setLoading(false);
     } catch (err) {
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -1163,7 +1256,6 @@ export default function PPEManagement() {
   // Get unique employees for autocomplete
   const existingEmployees = useMemo(() => {
     const employeeMap = new Map();
-    
     records.forEach(record => {
       if (!employeeMap.has(record.employee_id)) {
         employeeMap.set(record.employee_id, {
@@ -1174,14 +1266,12 @@ export default function PPEManagement() {
         });
       }
     });
-    
     return Array.from(employeeMap.values());
   }, [records]);
 
   // Group records by employee
   const employeesWithPPE = useMemo(() => {
     const employeeMap = new Map();
-    
     records.forEach(record => {
       if (!employeeMap.has(record.employee_id)) {
         employeeMap.set(record.employee_id, {
@@ -1194,11 +1284,73 @@ export default function PPEManagement() {
       }
       employeeMap.get(record.employee_id).records.push(record);
     });
-    
     return Array.from(employeeMap.values());
   }, [records]);
 
-  // Enhanced form success handler
+  // Apply filters (search + filterType)
+  const filteredEmployees = useMemo(() => {
+    let filtered = employeesWithPPE;
+
+    // Search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(employee =>
+        employee.employee_name?.toLowerCase().includes(searchLower) ||
+        employee.employee_id?.toLowerCase().includes(searchLower) ||
+        employee.position?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Status filter
+    if (filterType !== 'all') {
+      filtered = filtered.filter(employee => {
+        const hasExpiringSoon = employee.records.some(r =>
+          isExpiringSoon(r.expiry_date) && r.status === 'active'
+        );
+        const hasExpired = employee.records.some(r =>
+          isExpired(r.expiry_date) && r.status === 'active'
+        );
+        const hasActive = employee.records.some(r => r.status === 'active');
+
+        if (filterType === 'expiring-soon') return hasExpiringSoon;
+        if (filterType === 'expired') return hasExpired;
+        if (filterType === 'active') return hasActive;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [employeesWithPPE, searchTerm, filterType]);
+
+  // Enhanced stats with counts for filtered views
+  const enhancedStats = useMemo(() => {
+    if (!stats) return null;
+
+    const activeRecords = records.filter(r => r.status === 'active').length;
+    const expiringSoon = records.filter(r =>
+      isExpiringSoon(r.expiry_date) && r.status === 'active'
+    ).length;
+    const expired = records.filter(r =>
+      isExpired(r.expiry_date) && r.status === 'active'
+    ).length;
+    const employeesWithExpiring = employeesWithPPE.filter(e =>
+      e.records.some(r => isExpiringSoon(r.expiry_date) && r.status === 'active')
+    ).length;
+    const employeesWithExpired = employeesWithPPE.filter(e =>
+      e.records.some(r => isExpired(r.expiry_date) && r.status === 'active')
+    ).length;
+
+    return {
+      ...stats,
+      activeRecords,
+      expiringSoon,
+      expired,
+      employeesWithExpiring,
+      employeesWithExpired
+    };
+  }, [stats, records, employeesWithPPE]);
+
+  // Handle form success
   const handleFormSuccess = (message) => {
     setSuccess(message);
     fetchAllData();
@@ -1223,15 +1375,14 @@ export default function PPEManagement() {
     }
   };
 
-  // Enhanced delete handler
+  // Handle delete
   const handleDeleteRecord = async (recordId) => {
     if (!confirm('Are you sure you want to delete this PPE record? This action cannot be undone.')) {
       return;
     }
-
     try {
       await deletePPERecord(recordId);
-      setRecords(prev => prev.filter(record => record.id !== recordId));
+      setRecords(prev => prev.filter(r => r.id !== recordId));
       setSuccess('PPE record deleted successfully');
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
@@ -1239,38 +1390,35 @@ export default function PPEManagement() {
     }
   };
 
-  // Filter employees based on search
-  const filteredEmployees = useMemo(() => {
-    if (!searchTerm) return employeesWithPPE;
-    
-    const searchLower = searchTerm.toLowerCase();
-    return employeesWithPPE.filter(employee => 
-      employee.employee_name?.toLowerCase().includes(searchLower) ||
-      employee.employee_id?.toLowerCase().includes(searchLower) ||
-      employee.position?.toLowerCase().includes(searchLower)
-    );
-  }, [employeesWithPPE, searchTerm]);
-
-  // Calculate additional stats
-  const enhancedStats = useMemo(() => {
-    if (!stats) return null;
-    
-    const activeRecords = records.filter(record => record.status === 'active').length;
-    const expiringSoon = records.filter(record => 
-      isExpiringSoon(record.expiry_date) && record.status === 'active'
-    ).length;
-    
-    return {
-      ...stats,
-      activeRecords,
-      expiringSoon
-    };
-  }, [stats, records]);
-
   // Initial data fetch
-  useEffect(() => { 
+  useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Filter button component
+  const FilterButton = ({ value, label, count }) => (
+    <button
+      onClick={() => setFilterType(value)}
+      className={`px-4 py-2 rounded-xl border transition-all font-medium ${
+        filterType === value
+          ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        {label}
+        {count !== undefined && (
+          <span className={`px-2 py-0.5 rounded-full text-xs ${
+            filterType === value
+              ? 'bg-white text-slate-900'
+              : 'bg-slate-100 text-slate-700'
+          }`}>
+            {count}
+          </span>
+        )}
+      </span>
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -1287,8 +1435,7 @@ export default function PPEManagement() {
                 <p className="text-sm text-slate-600 font-medium">Maintenance Department</p>
               </div>
             </div>
-            
-            <QuickActions 
+            <QuickActions
               onNewRecord={() => {
                 setSelectedEmployee(null);
                 setEditData(null);
@@ -1329,67 +1476,138 @@ export default function PPEManagement() {
           </div>
         )}
 
-        {/* Statistics Overview */}
+        {/* Enhanced Statistics with Due Summary */}
         {enhancedStats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
-              title="Total Employees" 
-              value={enhancedStats.unique_employees} 
-              icon={Users} 
-              color="slate"
-            />
-            <StatCard 
-              title="Active PPE" 
-              value={enhancedStats.activeRecords} 
-              icon={CheckCircle2} 
-              color="emerald"
-            />
-            <StatCard 
-              title="Expiring Soon" 
-              value={enhancedStats.expiringSoon} 
-              icon={AlertTriangle} 
-              color="rose"
-            />
-            <StatCard 
-              title="Expired Items" 
-              value={enhancedStats.expired} 
-              icon={XCircle} 
-              color="violet"
-            />
-          </div>
+          <>
+            {/* Main Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard
+                title="Total Employees"
+                value={enhancedStats.unique_employees}
+                icon={Users}
+                color="slate"
+                onClick={() => setFilterType('all')}
+              />
+              <StatCard
+                title="Active PPE"
+                value={enhancedStats.activeRecords}
+                icon={CheckCircle2}
+                color="emerald"
+                onClick={() => setFilterType('active')}
+              />
+              <StatCard
+                title="Expiring Soon"
+                value={enhancedStats.expiringSoon}
+                subtitle={`${enhancedStats.employeesWithExpiring} employees`}
+                icon={AlertTriangle}
+                color="amber"
+                onClick={() => setFilterType('expiring-soon')}
+              />
+              <StatCard
+                title="Expired Items"
+                value={enhancedStats.expired}
+                subtitle={`${enhancedStats.employeesWithExpired} employees`}
+                icon={XCircle}
+                color="rose"
+                onClick={() => setFilterType('expired')}
+              />
+            </div>
+
+            {/* Due Summary Card (clickable) */}
+            {(enhancedStats.expiringSoon > 0 || enhancedStats.expired > 0) && (
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-slate-600" />
+                    <span className="font-semibold text-slate-900">Due Summary:</span>
+                  </div>
+                  {enhancedStats.expiringSoon > 0 && (
+                    <button
+                      onClick={() => setFilterType('expiring-soon')}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full hover:bg-amber-100 transition-colors"
+                    >
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm font-medium text-amber-700">
+                        {enhancedStats.expiringSoon} items expiring soon
+                      </span>
+                      <ArrowUpRight className="h-3 w-3 text-amber-600" />
+                    </button>
+                  )}
+                  {enhancedStats.expired > 0 && (
+                    <button
+                      onClick={() => setFilterType('expired')}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-full hover:bg-rose-100 transition-colors"
+                    >
+                      <XCircle className="h-4 w-4 text-rose-600" />
+                      <span className="text-sm font-medium text-rose-700">
+                        {enhancedStats.expired} expired items
+                      </span>
+                      <ArrowUpRight className="h-3 w-3 text-rose-600" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Main Content */}
+        {/* Main Content Card */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="p-6">
             <div className="space-y-6">
-              {/* Search Header */}
-              <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+              {/* Search and Filter Bar */}
+              <div className="flex flex-col lg:flex-row gap-4 justify-between">
                 <div className="space-y-1">
                   <h2 className="text-xl font-bold text-slate-900 tracking-wide">
                     Employee PPE Records
                   </h2>
                   <p className="text-sm text-slate-600 font-medium">
-                    Search and manage PPE assignments for maintenance personnel
+                    {filteredEmployees.length} employees {filterType !== 'all' && `with ${filterType.replace('-', ' ')} PPE`}
                   </p>
                 </div>
-                
-                <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+
+                <div className="flex flex-wrap gap-3 items-center">
+                  {/* Filter Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <FilterButton
+                      value="all"
+                      label="All"
+                      count={employeesWithPPE.length}
+                    />
+                    <FilterButton
+                      value="active"
+                      label="Active"
+                      count={employeesWithPPE.filter(e =>
+                        e.records.some(r => r.status === 'active')
+                      ).length}
+                    />
+                    <FilterButton
+                      value="expiring-soon"
+                      label="Expiring Soon"
+                      count={enhancedStats?.employeesWithExpiring || 0}
+                    />
+                    <FilterButton
+                      value="expired"
+                      label="Expired"
+                      count={enhancedStats?.employeesWithExpired || 0}
+                    />
+                  </div>
+
                   {/* Search */}
-                  <div className="relative flex-1 lg:flex-none min-w-[300px]">
+                  <div className="relative min-w-[250px]">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Search by employee name, ID, or position..." 
-                      value={searchTerm} 
-                      onChange={(e) => setSearchTerm(e.target.value)} 
+                    <input
+                      type="text"
+                      placeholder="Search employees..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium bg-white"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Employee PPE Cards */}
+              {/* Employee PPE Cards or Due Items List */}
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="text-center space-y-3">
@@ -1399,41 +1617,55 @@ export default function PPEManagement() {
                     </p>
                   </div>
                 </div>
+              ) : filteredEmployees.length > 0 ? (
+                filterType === 'expiring-soon' || filterType === 'expired' ? (
+                  <DueItemsList
+                    employees={filteredEmployees}
+                    filterType={filterType}
+                    onEditItem={(record) => {
+                      setEditData(record);
+                      setSelectedEmployee(null);
+                      setShowForm(true);
+                    }}
+                    onDeleteItem={handleDeleteRecord}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {filteredEmployees.map((employee) => (
+                      <EmployeePPECard
+                        key={employee.employee_id}
+                        employee={employee}
+                        records={employee.records}
+                        onIssueNew={(emp) => {
+                          setSelectedEmployee(emp);
+                          setEditData(null);
+                          setShowForm(true);
+                        }}
+                        onEditItem={(record) => {
+                          setEditData(record);
+                          setSelectedEmployee(null);
+                          setShowForm(true);
+                        }}
+                        onDeleteItem={handleDeleteRecord}
+                      />
+                    ))}
+                  </div>
+                )
               ) : (
-                <div className="space-y-4">
-                  {filteredEmployees.map((employee) => (
-                    <EmployeePPECard 
-                      key={employee.employee_id}
-                      employee={employee}
-                      records={employee.records}
-                      onIssueNew={(emp) => {
-                        setSelectedEmployee(emp);
-                        setEditData(null);
-                        setShowForm(true);
-                      }}
-                      onEditItem={(record) => {
-                        setEditData(record);
-                        setSelectedEmployee(null);
-                        setShowForm(true);
-                      }}
-                      onDeleteItem={handleDeleteRecord}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Empty State */}
-              {!loading && filteredEmployees.length === 0 && (
                 <div className="text-center py-16">
                   <UserCheck className="h-16 w-16 mx-auto mb-4 text-slate-300" />
                   <p className="text-lg font-bold text-slate-900 mb-2 tracking-wide">
-                    {searchTerm ? 'No matching employees found' : 'No employee records found'}
+                    {searchTerm || filterType !== 'all'
+                      ? 'No matching employees found'
+                      : 'No employee records found'}
                   </p>
                   <p className="text-sm text-slate-600 mb-6 font-medium">
-                    {searchTerm ? 'Try adjusting your search terms' : 'Get started by issuing PPE to your first employee'}
+                    {searchTerm || filterType !== 'all'
+                      ? 'Try adjusting your search or filters'
+                      : 'Get started by issuing PPE to your first employee'}
                   </p>
-                  <button 
-                    onClick={() => setShowForm(true)} 
+                  <button
+                    onClick={() => setShowForm(true)}
                     className="px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl font-semibold tracking-wide"
                   >
                     <Plus className="h-4 w-4 inline mr-2" />
@@ -1447,7 +1679,7 @@ export default function PPEManagement() {
       </main>
 
       {/* PPE Issue Form Modal */}
-      <PPEIssueForm 
+      <PPEIssueForm
         isOpen={showForm}
         onClose={() => {
           setShowForm(false);
