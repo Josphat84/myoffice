@@ -8,7 +8,8 @@ import {
   Download, Edit, X, ArrowUpRight,
   TrendingUp, BarChart3, Users, Briefcase, Zap, FileDown,
   List, LayoutGrid, Home as HomeIcon, Database, Layers, Server,
-  Link as LinkIcon, FilterX, CalendarRange, UserCheck, ChevronLeft, ChevronRight
+  Link as LinkIcon, FilterX, CalendarRange, UserCheck, ChevronLeft, ChevronRight,
+  ArrowUpDown, SortAsc, SortDesc
 } from "lucide-react";
 import Link from "next/link";
 
@@ -144,9 +145,8 @@ const calculateHours = (startTime, endTime, date) => {
   }
 };
 
-// API Functions (replace with real ones)
+// API Functions
 const fetchOvertime = async (filters = {}) => {
-  // Build query string from filters
   const params = new URLSearchParams();
   if (filters.status && filters.status !== 'all') params.append('status', filters.status);
   if (filters.overtime_type && filters.overtime_type !== 'all') params.append('overtime_type', filters.overtime_type);
@@ -199,28 +199,13 @@ const exportToExcel = (data, filename = `overtime-${new Date().toISOString().spl
     return;
   }
 
-  // Define CSV headers (matching SQL columns)
   const headers = [
-    'ID',
-    'Employee Name',
-    'Employee ID',
-    'Position',
-    'Overtime Type',
-    'Date',
-    'Start Time',
-    'End Time',
-    'Hours',
-    'Reason',
-    'Contact Number',
-    'Emergency Contact',
-    'Status',
-    'Applied Date',
-    'Notes',
-    'Hourly Rate',
-    'Created At',
+    'ID', 'Employee Name', 'Employee ID', 'Position', 'Overtime Type',
+    'Date', 'Start Time', 'End Time', 'Hours', 'Reason',
+    'Contact Number', 'Emergency Contact', 'Status', 'Applied Date',
+    'Notes', 'Hourly Rate', 'Created At',
   ];
 
-  // Prepare rows
   const rows = data.map((item) => {
     const hours = calculateHours(item.start_time, item.end_time, item.date);
     return [
@@ -244,13 +229,11 @@ const exportToExcel = (data, filename = `overtime-${new Date().toISOString().spl
     ];
   });
 
-  // Combine headers and rows
   const csvContent = [
     headers.join(','),
     ...rows.map((row) =>
       row
         .map((cell) => {
-          // Escape commas and quotes
           if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
             return `"${cell.replace(/"/g, '""')}"`;
           }
@@ -260,8 +243,7 @@ const exportToExcel = (data, filename = `overtime-${new Date().toISOString().spl
     ),
   ].join('\n');
 
-  // Create download link
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // UTF-8 BOM for Excel
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -275,31 +257,31 @@ const exportToExcel = (data, filename = `overtime-${new Date().toISOString().spl
 
 // ============= Component Sub‑components =============
 
-// Status Badge using shadcn Badge
+// Status Badge
 const StatusBadge = ({ status }) => {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   const Icon = config.icon;
   return (
-    <Badge variant={config.variant} className="gap-1 px-2 py-1">
+    <Badge variant={config.variant} className="gap-1 px-2 py-1 whitespace-nowrap">
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>
   );
 };
 
-// Type Badge using shadcn Badge
+// Type Badge
 const TypeBadge = ({ type }) => {
   const config = OVERTIME_TYPES[type] || OVERTIME_TYPES.regular;
   const Icon = config.icon;
   return (
-    <Badge variant={config.variant} className="gap-1 px-2 py-1">
+    <Badge variant={config.variant} className="gap-1 px-2 py-1 whitespace-nowrap">
       <Icon className="h-3 w-3" />
       {config.shortName}
     </Badge>
   );
 };
 
-// Stat Card using shadcn Card
+// Stat Card
 const StatCard = ({ title, value, icon: Icon, onClick }) => (
   <Card
     className={`cursor-pointer transition-all hover:shadow-lg ${onClick ? '' : 'cursor-default'}`}
@@ -319,7 +301,7 @@ const StatCard = ({ title, value, icon: Icon, onClick }) => (
   </Card>
 );
 
-// Overtime Card (Grid View) with inline expand/collapse
+// Overtime Card (Grid View) with inline expand/collapse and visible label
 const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
   const typeConfig = OVERTIME_TYPES[overtime.overtime_type];
@@ -349,11 +331,12 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
           <div className="flex items-center gap-1 flex-shrink-0">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="sm"
+              className="h-8 gap-1"
               onClick={handleExpandClick}
             >
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <span className="hidden sm:inline text-xs">{expanded ? 'Hide details' : 'View details'}</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -406,29 +389,28 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
           </div>
         </div>
 
-        {/* Expanded details */}
         {expanded && (
-          <div className="mt-4 pt-4 border-t space-y-3">
+          <div className="mt-4 pt-4 border-t space-y-3 w-full">
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-1">Reason</p>
-              <p className="text-sm bg-muted/50 p-2 rounded-md">{overtime.reason || 'No reason provided'}</p>
+              <p className="text-sm bg-muted/50 p-2 rounded-md break-words whitespace-pre-wrap">{overtime.reason || 'No reason provided'}</p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-xs text-muted-foreground">Contact</p>
-                <p className="font-medium">{overtime.contact_number}</p>
+                <p className="font-medium break-words">{overtime.contact_number}</p>
               </div>
               {overtime.emergency_contact && (
                 <div>
                   <p className="text-xs text-muted-foreground">Emergency</p>
-                  <p className="font-medium">{overtime.emergency_contact}</p>
+                  <p className="font-medium break-words">{overtime.emergency_contact}</p>
                 </div>
               )}
             </div>
             {overtime.notes && (
               <div>
                 <p className="text-xs text-muted-foreground">Notes</p>
-                <p className="text-sm">{overtime.notes}</p>
+                <p className="text-sm break-words whitespace-pre-wrap">{overtime.notes}</p>
               </div>
             )}
           </div>
@@ -443,7 +425,7 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   );
 };
 
-// Overtime Application Form (shadcn dialog) – earnings/rate fields present but hidden
+// Overtime Application Form
 const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
   const [formData, setFormData] = useState(
     editData || {
@@ -457,7 +439,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
       reason: '',
       contact_number: '',
       emergency_contact: '',
-      hourly_rate: 25, // kept for DB
+      hourly_rate: 25,
     }
   );
   const [loading, setLoading] = useState(false);
@@ -499,7 +481,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Employee Name */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Full Name *</label>
               <Input
@@ -509,7 +490,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 placeholder="e.g., John Smith"
               />
             </div>
-            {/* Employee ID */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Employee ID *</label>
               <Input
@@ -519,7 +499,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 placeholder="e.g., EMP001"
               />
             </div>
-            {/* Position */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Position *</label>
               <Input
@@ -529,7 +508,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 placeholder="e.g., Technician"
               />
             </div>
-            {/* Contact Number */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Contact Number *</label>
               <Input
@@ -539,7 +517,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 placeholder="+1 234 567 890"
               />
             </div>
-            {/* Overtime Type */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Overtime Type *</label>
               <Select
@@ -558,7 +535,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 </SelectContent>
               </Select>
             </div>
-            {/* Date */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Date *</label>
               <Input
@@ -568,7 +544,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 onChange={(e) => handleChange('date', e.target.value)}
               />
             </div>
-            {/* Start Time */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Start Time *</label>
               <Input
@@ -578,7 +553,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 onChange={(e) => handleChange('start_time', e.target.value)}
               />
             </div>
-            {/* End Time */}
             <div className="space-y-2">
               <label className="text-sm font-medium">End Time *</label>
               <Input
@@ -597,7 +571,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             </div>
           )}
 
-          {/* Reason */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Reason for Overtime *</label>
             <Textarea
@@ -609,7 +582,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             />
           </div>
 
-          {/* Emergency Contact (optional) */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Emergency Contact (optional)</label>
             <Input
@@ -619,7 +591,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             />
           </div>
 
-          {/* Hidden fields for DB compatibility */}
           <input type="hidden" name="hourly_rate" value={formData.hourly_rate} />
 
           <DialogFooter>
@@ -637,7 +608,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
   );
 };
 
-// Overtime Details Modal – earnings/rate hidden
+// Overtime Details Modal
 const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onEdit }) => {
   const [updating, setUpdating] = useState(false);
   const typeConfig = OVERTIME_TYPES[overtime.overtime_type];
@@ -684,7 +655,6 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Employee Info */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -702,7 +672,6 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
               </CardContent>
             </Card>
 
-            {/* Overtime Details */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -740,7 +709,6 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
             </Card>
           </div>
 
-          {/* Reason */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -748,11 +716,10 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap text-sm">{overtime.reason}</p>
+              <p className="whitespace-pre-wrap text-sm break-words">{overtime.reason}</p>
             </CardContent>
           </Card>
 
-          {/* Actions */}
           <div className="flex flex-wrap gap-2 justify-end">
             <Button variant="outline" onClick={() => { onEdit(overtime); onClose(); }}>
               <Edit className="h-4 w-4 mr-2" /> Edit
@@ -785,9 +752,8 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
   );
 };
 
-// Summary Card Component – shows totals per employee, with hide option
-const EmployeeSummary = ({ data, show, onToggle }) => {
-  // Group by employee and calculate totals
+// Employee Summary Component
+const EmployeeSummary = ({ data, show, onToggle, sortBy, sortOrder }) => {
   const summary = useMemo(() => {
     const map = new Map();
     data.forEach((item) => {
@@ -804,8 +770,27 @@ const EmployeeSummary = ({ data, show, onToggle }) => {
       entry.count += 1;
       entry.totalHours += calculateHours(item.start_time, item.end_time, item.date);
     });
-    return Array.from(map.values()).sort((a, b) => b.totalHours - a.totalHours);
-  }, [data]);
+
+    let sorted = Array.from(map.values());
+    
+    if (sortBy === 'name') {
+      sorted.sort((a, b) => a.employee_name.localeCompare(b.employee_name));
+    } else if (sortBy === 'hours') {
+      sorted.sort((a, b) => a.totalHours - b.totalHours);
+    } else {
+      sorted.sort((a, b) => b.totalHours - a.totalHours);
+    }
+
+    if (sortOrder === 'desc' && sortBy !== 'hours') {
+      if (sortBy === 'name') sorted.reverse();
+    } else if (sortOrder === 'asc' && sortBy === 'hours') {
+      // already asc
+    } else if (sortOrder === 'desc' && sortBy === 'hours') {
+      sorted.reverse();
+    }
+
+    return sorted;
+  }, [data, sortBy, sortOrder]);
 
   if (summary.length === 0) return null;
 
@@ -844,7 +829,7 @@ const EmployeeSummary = ({ data, show, onToggle }) => {
                 {summary.map((emp) => (
                   <TableRow key={emp.employee_id}>
                     <TableCell>
-                      <div className="font-medium">{emp.employee_name}</div>
+                      <div className="font-medium break-words">{emp.employee_name}</div>
                       <div className="text-xs text-muted-foreground">{emp.employee_id}</div>
                     </TableCell>
                     <TableCell className="text-right">{emp.count}</TableCell>
@@ -869,6 +854,7 @@ export default function OvertimeManagementPage() {
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [filter, setFilter] = useState('all'); // status filter
+  const [typeFilter, setTypeFilter] = useState('all'); // overtime type filter
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -876,7 +862,12 @@ export default function OvertimeManagementPage() {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [showSummary, setShowSummary] = useState(true); // toggle for employee summary
+  const [showSummary, setShowSummary] = useState(true);
+  // Sorting
+  const [sortBy, setSortBy] = useState('date'); // 'date', 'name', 'hours'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
+  // Expanded rows in table view
+  const [expandedRows, setExpandedRows] = useState(new Set());
 
   // Get unique employees for dropdown
   const employeeOptions = useMemo(() => {
@@ -895,9 +886,9 @@ export default function OvertimeManagementPage() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Build filters for API
       const apiFilters = {
         status: filter === 'all' ? null : filter,
+        overtime_type: typeFilter === 'all' ? null : typeFilter,
         employee_id: employeeFilter === 'all' ? null : employeeFilter,
         date_from: dateFrom || null,
         date_to: dateTo || null,
@@ -913,7 +904,7 @@ export default function OvertimeManagementPage() {
 
   useEffect(() => {
     fetchAllData();
-  }, [filter, employeeFilter, dateFrom, dateTo]); // refetch when filters change
+  }, [filter, typeFilter, employeeFilter, dateFrom, dateTo]);
 
   const handleCreate = async (data) => {
     const newItem = await createOvertime(data);
@@ -939,9 +930,22 @@ export default function OvertimeManagementPage() {
     setOvertime((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Client-side search (overrides API filters for quick search)
-  const filteredOvertime = useMemo(() => {
+  const toggleRowExpanded = (id, e) => {
+    e.stopPropagation();
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const processedOvertime = useMemo(() => {
     let filtered = overtime;
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -951,25 +955,39 @@ export default function OvertimeManagementPage() {
           ot.position?.toLowerCase().includes(term)
       );
     }
-    return filtered;
-  }, [overtime, searchTerm]);
 
-  // Stats
+    const sorted = [...filtered].sort((a, b) => {
+      let compare = 0;
+      if (sortBy === 'date') {
+        compare = new Date(a.date) - new Date(b.date);
+      } else if (sortBy === 'name') {
+        compare = a.employee_name.localeCompare(b.employee_name);
+      } else if (sortBy === 'hours') {
+        const hoursA = calculateHours(a.start_time, a.end_time, a.date);
+        const hoursB = calculateHours(b.start_time, b.end_time, b.date);
+        compare = hoursA - hoursB;
+      }
+      return sortOrder === 'asc' ? compare : -compare;
+    });
+
+    return sorted;
+  }, [overtime, searchTerm, sortBy, sortOrder]);
+
   const stats = useMemo(() => {
-    const total = filteredOvertime.length;
-    const pending = filteredOvertime.filter((ot) => ot.status === 'pending').length;
-    const approved = filteredOvertime.filter((ot) => ot.status === 'approved').length;
-    const rejected = filteredOvertime.filter((ot) => ot.status === 'rejected').length;
-    const totalHours = filteredOvertime.reduce((sum, ot) => {
+    const total = processedOvertime.length;
+    const pending = processedOvertime.filter((ot) => ot.status === 'pending').length;
+    const approved = processedOvertime.filter((ot) => ot.status === 'approved').length;
+    const rejected = processedOvertime.filter((ot) => ot.status === 'rejected').length;
+    const totalHours = processedOvertime.reduce((sum, ot) => {
       const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
       return sum + hours;
     }, 0);
     return { total, pending, approved, rejected, totalHours: Math.round(totalHours * 100) / 100 };
-  }, [filteredOvertime]);
+  }, [processedOvertime]);
 
-  // Clear advanced filters
   const clearFilters = () => {
     setEmployeeFilter('all');
+    setTypeFilter('all');
     setDateFrom('');
     setDateTo('');
     setFilter('all');
@@ -980,7 +998,6 @@ export default function OvertimeManagementPage() {
     <div className="min-h-screen bg-background">
       <Toaster position="top-right" richColors />
 
-      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-4">
@@ -1003,7 +1020,7 @@ export default function OvertimeManagementPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportToExcel(filteredOvertime)}
+              onClick={() => exportToExcel(processedOvertime)}
               title="Export to Excel"
             >
               <FileDown className="h-4 w-4 mr-2" /> Export
@@ -1019,7 +1036,6 @@ export default function OvertimeManagementPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Hero */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Overtime Management</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -1027,7 +1043,6 @@ export default function OvertimeManagementPage() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard title="Total Requests" value={stats.total} icon={FileText} />
           <StatCard
@@ -1045,7 +1060,6 @@ export default function OvertimeManagementPage() {
           <StatCard title="Total Hours" value={`${stats.totalHours} h`} icon={TrendingUp} />
         </div>
 
-        {/* Filters & View Toggle */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -1054,7 +1068,6 @@ export default function OvertimeManagementPage() {
                 <h2 className="text-lg font-semibold">Overtime Requests</h2>
               </div>
               <div className="flex flex-wrap items-center gap-4">
-                {/* Search */}
                 <div className="relative w-full lg:w-64">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -1064,7 +1077,25 @@ export default function OvertimeManagementPage() {
                     className="pl-9"
                   />
                 </div>
-                {/* Advanced filters toggle */}
+
+                <Select value={`${sortBy}-${sortOrder}`} onValueChange={(val) => {
+                  const [by, order] = val.split('-');
+                  setSortBy(by);
+                  setSortOrder(order);
+                }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">Date (Newest)</SelectItem>
+                    <SelectItem value="date-asc">Date (Oldest)</SelectItem>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="hours-desc">Hours (High-Low)</SelectItem>
+                    <SelectItem value="hours-asc">Hours (Low-High)</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -1074,7 +1105,6 @@ export default function OvertimeManagementPage() {
                   <Filter className="h-4 w-4" />
                   {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
                 </Button>
-                {/* View toggle */}
                 <div className="flex rounded-md border">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -1096,7 +1126,6 @@ export default function OvertimeManagementPage() {
               </div>
             </div>
 
-            {/* Advanced Filters Panel */}
             {showAdvancedFilters && (
               <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
                 <div className="flex items-center justify-between mb-3">
@@ -1106,7 +1135,6 @@ export default function OvertimeManagementPage() {
                   </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Employee filter */}
                   <div>
                     <label className="text-xs text-muted-foreground">Employee</label>
                     <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
@@ -1123,7 +1151,22 @@ export default function OvertimeManagementPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {/* Date from */}
+                  <div>
+                    <label className="text-xs text-muted-foreground">Overtime Type</label>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {Object.entries(OVERTIME_TYPES).map(([key, type]) => (
+                          <SelectItem key={key} value={key}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Date From</label>
                     <Input
@@ -1133,7 +1176,6 @@ export default function OvertimeManagementPage() {
                       className="mt-1"
                     />
                   </div>
-                  {/* Date to */}
                   <div>
                     <label className="text-xs text-muted-foreground">Date To</label>
                     <Input
@@ -1143,7 +1185,6 @@ export default function OvertimeManagementPage() {
                       className="mt-1"
                     />
                   </div>
-                  {/* Status filter (quick) */}
                   <div>
                     <label className="text-xs text-muted-foreground">Status</label>
                     <Select value={filter} onValueChange={setFilter}>
@@ -1163,12 +1204,13 @@ export default function OvertimeManagementPage() {
             )}
           </CardHeader>
           <CardContent>
-            {/* Employee Summary with hide toggle */}
-            {filteredOvertime.length > 0 && (
+            {processedOvertime.length > 0 && (
               <EmployeeSummary
-                data={filteredOvertime}
+                data={processedOvertime}
                 show={showSummary}
                 onToggle={setShowSummary}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
               />
             )}
 
@@ -1176,7 +1218,7 @@ export default function OvertimeManagementPage() {
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : filteredOvertime.length === 0 ? (
+            ) : processedOvertime.length === 0 ? (
               <div className="text-center py-12">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">No overtime requests found</h3>
@@ -1193,7 +1235,7 @@ export default function OvertimeManagementPage() {
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredOvertime.map((ot) => (
+                {processedOvertime.map((ot) => (
                   <OvertimeCard
                     key={ot.id}
                     overtime={ot}
@@ -1208,6 +1250,7 @@ export default function OvertimeManagementPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10"></TableHead>
                       <TableHead>Employee</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Date</TableHead>
@@ -1218,46 +1261,91 @@ export default function OvertimeManagementPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredOvertime.map((ot) => {
+                    {processedOvertime.map((ot) => {
                       const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
+                      const isExpanded = expandedRows.has(ot.id);
                       return (
-                        <TableRow
-                          key={ot.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => setSelectedOvertime(ot)}
-                        >
-                          <TableCell>
-                            <div className="font-medium">{ot.employee_name}</div>
-                            <div className="text-xs text-muted-foreground">{ot.employee_id}</div>
-                          </TableCell>
-                          <TableCell>
-                            <TypeBadge type={ot.overtime_type} />
-                          </TableCell>
-                          <TableCell>{formatDate(ot.date)}</TableCell>
-                          <TableCell>
-                            {formatTime(ot.start_time)} – {formatTime(ot.end_time)}
-                          </TableCell>
-                          <TableCell>{hours} h</TableCell>
-                          <TableCell>
-                            <StatusBadge status={ot.status} />
-                          </TableCell>
-                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedOvertime(ot)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => { setEditData(ot); setShowForm(true); }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                        <React.Fragment key={ot.id}>
+                          <TableRow
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => setSelectedOvertime(ot)}
+                          >
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 text-xs"
+                                onClick={(e) => toggleRowExpanded(ot.id, e)}
+                              >
+                                {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                                <span className="hidden sm:inline">{isExpanded ? 'Hide details' : 'View details'}</span>
+                              </Button>
+                            </TableCell>
+                            <TableCell className="max-w-[200px]">
+                              <div className="font-medium break-words">{ot.employee_name}</div>
+                              <div className="text-xs text-muted-foreground break-words">{ot.employee_id}</div>
+                            </TableCell>
+                            <TableCell>
+                              <TypeBadge type={ot.overtime_type} />
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{formatDate(ot.date)}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {formatTime(ot.start_time)} – {formatTime(ot.end_time)}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{hours} h</TableCell>
+                            <TableCell>
+                              <StatusBadge status={ot.status} />
+                            </TableCell>
+                            <TableCell className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => setSelectedOvertime(ot)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => { setEditData(ot); setShowForm(true); }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          {isExpanded && (
+                            <TableRow className="bg-muted/20">
+                              <TableCell colSpan={8} className="p-4">
+                                <div className="space-y-3 w-full">
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">Reason</p>
+                                    <p className="text-sm break-words whitespace-pre-wrap">{ot.reason || 'No reason provided'}</p>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Contact</p>
+                                      <p className="font-medium break-words">{ot.contact_number}</p>
+                                    </div>
+                                    {ot.emergency_contact && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">Emergency</p>
+                                        <p className="font-medium break-words">{ot.emergency_contact}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {ot.notes && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Notes</p>
+                                      <p className="text-sm break-words whitespace-pre-wrap">{ot.notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </TableBody>
@@ -1268,7 +1356,6 @@ export default function OvertimeManagementPage() {
         </Card>
       </main>
 
-      {/* Modals */}
       {showForm && (
         <OvertimeApplicationForm
           onClose={() => {
