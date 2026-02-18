@@ -1613,7 +1613,7 @@ export default function PPEManagement() {
                   <div className="text-center space-y-3">
                     <Loader2 className="h-12 w-12 animate-spin text-slate-600 mx-auto" />
                     <p className="text-slate-600 font-semibold">
-                      Loading employee PPE records...
+                      Loading PPE records...
                     </p>
                   </div>
                 </div>
