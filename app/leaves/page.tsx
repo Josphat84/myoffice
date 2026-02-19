@@ -307,34 +307,20 @@ const createLeave = async (leaveData: Partial<Leave>): Promise<Leave> => {
 };
 
 const updateLeave = async (leaveId: string, leaveData: Partial<Leave>): Promise<Leave> => {
+  // Use PATCH as the server likely expects it
   const response = await fetch(`${LEAVES_API}/${leaveId}`, {
-    method: 'PATCH',
+    method: 'PATCH', // Changed from PUT to PATCH
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ...leaveData,
       total_days: calculateDays(leaveData.start_date, leaveData.end_date)
     }),
   });
-
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Failed to update leave: ${response.status} - ${errorText}`);
   }
-
-  // Check if response has content
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    const data = await response.json();
-    return data;
-  } else {
-    // No content returned, assume success and construct a response
-    // Use the provided leaveData plus the id
-    return {
-      ...leaveData,
-      id: leaveId,
-      total_days: calculateDays(leaveData.start_date, leaveData.end_date),
-    } as Leave;
-  }
+  return await response.json();
 };
 
 const updateLeaveStatus = async (leaveId: string, status: Leave['status'], notes?: string): Promise<Leave> => {
@@ -1582,4 +1568,4 @@ export default function LeaveManagementPage() {
       )}
     </div>
   );
-}
+}``
