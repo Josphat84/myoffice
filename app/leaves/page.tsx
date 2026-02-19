@@ -321,14 +321,12 @@ const updateLeave = async (leaveId: string, leaveData: Partial<Leave>): Promise<
     throw new Error(`Failed to update leave: ${response.status} - ${errorText}`);
   }
 
-  // Check if response has content
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
     const data = await response.json();
     return data;
   } else {
     // No content returned, assume success and construct a response
-    // Use the provided leaveData plus the id
     return {
       ...leaveData,
       id: leaveId,
@@ -368,34 +366,42 @@ const getDefaultBalance = (): LeaveBalance => ({
   study: { total: 10, used: 0, pending: 0, remaining: 10 }
 });
 
-// Status Badge Component
+// ============= FIXED: Status Badge Component =============
 const StatusBadge = ({ status }: { status: Leave['status'] }) => {
+  // Map status to variant and custom class (since 'success' is not a valid Badge variant)
   const config = {
     pending: { 
       variant: 'secondary' as const, 
       icon: Clock, 
-      label: 'Pending Review' 
+      label: 'Pending Review',
+      className: '' 
     },
     approved: { 
-      variant: 'success' as const, 
+      variant: 'default' as const, 
       icon: CheckCircle2, 
-      label: 'Approved' 
+      label: 'Approved',
+      className: 'bg-emerald-100 text-emerald-800 border-emerald-200' 
     },
     rejected: { 
       variant: 'destructive' as const, 
       icon: XCircle, 
-      label: 'Rejected' 
+      label: 'Rejected',
+      className: '' 
     }
   }[status] || { 
     variant: 'outline' as const, 
     icon: Clock, 
-    label: 'Unknown' 
+    label: 'Unknown',
+    className: '' 
   };
 
   const Icon = config.icon;
 
   return (
-    <Badge variant={config.variant} className="gap-1 px-2 py-1 whitespace-nowrap">
+    <Badge 
+      variant={config.variant} 
+      className={`gap-1 px-2 py-1 whitespace-nowrap ${config.className}`}
+    >
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>
@@ -612,7 +618,7 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   );
 };
 
-// Leave Application Form (fixed controlled inputs and error handling)
+// Leave Application Form
 const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT001' }: {
   onClose: () => void;
   onSuccess: (message: string, leave?: Leave) => void;
@@ -633,7 +639,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
       handover_to: editData.handover_to || '',
       department: editData.department || '',
       manager_name: editData.manager_name || '',
-      applied_date: editData.applied_date // keep original applied date for updates
+      applied_date: editData.applied_date
     } : {
       employee_id: employeeId,
       employee_name: '',
@@ -842,7 +848,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
                 required
                 value={formData.end_date || ''}
                 onChange={(e) => handleChange('end_date', e.target.value)}
-                min={formData.start_date} // keep relative validation
+                min={formData.start_date}
               />
               {validationErrors.end_date && (
                 <p className="text-sm text-destructive">{validationErrors.end_date}</p>
@@ -872,7 +878,6 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
             )}
           </div>
 
-          {/* Additional info (emergency contact, handover) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_contact">Emergency Contact</Label>
@@ -1028,7 +1033,6 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
             </CardContent>
           </Card>
 
-          {/* Approval statuses if present */}
           {(leave.manager_approval || leave.hr_approval) && (
             <Card>
               <CardHeader className="pb-2">
@@ -1038,7 +1042,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
                 {leave.manager_approval && (
                   <div>
                     <p className="text-xs text-muted-foreground">Manager</p>
-                    <Badge variant={leave.manager_approval === 'approved' ? 'success' : leave.manager_approval === 'rejected' ? 'destructive' : 'secondary'}>
+                    <Badge variant={leave.manager_approval === 'approved' ? 'default' : leave.manager_approval === 'rejected' ? 'destructive' : 'secondary'}>
                       {leave.manager_approval}
                     </Badge>
                   </div>
@@ -1046,7 +1050,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
                 {leave.hr_approval && (
                   <div>
                     <p className="text-xs text-muted-foreground">HR</p>
-                    <Badge variant={leave.hr_approval === 'approved' ? 'success' : leave.hr_approval === 'rejected' ? 'destructive' : 'secondary'}>
+                    <Badge variant={leave.hr_approval === 'approved' ? 'default' : leave.hr_approval === 'rejected' ? 'destructive' : 'secondary'}>
                       {leave.hr_approval}
                     </Badge>
                   </div>
@@ -1055,7 +1059,6 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
             </Card>
           )}
 
-          {/* Supporting documents */}
           {leave.supporting_docs && leave.supporting_docs.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
@@ -1116,18 +1119,18 @@ export default function LeaveManagementPage() {
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<Leave | null>(null);
-  const [filter, setFilter] = useState<string>('all'); // status filter
-  const [typeFilter, setTypeFilter] = useState<string>('all'); // leave type filter
+  const [filter, setFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, days-desc, days-asc, name-asc, name-desc
+  const [sortBy, setSortBy] = useState('date-desc');
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState({ leaves: true, stats: false, balance: false });
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance>(getDefaultBalance());
-  const [showBalance, setShowBalance] = useState(false); // toggle for leave balances
+  const [showBalance, setShowBalance] = useState(false);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     pending: 0,
@@ -1138,7 +1141,7 @@ export default function LeaveManagementPage() {
     total_days_requested: 0,
     average_days: 0
   });
-  const [selectedEmployeeId] = useState('MNT001'); // simplified – just current user
+  const [selectedEmployeeId] = useState('MNT001');
 
   const fetchAllData = async () => {
     try {
@@ -1210,21 +1213,14 @@ export default function LeaveManagementPage() {
     }
   };
 
-  // Filtering and sorting
   const filteredLeaves = useMemo(() => {
     let filtered = leaves;
 
-    // Status filter
     if (filter !== 'all') filtered = filtered.filter(l => l.status === filter);
-
-    // Leave type filter
     if (typeFilter !== 'all') filtered = filtered.filter(l => l.leave_type === typeFilter);
-
-    // Date range filter
     if (dateFrom) filtered = filtered.filter(l => l.start_date >= dateFrom);
     if (dateTo) filtered = filtered.filter(l => l.end_date <= dateTo);
 
-    // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(l =>
@@ -1235,7 +1231,6 @@ export default function LeaveManagementPage() {
       );
     }
 
-    // Sorting
     const [sortField, sortDirection] = sortBy.split('-');
     filtered.sort((a, b) => {
       if (sortField === 'date') {
@@ -1267,7 +1262,6 @@ export default function LeaveManagementPage() {
     <div className="min-h-screen bg-background">
       <Toaster position="top-right" richColors />
 
-      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-4">
@@ -1301,7 +1295,6 @@ export default function LeaveManagementPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Hero */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Leave Management</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -1309,7 +1302,6 @@ export default function LeaveManagementPage() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Total Requests" value={stats.total} icon={FileText} color="slate" />
           <StatCard title="Pending" value={stats.pending} icon={Clock} color="amber" onClick={() => setFilter('pending')} />
@@ -1317,7 +1309,6 @@ export default function LeaveManagementPage() {
           <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
         </div>
 
-        {/* Leave Balance with toggle */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -1349,7 +1340,6 @@ export default function LeaveManagementPage() {
           )}
         </Card>
 
-        {/* Main content with advanced filters */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex flex-col lg:flex-row justify-between gap-4">
@@ -1360,7 +1350,6 @@ export default function LeaveManagementPage() {
                 </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-4">
-                {/* Search */}
                 <div className="relative w-full lg:w-64">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -1371,7 +1360,6 @@ export default function LeaveManagementPage() {
                   />
                 </div>
 
-                {/* Sort dropdown */}
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Sort by" />
@@ -1386,7 +1374,6 @@ export default function LeaveManagementPage() {
                   </SelectContent>
                 </Select>
 
-                {/* View toggle */}
                 <div className="flex rounded-md border">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -1408,10 +1395,8 @@ export default function LeaveManagementPage() {
               </div>
             </div>
 
-            {/* Advanced filters row */}
             <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Status filter */}
                 <div>
                   <Label className="text-xs">Status</Label>
                   <Select value={filter} onValueChange={setFilter}>
@@ -1427,7 +1412,6 @@ export default function LeaveManagementPage() {
                   </Select>
                 </div>
 
-                {/* Leave type filter */}
                 <div>
                   <Label className="text-xs">Leave Type</Label>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -1443,7 +1427,6 @@ export default function LeaveManagementPage() {
                   </Select>
                 </div>
 
-                {/* Date from */}
                 <div>
                   <Label className="text-xs">From Date</Label>
                   <Input
@@ -1454,7 +1437,6 @@ export default function LeaveManagementPage() {
                   />
                 </div>
 
-                {/* Date to */}
                 <div>
                   <Label className="text-xs">To Date</Label>
                   <Input
@@ -1561,7 +1543,6 @@ export default function LeaveManagementPage() {
         </Card>
       </main>
 
-      {/* Modals */}
       {showForm && (
         <LeaveApplicationForm
           onClose={() => { setShowForm(false); setEditData(null); }}
