@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { format, isToday, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks } from 'date-fns';
 import { useTheme } from 'next-themes';
 
-// shadcn/ui components (imports unchanged)
+// shadcn/ui components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,7 +125,7 @@ interface StandbySchedule {
   duration_days?: number;
 }
 
-// ---------- Utility Functions (unchanged) ----------
+// ---------- Utility Functions ----------
 const getStatusBadgeColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case "scheduled": return "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800";
@@ -279,11 +279,9 @@ const Cpu = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ---------- Form Schema (fixed for Zod compatibility) ----------
+// ---------- Form Schema ----------
 const scheduleFormSchema = z.object({
-  // For employeeId: use .min(1) to ensure it's not empty
   employeeId: z.string().min(1, 'Please select an employee'),
-  // For dates: use refine to provide a custom error message (compatible with older Zod)
   startDate: z.date().refine(val => val !== undefined, { message: 'Start date is required' }),
   endDate: z.date().refine(val => val !== undefined, { message: 'End date is required' }),
   residence: z.string().min(1, 'Residence is required'),
@@ -295,7 +293,10 @@ const scheduleFormSchema = z.object({
   path: ['endDate'],
 });
 
-type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
+// Form input type (raw values, with optional fields for those with defaults)
+type ScheduleFormInput = z.input<typeof scheduleFormSchema>;
+// Validated output type
+type ScheduleFormOutput = z.infer<typeof scheduleFormSchema>;
 
 // ---------- Theme Toggle ----------
 const ThemeToggle = () => {
@@ -651,14 +652,14 @@ const EmployeeStandbyScheduler = () => {
   const [selectedScheduleIds, setSelectedScheduleIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // ---------- Form with default values (controlled inputs) ----------
-  const form = useForm<ScheduleFormValues>({
+  // ---------- Form ----------
+  const form = useForm<ScheduleFormInput>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
-      employeeId: '',           // ensures controlled input
-      startDate: undefined,      // date picker handles undefined gracefully
+      employeeId: '',
+      startDate: undefined,
       endDate: undefined,
-      residence: '',            // ← this fixes the controlled/uncontrolled error
+      residence: '',
       status: 'scheduled',
       priority: 'medium',
       notes: '',
@@ -874,7 +875,7 @@ const EmployeeStandbyScheduler = () => {
   }, [standbySchedules]);
 
   // Create schedule handler
-  const handleCreateSchedule = async (values: ScheduleFormValues) => {
+  const handleCreateSchedule = async (values: ScheduleFormOutput) => {
     if (!values.employeeId || !values.startDate || !values.endDate || !values.residence.trim()) {
       toast.error('Please fill all required fields');
       return;
@@ -1623,7 +1624,7 @@ const EmployeeStandbyScheduler = () => {
                   />
                 </div>
 
-                {/* Residence field – now properly controlled because default value is '' */}
+                {/* Residence field – now properly controlled */}
                 <FormField
                   control={form.control}
                   name="residence"
