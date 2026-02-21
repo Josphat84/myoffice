@@ -295,7 +295,7 @@ const scheduleFormSchema = z.object({
 
 // Form input type (raw values, with optional fields for those with defaults)
 type ScheduleFormInput = z.input<typeof scheduleFormSchema>;
-// Validated output type
+// Validated output type (all fields required after validation)
 type ScheduleFormOutput = z.infer<typeof scheduleFormSchema>;
 
 // ---------- Theme Toggle ----------
@@ -1526,7 +1526,7 @@ const EmployeeStandbyScheduler = () => {
           </Tabs>
         </main>
 
-        {/* Create Schedule Dialog */}
+        {/* Create Schedule Dialog – fixed onSubmit with type assertion */}
         <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
@@ -1535,7 +1535,10 @@ const EmployeeStandbyScheduler = () => {
             </DialogHeader>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleCreateSchedule)} className="space-y-6">
+              <form 
+                onSubmit={form.handleSubmit((values) => handleCreateSchedule(values as ScheduleFormOutput))} 
+                className="space-y-6"
+              >
                 <FormField
                   control={form.control}
                   name="employeeId"
