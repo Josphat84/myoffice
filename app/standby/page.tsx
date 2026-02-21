@@ -1221,7 +1221,12 @@ const EmployeeStandbyScheduler = () => {
                         <Calendar
                           mode="range"
                           selected={dateRange}
-                          onSelect={(range) => setDateRange(range ?? { from: undefined, to: undefined })}
+                          onSelect={(range) => {
+                            setDateRange(range 
+                              ? { from: range.from, to: range.to } 
+                              : { from: undefined, to: undefined }
+                            );
+                          }}
                           initialFocus
                           numberOfMonths={2}
                         />
