@@ -1199,7 +1199,7 @@ const EmployeeStandbyScheduler = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    {/* Date range picker */}
+                    {/* Date range picker – fixed onSelect */}
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full sm:w-auto">
@@ -1221,7 +1221,7 @@ const EmployeeStandbyScheduler = () => {
                         <Calendar
                           mode="range"
                           selected={dateRange}
-                          onSelect={setDateRange}
+                          onSelect={(range) => setDateRange(range ?? { from: undefined, to: undefined })}
                           initialFocus
                           numberOfMonths={2}
                         />
@@ -1624,7 +1624,6 @@ const EmployeeStandbyScheduler = () => {
                   />
                 </div>
 
-                {/* Residence field – now properly controlled */}
                 <FormField
                   control={form.control}
                   name="residence"
