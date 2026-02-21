@@ -1,6 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { format, isToday, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks } from 'date-fns';
+import { useTheme } from 'next-themes';
+
+// shadcn/ui components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +25,13 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+// Icons
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -58,20 +72,23 @@ import {
   AlertTriangle,
   Zap as ZapIcon,
   Flame,
-  X as XIcon} from 'lucide-react';
-import { format, isToday, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks } from 'date-fns';
+  X as XIcon,
+  MoreVertical,
+  Sun,
+  Moon,
+} from 'lucide-react';
 
-// API Configuration
+// ---------- API Configuration ----------
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const EMPLOYEES_API_URL = `${API_BASE_URL}/api/employees`;
 const STANDBY_API_URL = `${API_BASE_URL}/api/standby`;
 
-// Types
+// ---------- Types ----------
 interface Employee {
   id: string;
   name: string;
   position: string;
-  designation?: string; // Added designation field
+  designation?: string;
   department: string;
   contact: string;
   email: string;
@@ -108,35 +125,35 @@ interface StandbySchedule {
   duration_days?: number;
 }
 
-// Utility Functions
+// ---------- Utility Functions ----------
 const getStatusBadgeColor = (status: string) => {
   switch (status?.toLowerCase()) {
-    case "scheduled": return "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200";
-    case "active": return "bg-green-100 text-green-800 hover:bg-green-100 border-green-200";
-    case "completed": return "bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-200";
-    case "cancelled": return "bg-red-100 text-red-800 hover:bg-red-100 border-red-200";
-    default: return "bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-200";
+    case "scheduled": return "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800";
+    case "active": return "bg-green-100 text-green-800 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800";
+    case "completed": return "bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+    case "cancelled": return "bg-red-100 text-red-800 hover:bg-red-100 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800";
+    default: return "bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
   }
 };
 
 const getPriorityColor = (priority: string) => {
   switch (priority?.toLowerCase()) {
-    case "critical": return "bg-red-100 text-red-800 border-red-300";
-    case "high": return "bg-orange-100 text-orange-800 border-orange-300";
-    case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    case "low": return "bg-blue-100 text-blue-800 border-blue-300";
-    default: return "bg-gray-100 text-gray-800 border-gray-300";
+    case "critical": return "bg-red-100 text-red-800 border-red-300 dark:bg-red-950 dark:text-red-300 dark:border-red-800";
+    case "high": return "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800";
+    case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800";
+    case "low": return "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800";
+    default: return "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
   }
 };
 
 const getAvailabilityColor = (availability: string) => {
   switch (availability?.toLowerCase()) {
-    case "available": return "bg-green-100 text-green-800 border-green-200";
-    case "busy": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "vacation": return "bg-purple-100 text-purple-800 border-purple-200";
-    case "off-duty": return "bg-gray-100 text-gray-800 border-gray-200";
-    case "on-standby": return "bg-blue-100 text-blue-800 border-blue-200";
-    default: return "bg-gray-100 text-gray-800 border-gray-200";
+    case "available": return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800";
+    case "busy": return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800";
+    case "vacation": return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800";
+    case "off-duty": return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+    case "on-standby": return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800";
+    default: return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
   }
 };
 
@@ -213,9 +230,8 @@ const extractEmployeeData = (data: any): Employee => {
     (data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : null) ||
     'Employee';
 
-  // Get position and designation
   const position = data.position || data.job_title || data.Position || data.JobTitle || 'Position';
-  const designation = data.designation || data.Designation || position; // Use position as fallback for designation
+  const designation = data.designation || data.Designation || position;
 
   return {
     id: String(data.id || data.employee_id || Math.random().toString(36).substr(2, 9)),
@@ -243,7 +259,7 @@ const extractEmployeeData = (data: any): Employee => {
   };
 };
 
-// Icons for different positions
+// ---------- Custom Icons ----------
 const Wrench = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -263,7 +279,40 @@ const Cpu = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Enhanced Stats Card
+// ---------- Form Schema ----------
+const scheduleFormSchema = z.object({
+  employeeId: z.string({ required_error: 'Please select an employee' }),
+  startDate: z.date({ required_error: 'Start date is required' }),
+  endDate: z.date({ required_error: 'End date is required' }),
+  residence: z.string().min(1, 'Residence is required'),
+  status: z.enum(['scheduled', 'active', 'completed', 'cancelled']).default('scheduled'),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+  notes: z.string().optional(),
+}).refine(data => data.endDate >= data.startDate, {
+  message: 'End date must be after or equal to start date',
+  path: ['endDate'],
+});
+
+type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
+
+// ---------- Theme Toggle ----------
+const ThemeToggle = () => {
+  const { theme, setTheme } = useTheme();
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      className="rounded-full"
+    >
+      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  );
+};
+
+// ---------- Stats Card ----------
 const StatsCard = ({ title, value, icon: Icon, color, trend, description, onClick }: {
   title: string;
   value: string | number;
@@ -273,18 +322,16 @@ const StatsCard = ({ title, value, icon: Icon, color, trend, description, onClic
   description?: string;
   onClick?: () => void;
 }) => (
-  <Card 
-    className={`group hover:shadow-lg transition-all duration-200 ${onClick ? 'cursor-pointer hover:border-blue-300' : ''}`}
+  <Card
+    className={`group hover:shadow-lg transition-all duration-200 ${onClick ? 'cursor-pointer hover:border-primary' : ''}`}
     onClick={onClick}
   >
     <CardContent className="p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-          <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{value}</h3>
-          {description && (
-            <p className="text-xs text-gray-500 mt-2">{description}</p>
-          )}
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{title}</p>
+          <h3 className="text-3xl font-extrabold text-foreground">{value}</h3>
+          {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
           {trend && (
             <div className="flex items-center gap-1.5 mt-3">
               <TrendingUpIcon className={`w-4 h-4 ${trend.isPositive ? 'text-green-500' : 'text-red-500'}`} />
@@ -302,163 +349,120 @@ const StatsCard = ({ title, value, icon: Icon, color, trend, description, onClic
   </Card>
 );
 
-// Enhanced Employee Card with Designation and Consistent Grid Layout
-const EmployeeCard = ({ employee, onSchedule }: { 
-  employee: Employee; 
-  onSchedule: (employee: Employee) => void;
-}) => {
+// ---------- Employee Card ----------
+const EmployeeCard = ({ employee, onSchedule }: { employee: Employee; onSchedule: (emp: Employee) => void }) => {
   const avatarColor = generateAvatarColor(employee.id);
   const phoneNumber = employee.contact?.replace(/\D/g, '');
-  
+
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 overflow-hidden border hover:border-blue-300 h-full flex flex-col">
+    <Card className="group hover:shadow-lg transition-all duration-200 overflow-hidden border hover:border-primary/50 h-full flex flex-col">
       <CardContent className="p-6 flex-1">
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-4">
-            <Avatar className={`h-12 w-12 ${avatarColor} text-white`}>
-              <AvatarFallback className="text-sm font-semibold">
-                {getInitials(employee.name)}
-              </AvatarFallback>
+            <Avatar className={`h-12 w-12 ring-2 ring-primary/10 ${avatarColor}`}>
+              <AvatarFallback className="text-sm font-semibold">{getInitials(employee.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900 truncate">
-                  {employee.name}
-                </h3>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <h3 className="font-semibold text-foreground cursor-help">{employee.name}</h3>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{employee.name}</p>
+                        <p className="text-xs text-muted-foreground">{employee.position}{employee.designation && ` • ${employee.designation}`}</p>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        {phoneNumber ? (
+                          <a href={`tel:${phoneNumber}`} className="hover:underline text-primary">{formatPhoneNumber(employee.contact)}</a>
+                        ) : <span>No contact</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        {employee.email !== 'No Email' ? (
+                          <a href={`mailto:${employee.email}`} className="hover:underline text-primary">{employee.email}</a>
+                        ) : <span>No email</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{employee.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge variant="secondary" className="text-xs">{employee.position}</Badge>
+                {employee.designation && employee.designation !== employee.position && (
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">{employee.designation}</Badge>
+                )}
                 {employee.is_active ? (
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-green-500" title="Active" />
                 ) : (
-                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-400" title="Inactive" />
                 )}
               </div>
-              
-              {/* Designation and Position */}
-              <div className="flex items-center gap-2 mb-2">
-                {employee.designation && employee.designation !== employee.position ? (
-                  <>
-                    <Badge variant="secondary" className="text-xs font-medium bg-blue-50 text-blue-700 border-blue-200">
-                      {employee.designation}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs font-medium">
-                      {employee.position}
-                    </Badge>
-                  </>
-                ) : (
-                  <Badge variant="secondary" className="text-xs font-medium">
-                    {employee.position}
+
+              <div className="flex gap-2 mt-2">
+                {employee.availability && (
+                  <Badge className={`text-xs ${getAvailabilityColor(employee.availability)}`}>
+                    {employee.availability.replace('-', ' ')}
                   </Badge>
                 )}
-                
                 {employee.experience_years && employee.experience_years > 0 && (
-                  <Badge variant="outline" className="text-xs">
-                    {employee.experience_years}y exp
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  <Building2 className="w-3 h-3 mr-1" />
-                  {employee.department}
-                </Badge>
-                <Badge className={`text-xs ${getAvailabilityColor(employee.availability || 'available')}`}>
-                  {employee.availability?.replace('-', ' ') || 'available'}
-                </Badge>
-                {employee.certifications && employee.certifications.length > 0 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-xs cursor-help">
-                        {employee.certifications.length} certs
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">{employee.certifications.join(', ')}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <Badge variant="outline" className="text-xs">{employee.experience_years}y exp</Badge>
                 )}
               </div>
             </div>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onSchedule(employee)}>
+                <CalendarDays className="h-4 w-4 mr-2" /> Schedule Standby
+              </DropdownMenuItem>
+              <DropdownMenuItem>View Profile</DropdownMenuItem>
+              <DropdownMenuItem>Send Notification</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="space-y-3 mb-5">
-          {/* Phone as clickable link */}
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <PhoneCall className="w-4 h-4 text-blue-500 flex-shrink-0" />
-            <div className="flex-1">
-              {phoneNumber ? (
-                <a 
-                  href={`tel:${phoneNumber}`}
-                  className="font-medium truncate text-blue-600 hover:text-blue-800 hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {formatPhoneNumber(employee.contact)}
-                </a>
-              ) : (
-                <span className="font-medium truncate">No Contact</span>
-              )}
-              {employee.emergency_contact && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Emergency: {formatPhoneNumber(employee.emergency_contact)}
-                </div>
-              )}
+          {phoneNumber && (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <PhoneCall className="w-4 h-4 text-primary flex-shrink-0" />
+              <a href={`tel:${phoneNumber}`} className="hover:underline text-primary font-medium">{formatPhoneNumber(employee.contact)}</a>
             </div>
-          </div>
-          
-          {/* Email as clickable link */}
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <MailIcon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-            {employee.email !== 'No Email' ? (
-              <a 
-                href={`mailto:${employee.email}`}
-                className="truncate text-emerald-600 hover:text-emerald-800 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {employee.email}
-              </a>
-            ) : (
-              <span className="truncate">{employee.email}</span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-3 text-sm text-gray-600">
+          )}
+          {employee.email !== 'No Email' && (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <MailIcon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <a href={`mailto:${employee.email}`} className="hover:underline text-emerald-600 dark:text-emerald-400 font-medium">{employee.email}</a>
+            </div>
+          )}
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <Navigation className="w-4 h-4 text-red-500 flex-shrink-0" />
             <span className="truncate">{employee.location}</span>
           </div>
-          
-          {employee.current_project && (
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <Target className="w-4 h-4 text-purple-500 flex-shrink-0" />
-              <span className="truncate">Project: {employee.current_project}</span>
-            </div>
-          )}
-          
-          {employee.skills && employee.skills.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs font-medium text-gray-500 mb-1">Skills:</p>
-              <div className="flex flex-wrap gap-1">
-                {employee.skills.slice(0, 3).map((skill, index) => (
-                  <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                    {skill}
-                  </span>
-                ))}
-                {employee.skills.length > 3 && (
-                  <span className="text-xs text-gray-500">
-                    +{employee.skills.length - 3} more
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </CardContent>
-      
+
       <div className="p-6 pt-0 mt-auto">
-        <Button 
-          className="w-full"
-          onClick={() => onSchedule(employee)}
-          size="sm"
-        >
+        <Button className="w-full" onClick={() => onSchedule(employee)} size="sm">
           <CalendarDays className="w-4 h-4 mr-2" />
           Schedule Standby
         </Button>
@@ -467,765 +471,153 @@ const EmployeeCard = ({ employee, onSchedule }: {
   );
 };
 
-// Enhanced Employee Select Component with Designation
-const EmployeeSelect = ({ 
-  employees, 
-  selectedEmployeeId, 
-  onSelect, 
-  label, 
-  placeholder 
-}: { 
-  employees: Employee[]; 
-  selectedEmployeeId: string; 
+// ---------- Employee Select (Command) ----------
+const EmployeeSelect = ({ employees, selectedEmployeeId, onSelect, label, placeholder }: {
+  employees: Employee[];
+  selectedEmployeeId: string;
   onSelect: (id: string) => void;
   label: string;
   placeholder: string;
 }) => {
-  const [search, setSearch] = useState("");
-  
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
   const filteredEmployees = useMemo(() => {
-    if (!search.trim()) return employees;
-    const query = search.toLowerCase();
+    if (!search) return employees;
+    const q = search.toLowerCase();
     return employees.filter(emp =>
-      emp.name.toLowerCase().includes(query) ||
-      emp.position.toLowerCase().includes(query) ||
-      (emp.designation && emp.designation.toLowerCase().includes(query)) ||
-      emp.department.toLowerCase().includes(query)
+      emp.name.toLowerCase().includes(q) ||
+      emp.position.toLowerCase().includes(q) ||
+      (emp.designation && emp.designation.toLowerCase().includes(q))
     );
   }, [employees, search]);
 
+  const selectedEmployee = employees.find(e => e.id === selectedEmployeeId);
+
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">{label} *</Label>
-      <Popover>
+      <Label>{label} *</Label>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between"
-          >
-            {selectedEmployeeId ? (
+          <Button variant="outline" role="combobox" className="w-full justify-between">
+            {selectedEmployee ? (
               <div className="flex items-center gap-2 truncate">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {getInitials(
-                      employees.find(e => e.id === selectedEmployeeId)?.name || ""
-                    )}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{getInitials(selectedEmployee.name)}</AvatarFallback>
                 </Avatar>
                 <div className="text-left truncate">
-                  <div className="truncate font-medium">
-                    {employees.find(e => e.id === selectedEmployeeId)?.name}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {employees.find(e => e.id === selectedEmployeeId)?.position}
-                    {employees.find(e => e.id === selectedEmployeeId)?.designation && 
-                     employees.find(e => e.id === selectedEmployeeId)?.designation !== employees.find(e => e.id === selectedEmployeeId)?.position && (
-                      <span> • {employees.find(e => e.id === selectedEmployeeId)?.designation}</span>
+                  <div className="truncate font-medium">{selectedEmployee.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {selectedEmployee.position}
+                    {selectedEmployee.designation && selectedEmployee.designation !== selectedEmployee.position && (
+                      <> • {selectedEmployee.designation}</>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
-              <span className="text-gray-500">{placeholder}</span>
+              <span className="text-muted-foreground">{placeholder}</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[60vh] p-0" align="start">
-          <div className="p-2">
-            <div className="relative mb-2">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search employees..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <ScrollArea className="h-64">
-              {filteredEmployees.length === 0 ? (
-                <div className="py-6 text-center">
-                  <User className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No employees found</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredEmployees.map(employee => (
-                    <Button
-                      key={employee.id}
-                      variant="ghost"
-                      className="w-full justify-start px-2 py-3 h-auto hover:bg-gray-100"
-                      onClick={() => onSelect(employee.id)}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-xs">
-                            {getInitials(employee.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-left flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{employee.name}</p>
-                          <div className="flex flex-col gap-1 mt-1">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs truncate max-w-[120px]">
-                                {employee.position}
-                              </Badge>
-                              {employee.designation && employee.designation !== employee.position && (
-                                <Badge variant="outline" className="text-xs truncate max-w-[120px] bg-blue-50 text-blue-700 border-blue-200">
-                                  {employee.designation}
-                                </Badge>
-                              )}
-                            </div>
-                            <span className="text-xs text-gray-600 truncate">{employee.department}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </div>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search employee..." value={search} onValueChange={setSearch} />
+            <CommandEmpty>No employee found.</CommandEmpty>
+            <CommandGroup className="max-h-64 overflow-y-auto">
+              {filteredEmployees.map(emp => (
+                <CommandItem
+                  key={emp.id}
+                  value={emp.name}
+                  onSelect={() => {
+                    onSelect(emp.id);
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">{getInitials(emp.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{emp.name}</p>
+                    <p className="text-xs text-muted-foreground">{emp.position}</p>
+                  </div>
+                  {emp.id === selectedEmployeeId && <Checkbox checked />}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
         </PopoverContent>
       </Popover>
     </div>
   );
 };
 
-// Enhanced Standby Overview Component
-const StandbyOverview = ({ schedules }: { schedules: StandbySchedule[] }) => {
-  const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [expandedDay, setExpandedDay] = useState<Date | null>(null);
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
-  
-  const weeklySchedules = useMemo(() => {
-    return schedules.filter(schedule => {
-      const start = parseISO(schedule.start_date);
-      const end = parseISO(schedule.end_date);
-      return (start <= weekEnd && end >= weekStart) || 
-             isSameDay(start, weekStart) || 
-             isSameDay(start, weekEnd) ||
-             isSameDay(end, weekStart) ||
-             isSameDay(end, weekEnd);
-    });
-  }, [schedules, weekStart, weekEnd]);
-
-  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
-
-  const getSchedulesForDay = (day: Date) => {
-    return weeklySchedules.filter(schedule => {
-      const start = parseISO(schedule.start_date);
-      const end = parseISO(schedule.end_date);
-      return day >= start && day <= end;
-    });
-  };
-
-  const getEmployeePositions = () => {
-    const positions = weeklySchedules.map(s => s.employee?.position).filter(Boolean) as string[];
-    const unique = [...new Set(positions)];
-    return unique;
-  };
-
-  const toggleDayExpansion = (day: Date) => {
-    if (expandedDay && isSameDay(expandedDay, day)) {
-      setExpandedDay(null);
-    } else {
-      setExpandedDay(day);
-    }
-  };
-
-  if (weeklySchedules.length === 0) {
-    return (
-      <Card className="h-full">
-        <CardContent className="py-12 text-center">
-          <CalendarClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No Standby This Week</h3>
-          <p className="text-gray-500">No employees are scheduled for standby this week</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="h-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-green-600" />
-              Weekly Standby Overview
-            </CardTitle>
-            <CardDescription>
-              {format(weekStart, 'MMM dd')} - {format(weekEnd, 'MMM dd, yyyy')}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentWeek(addWeeks(currentWeek, -1))}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setCurrentWeek(new Date());
-                setExpandedDay(null);
-              }}
-            >
-              This Week
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
-            >
-              <ChevronRightIcon className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {/* Summary */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              <div className="text-center">
-                <p className="text-sm font-medium text-blue-600 mb-1">Total on Standby</p>
-                <p className="text-3xl font-bold text-gray-900">{weeklySchedules.length}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-green-600 mb-1">Active Now</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {weeklySchedules.filter(s => s.status === 'active').length}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-orange-600 mb-1">Fitters</p>
-                <p className="text-3xl font-bold text-orange-600">
-                  {weeklySchedules.filter(s => 
-                    s.employee?.position?.toLowerCase().includes('fitter')).length}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-purple-600 mb-1">Positions</p>
-                <p className="text-3xl font-bold text-purple-600">
-                  {getEmployeePositions().length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Weekly Calendar View with Expandable Days */}
-          <div className="border rounded-xl overflow-hidden bg-white">
-            <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-                const dayDate = weekDays[index];
-                const daySchedules = getSchedulesForDay(dayDate);
-                const isTodayFlag = isToday(dayDate);
-                const isExpanded = expandedDay && isSameDay(expandedDay, dayDate);
-                
-                return (
-                  <div 
-                    key={day} 
-                    className={`p-3 text-center border-r last:border-r-0 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      isTodayFlag ? 'bg-blue-50' : ''
-                    }`}
-                    onClick={() => daySchedules.length > 0 && toggleDayExpansion(dayDate)}
-                  >
-                    <p className="text-sm font-medium text-gray-500">{day}</p>
-                    <div className="flex items-center justify-center gap-1 mt-1">
-                      <p className={`text-lg font-bold ${isTodayFlag ? 'text-blue-600' : 'text-gray-900'}`}>
-                        {format(dayDate, 'd')}
-                      </p>
-                      {daySchedules.length > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {daySchedules.length}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Expanded Day View */}
-            {expandedDay && (
-              <div className="border-t p-4 bg-blue-50">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">
-                    {format(expandedDay, 'EEEE, MMMM d, yyyy')}
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setExpandedDay(null)}
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {getSchedulesForDay(expandedDay).map(schedule => {
-                    const employee = schedule.employee;
-                    if (!employee) return null;
-                    
-                    return (
-                      <div key={schedule.id} className="bg-white p-3 rounded-lg border">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarFallback>
-                                {getInitials(employee.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-gray-900">{employee.name}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  {employee.position}
-                                </Badge>
-                                {employee.designation && employee.designation !== employee.position && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {employee.designation}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <Badge className={getStatusBadgeColor(schedule.status)}>
-                            {schedule.status}
-                          </Badge>
-                        </div>
-                        
-                        {/* Contact Information with clickable links */}
-                        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t">
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">Contact</p>
-                            <a 
-                              href={`tel:${employee.contact.replace(/\D/g, '')}`}
-                              className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                            >
-                              <Phone className="w-3 h-3" />
-                              {formatPhoneNumber(employee.contact)}
-                            </a>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">Residence</p>
-                            <p className="text-sm font-medium text-gray-900">{schedule.residence}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            
-            {/* Daily Schedule Grid */}
-            <div className="grid grid-cols-7 divide-x">
-              {weekDays.map((day, index) => {
-                const daySchedules = getSchedulesForDay(day);
-                const isExpanded = expandedDay && isSameDay(expandedDay, day);
-                
-                return (
-                  <div 
-                    key={index} 
-                    className={`min-h-48 p-2 ${isExpanded ? 'bg-blue-50' : ''}`}
-                  >
-                    <div className="space-y-2">
-                      {daySchedules.slice(0, isExpanded ? 10 : 3).map(schedule => (
-                        <div
-                          key={schedule.id}
-                          className={`text-xs p-2 rounded cursor-pointer truncate ${
-                            schedule.status === 'active' ? 'bg-green-100 text-green-700 border border-green-200 hover:bg-green-200' :
-                            schedule.status === 'scheduled' ? 'bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200' :
-                            'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
-                          }`}
-                          onClick={() => toggleDayExpansion(day)}
-                        >
-                          <div className="font-medium truncate">{schedule.employee?.name}</div>
-                          <div className="text-xs opacity-75 truncate mt-1">
-                            {schedule.employee?.position}
-                            {schedule.employee?.designation && schedule.employee.designation !== schedule.employee.position && (
-                              <span> • {schedule.employee.designation}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Show more indicator */}
-                      {daySchedules.length > 3 && !isExpanded && (
-                        <div 
-                          className="text-xs text-gray-500 text-center cursor-pointer hover:text-gray-700 hover:bg-gray-100 py-1 rounded"
-                          onClick={() => toggleDayExpansion(day)}
-                        >
-                          +{daySchedules.length - 3} more
-                        </div>
-                      )}
-                      
-                      {/* Show less indicator when expanded */}
-                      {isExpanded && daySchedules.length > 0 && (
-                        <div 
-                          className="text-xs text-blue-500 text-center cursor-pointer hover:text-blue-700 hover:bg-blue-50 py-1 rounded"
-                          onClick={() => setExpandedDay(null)}
-                        >
-                          Show less
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Employee List */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-semibold text-gray-700">Employees on Standby This Week</h4>
-              <Badge variant="outline" className="text-xs">
-                {weeklySchedules.length} employees
-              </Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-2">
-              {weeklySchedules.map(schedule => {
-                const employee = schedule.employee;
-                if (!employee) return null;
-                
-                const start = parseISO(schedule.start_date);
-                const end = parseISO(schedule.end_date);
-                const isActive = schedule.status === 'active';
-                const phoneNumber = employee.contact?.replace(/\D/g, '');
-                
-                return (
-                  <div key={schedule.id} className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border hover:shadow-sm transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="text-sm">
-                            {getInitials(employee.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-gray-900 truncate">{employee.name}</p>
-                            {isActive && (
-                              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-2 mt-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {employee.position}
-                              </Badge>
-                              {employee.designation && employee.designation !== employee.position && (
-                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                  {employee.designation}
-                                </Badge>
-                              )}
-                              <Badge className={getStatusBadgeColor(schedule.status)}>
-                                {schedule.status}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-4 text-xs text-gray-600">
-                              <span>
-                                {format(start, 'MMM dd')} - {format(end, 'MMM dd')}
-                              </span>
-                              {phoneNumber && (
-                                <a 
-                                  href={`tel:${phoneNumber}`}
-                                  className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Phone className="w-3 h-3" />
-                                  Call
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {schedule.priority && schedule.priority !== 'medium' && (
-                        <Badge className={`text-xs ${getPriorityColor(schedule.priority)}`}>
-                          {schedule.priority}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                          <MapPin className="w-3 h-3" />
-                          <span className="truncate">{schedule.residence}</span>
-                        </div>
-                        {employee.email && employee.email !== 'No Email' && (
-                          <a 
-                            href={`mailto:${employee.email}`}
-                            className="text-xs text-emerald-600 hover:text-emerald-800 hover:underline flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Mail className="w-3 h-3" />
-                            Email
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Enhanced Calendar View Component with Expandable Days
-const CalendarView = ({ schedules, onView }: {
-  schedules: StandbySchedule[];
-  onView: (schedule: StandbySchedule) => void;
+// ---------- Schedule Card ----------
+const ScheduleCard = ({ schedule, onView, onDelete }: {
+  schedule: StandbySchedule;
+  onView: (s: StandbySchedule) => void;
+  onDelete: (id: number) => void;
 }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [expandedDay, setExpandedDay] = useState<Date | null>(null);
-  const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-  const end = endOfWeek(currentDate, { weekStartsOn: 0 });
-  const weekDays = eachDayOfInterval({ start, end });
-
-  const getSchedulesForDay = (day: Date) => {
-    return schedules.filter(schedule => {
-      const start = parseISO(schedule.start_date);
-      const end = parseISO(schedule.end_date);
-      return (day >= start && day <= end) || isSameDay(day, start) || isSameDay(day, end);
-    });
-  };
-
-  const toggleDayExpansion = (day: Date) => {
-    const daySchedules = getSchedulesForDay(day);
-    if (daySchedules.length === 0) return;
-    
-    if (expandedDay && isSameDay(expandedDay, day)) {
-      setExpandedDay(null);
-    } else {
-      setExpandedDay(day);
-    }
-  };
+  const employee = schedule.employee;
+  if (!employee) return null;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Calendar View</CardTitle>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentDate(addDays(currentDate, -7))}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-sm font-medium">
-              {format(start, 'MMM dd')} - {format(end, 'MMM dd, yyyy')}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentDate(addDays(currentDate, 7))}
-            >
-              <ChevronRightIcon className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Expanded Day View */}
-          {expandedDay && (
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">
-                  {format(expandedDay, 'EEEE, MMMM d, yyyy')}
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setExpandedDay(null)}
-                >
-                  <XIcon className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                {getSchedulesForDay(expandedDay).map(schedule => {
-                  const employee = schedule.employee;
-                  if (!employee) return null;
-                  const phoneNumber = employee.contact?.replace(/\D/g, '');
-                  
-                  return (
-                    <div key={schedule.id} className="bg-white p-4 rounded-lg border hover:shadow-sm">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {getInitials(employee.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-gray-900">{employee.name}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className="text-xs">
-                                {employee.position}
-                              </Badge>
-                              {employee.designation && employee.designation !== employee.position && (
-                                <Badge variant="outline" className="text-xs">
-                                  {employee.designation}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <Badge className={getStatusBadgeColor(schedule.status)}>
-                          {schedule.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Period</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {formatDate(schedule.start_date)} - {formatDate(schedule.end_date)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Residence</p>
-                          <p className="text-sm font-medium text-gray-900">{schedule.residence}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between pt-3 border-t">
-                        <div className="flex items-center gap-4">
-                          {phoneNumber && (
-                            <a 
-                              href={`tel:${phoneNumber}`}
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2"
-                            >
-                              <Phone className="w-4 h-4" />
-                              {formatPhoneNumber(employee.contact)}
-                            </a>
-                          )}
-                          {employee.email && employee.email !== 'No Email' && (
-                            <a 
-                              href={`mailto:${employee.email}`}
-                              className="text-sm text-emerald-600 hover:text-emerald-800 hover:underline flex items-center gap-2"
-                            >
-                              <Mail className="w-4 h-4" />
-                              Email
-                            </a>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onView(schedule)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-200">
+      <div className={`h-2 ${schedule.status === 'active' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`} />
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarFallback className="text-sm font-semibold">{getInitials(employee.name)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-foreground">{employee.name}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="text-xs">{employee.position}</Badge>
+                {employee.designation && employee.designation !== employee.position && (
+                  <Badge variant="outline" className="text-xs">{employee.designation}</Badge>
+                )}
               </div>
             </div>
-          )}
-          
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden border">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="bg-white p-3 text-center">
-                <p className="text-sm font-medium text-gray-500">{day}</p>
+          </div>
+          <Badge className={getStatusBadgeColor(schedule.status)}>{schedule.status}</Badge>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg p-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Start</p>
+                <p className="text-sm font-semibold text-foreground">{formatDate(schedule.start_date)}</p>
               </div>
-            ))}
-            
-            {weekDays.map(day => {
-              const daySchedules = getSchedulesForDay(day);
-              const isExpanded = expandedDay && isSameDay(expandedDay, day);
-              const isTodayFlag = isToday(day);
-              
-              return (
-                <div
-                  key={day.toString()}
-                  className={`min-h-40 bg-white p-2 ${isTodayFlag ? 'bg-blue-50' : ''} ${isExpanded ? 'bg-blue-100' : ''}`}
-                >
-                  <div 
-                    className="flex items-center justify-between mb-2 cursor-pointer"
-                    onClick={() => toggleDayExpansion(day)}
-                  >
-                    <span className={`text-sm font-medium ${isTodayFlag ? 'text-blue-600' : 'text-gray-700'}`}>
-                      {format(day, 'd')}
-                    </span>
-                    {daySchedules.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {daySchedules.length}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-1">
-                    {daySchedules.slice(0, isExpanded ? 10 : 3).map(schedule => {
-                      const employee = schedule.employee;
-                      if (!employee) return null;
-                      const phoneNumber = employee.contact?.replace(/\D/g, '');
-                      
-                      return (
-                        <div
-                          key={schedule.id}
-                          className={`text-xs p-2 rounded cursor-pointer truncate ${
-                            schedule.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
-                            schedule.status === 'scheduled' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
-                            'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                          onClick={() => onView(schedule)}
-                        >
-                          <div className="font-medium truncate">{employee.name}</div>
-                          <div className="text-xs opacity-75 truncate mt-1">
-                            {employee.position}
-                            {employee.designation && employee.designation !== employee.position && (
-                              <span> • {employee.designation}</span>
-                            )}
-                          </div>
-                          {phoneNumber && (
-                            <div className="mt-1">
-                              <a 
-                                href={`tel:${phoneNumber}`}
-                                className="text-xs text-blue-500 hover:text-blue-700 hover:underline flex items-center gap-1"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Phone className="w-3 h-3" />
-                                Call
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Show more/less indicator */}
-                    {daySchedules.length > 3 && (
-                      <div 
-                        className="text-xs text-gray-500 text-center cursor-pointer hover:text-gray-700 hover:bg-gray-50 py-1 rounded"
-                        onClick={() => toggleDayExpansion(day)}
-                      >
-                        {isExpanded ? 'Show less' : `+${daySchedules.length - 3} more`}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+              <div>
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">End</p>
+                <p className="text-sm font-semibold text-foreground">{formatDate(schedule.end_date)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Residence
+            </p>
+            <p className="text-sm text-foreground">{schedule.residence}</p>
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => onView(schedule)}>
+                <Eye className="w-4 h-4 mr-2" /> View
+              </Button>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(schedule.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+            <Badge className={getPriorityColor(schedule.priority || 'medium')}>
+              {schedule.priority}
+            </Badge>
           </div>
         </div>
       </CardContent>
@@ -1233,7 +625,7 @@ const CalendarView = ({ schedules, onView }: {
   );
 };
 
-// Main Component
+// ---------- Main Component ----------
 const EmployeeStandbyScheduler = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [standbySchedules, setStandbySchedules] = useState<StandbySchedule[]>([]);
@@ -1242,32 +634,57 @@ const EmployeeStandbyScheduler = () => {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<StandbySchedule | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedPosition, setSelectedPosition] = useState("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedPosition, setSelectedPosition] = useState('all');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'schedules' | 'calendar'>('dashboard');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [scheduleViewMode, setScheduleViewMode] = useState<'grid' | 'list'>('grid');
   const [backendAvailable, setBackendAvailable] = useState(true);
-  
-  // Schedule form
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [residence, setResidence] = useState("");
-  const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<'scheduled' | 'active' | 'completed' | 'cancelled'>('scheduled');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
-  const [submitting, setSubmitting] = useState(false);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
+  const [selectedScheduleIds, setSelectedScheduleIds] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
 
-  // Enhanced fetch with designation
+  // ---------- FIX: Provide default values for all form fields ----------
+  const form = useForm<ScheduleFormValues>({
+    resolver: zodResolver(scheduleFormSchema),
+    defaultValues: {
+      employeeId: '',           // ensures controlled input
+      startDate: undefined,      // date picker handles undefined gracefully
+      endDate: undefined,
+      residence: '',            // ← this fixes the controlled/uncontrolled error
+      status: 'scheduled',
+      priority: 'medium',
+      notes: '',
+    },
+  });
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!isScheduleDialogOpen) {
+      form.reset({
+        employeeId: '',
+        startDate: undefined,
+        endDate: undefined,
+        residence: '',
+        status: 'scheduled',
+        priority: 'medium',
+        notes: '',
+      });
+    }
+  }, [isScheduleDialogOpen, form]);
+
+  // Fetch data from API
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Test backend connectivity first
+      // Test backend connectivity
       try {
         const testResponse = await fetch(API_BASE_URL, {
           headers: { 'Accept': 'application/json' }
@@ -1296,7 +713,7 @@ const EmployeeStandbyScheduler = () => {
       const transformedEmployees = employeesData.map(extractEmployeeData);
       setEmployees(transformedEmployees);
 
-      // Try to fetch standby schedules if backend is available
+      // Try to fetch standby schedules
       if (backendAvailable) {
         try {
           const standbyRes = await fetch(STANDBY_API_URL, {
@@ -1307,7 +724,6 @@ const EmployeeStandbyScheduler = () => {
             const standbyData = await standbyRes.json();
             const schedules = Array.isArray(standbyData) ? standbyData : [];
             
-            // Enrich schedules with employee data
             const enrichedSchedules = schedules.map((schedule: any) => {
               const employeeId = String(schedule.employee_id);
               const employee = transformedEmployees.find(e => e.id === employeeId);
@@ -1327,8 +743,7 @@ const EmployeeStandbyScheduler = () => {
           console.log('⚠️ Could not fetch standby schedules:', standbyError);
         }
       } else {
-        // If backend is not available, use mock data for demonstration
-        console.log('⚠️ Using mock data for demonstration');
+        // Mock data for demo
         const mockSchedules: StandbySchedule[] = [
           {
             id: 1,
@@ -1362,32 +777,18 @@ const EmployeeStandbyScheduler = () => {
     fetchData();
   }, []);
 
-  // Calculate dashboard stats
+  // Dashboard stats
   const dashboardStats = useMemo(() => {
     const totalEmployees = employees.length;
     const activeSchedules = standbySchedules.filter(s => s.status === 'active').length;
     const upcomingSchedules = standbySchedules.filter(s => s.status === 'scheduled').length;
-    const activeEmployeesOnStandby = new Set(
-      standbySchedules
-        .filter(s => s.status === 'active')
-        .map(s => s.employee_id)
-    ).size;
-    const totalSchedules = standbySchedules.length;
     const fittersOnStandby = standbySchedules
       .filter(s => s.status === 'active' && s.employee?.position?.toLowerCase().includes('fitter'))
       .length;
-
-    return {
-      totalEmployees,
-      activeSchedules,
-      upcomingSchedules,
-      activeEmployeesOnStandby,
-      totalSchedules,
-      fittersOnStandby
-    };
+    return { totalEmployees, activeSchedules, upcomingSchedules, fittersOnStandby, totalSchedules: standbySchedules.length };
   }, [employees, standbySchedules]);
 
-  // Filter employees
+  // Filtered employees
   const filteredEmployees = useMemo(() => {
     let result = [...employees];
     
@@ -1418,7 +819,7 @@ const EmployeeStandbyScheduler = () => {
     return result;
   }, [employees, searchQuery, selectedDepartment, selectedPosition]);
 
-  // Filter schedules
+  // Filtered schedules
   const filteredSchedules = useMemo(() => {
     let result = [...standbySchedules];
     
@@ -1436,18 +837,25 @@ const EmployeeStandbyScheduler = () => {
                schedule.residence.toLowerCase().includes(query);
       });
     }
+
+    if (dateRange.from) {
+      result = result.filter(s => new Date(s.start_date) >= dateRange.from!);
+    }
+    if (dateRange.to) {
+      result = result.filter(s => new Date(s.end_date) <= dateRange.to!);
+    }
     
     return result;
-  }, [standbySchedules, selectedStatus, searchQuery]);
+  }, [standbySchedules, selectedStatus, searchQuery, dateRange]);
 
-  // Get departments
+  // Departments list
   const departments = useMemo(() => {
     const depts = employees.map(e => e.department).filter(Boolean);
     const unique = [...new Set(depts)];
     return ['All Departments', ...unique.sort()];
   }, [employees]);
 
-  // Get positions with designations
+  // Positions list
   const positions = useMemo(() => {
     const allPositions = employees.map(e => e.position).filter(Boolean);
     const allDesignations = employees.map(e => e.designation).filter(Boolean);
@@ -1456,157 +864,100 @@ const EmployeeStandbyScheduler = () => {
     return ['All Positions', ...unique.sort()];
   }, [employees]);
 
-  // Get statuses
+  // Statuses list
   const statuses = useMemo(() => {
     const stats = standbySchedules.map(s => s.status).filter(Boolean);
     const unique = [...new Set(stats)];
     return ['All Status', ...unique.sort()];
   }, [standbySchedules]);
 
-  // Create schedule - FIXED: Handle API endpoint not available
-  const handleCreateSchedule = async () => {
-    if (!selectedEmployeeId || !startDate || !endDate || !residence.trim()) {
+  // Create schedule handler
+  const handleCreateSchedule = async (values: ScheduleFormValues) => {
+    if (!values.employeeId || !values.startDate || !values.endDate || !values.residence.trim()) {
       toast.error('Please fill all required fields');
       return;
     }
 
-    if (startDate > endDate) {
-      toast.error('End date must be after start date');
-      return;
-    }
-
     try {
-      setSubmitting(true);
-      
       const scheduleData = {
-        employee_id: selectedEmployeeId,
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: format(endDate, 'yyyy-MM-dd'),
-        residence: residence.trim(),
-        status,
-        priority,
-        notes: notes.trim() || undefined
+        employee_id: parseInt(values.employeeId, 10),
+        start_date: format(values.startDate, 'yyyy-MM-dd'),
+        end_date: format(values.endDate, 'yyyy-MM-dd'),
+        residence: values.residence.trim(),
+        status: values.status,
+        priority: values.priority,
+        notes: values.notes?.trim() || undefined,
       };
 
       if (!backendAvailable) {
-        // Mock response when backend is not available
+        // Mock response
         const mockSchedule: StandbySchedule = {
           id: Date.now(),
           ...scheduleData,
+          employee_id: values.employeeId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          employee: employees.find(e => e.id === selectedEmployeeId),
-          duration_days: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+          employee: employees.find(e => e.id === values.employeeId),
+          duration_days: Math.ceil((values.endDate.getTime() - values.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1,
         };
-        
         toast.success('Standby schedule created successfully! (Demo Mode)');
-        
-        // Reset form
         setIsScheduleDialogOpen(false);
-        setSelectedEmployeeId("");
-        setStartDate(undefined);
-        setEndDate(undefined);
-        setResidence('');
-        setNotes('');
-        setStatus('scheduled');
-        setPriority('medium');
-        
-        // Update schedules locally
         setStandbySchedules(prev => [mockSchedule, ...prev]);
         return;
       }
 
-      // Try the POST endpoint
+      // Real API call
       let response;
       try {
         response = await fetch(STANDBY_API_URL, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(scheduleData)
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(scheduleData),
         });
       } catch (apiError) {
-        console.log('⚠️ POST to /api/standby failed, trying alternative endpoint:', apiError);
         // Try alternative endpoint
         response = await fetch(`${STANDBY_API_URL}/create`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(scheduleData)
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(scheduleData),
         });
       }
 
       if (!response.ok) {
         if (response.status === 404 || response.status === 405) {
-          // If endpoint doesn't exist or doesn't accept POST, create locally
-          console.log('⚠️ Standby API endpoint not available, creating schedule locally');
+          // Create locally
           const mockSchedule: StandbySchedule = {
             id: Date.now(),
             ...scheduleData,
+            employee_id: values.employeeId,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            employee: employees.find(e => e.id === selectedEmployeeId),
-            duration_days: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+            employee: employees.find(e => e.id === values.employeeId),
+            duration_days: Math.ceil((values.endDate.getTime() - values.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1,
           };
-          
-          toast.success('Standby schedule created locally (API endpoint not available)');
-          
-          // Reset form
+          toast.success('Standby schedule created locally');
           setIsScheduleDialogOpen(false);
-          setSelectedEmployeeId("");
-          setStartDate(undefined);
-          setEndDate(undefined);
-          setResidence('');
-          setNotes('');
-          setStatus('scheduled');
-          setPriority('medium');
-          
-          // Update schedules locally
           setStandbySchedules(prev => [mockSchedule, ...prev]);
           return;
         }
-        
         const errorText = await response.text();
         throw new Error(`Server error: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      const employee = employees.find(e => e.id === selectedEmployeeId);
-      
-      const newSchedule = {
-        ...result,
-        employee,
-        priority
-      };
-      
+      const employee = employees.find(e => e.id === values.employeeId);
+      const newSchedule = { ...result, employee };
+
       toast.success('Standby schedule created successfully!');
-      
-      // Reset form
       setIsScheduleDialogOpen(false);
-      setSelectedEmployeeId("");
-      setStartDate(undefined);
-      setEndDate(undefined);
-      setResidence('');
-      setNotes('');
-      setStatus('scheduled');
-      setPriority('medium');
-      
-      // Update schedules locally
       setStandbySchedules(prev => [newSchedule, ...prev]);
-      
     } catch (err: any) {
       console.error('❌ Create error:', err);
       toast.error(err.message || 'Failed to create schedule');
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  // Delete schedule - FIXED: Handle API endpoint not available
+  // Delete schedule
   const handleDeleteSchedule = async (id: number) => {
     if (!confirm('Are you sure you want to delete this schedule?')) return;
 
@@ -1616,7 +967,6 @@ const EmployeeStandbyScheduler = () => {
           const response = await fetch(`${STANDBY_API_URL}/${id}`, {
             method: 'DELETE'
           });
-
           if (!response.ok && response.status !== 404) {
             const errorText = await response.text();
             throw new Error(`Delete failed: ${response.status} - ${errorText}`);
@@ -1628,13 +978,14 @@ const EmployeeStandbyScheduler = () => {
       
       toast.success('Schedule deleted successfully');
       setStandbySchedules(prev => prev.filter(s => s.id !== id));
+      setSelectedScheduleIds(prev => prev.filter(sid => sid !== id));
       
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete schedule');
     }
   };
 
-  // View schedule details
+  // View schedule
   const handleViewSchedule = (schedule: StandbySchedule) => {
     setSelectedSchedule(schedule);
     setIsViewDialogOpen(true);
@@ -1646,15 +997,7 @@ const EmployeeStandbyScheduler = () => {
     setSelectedDepartment('all');
     setSelectedStatus('all');
     setSelectedPosition('all');
-  };
-
-  // Open schedule dialog
-  const openScheduleDialog = () => {
-    if (employees.length === 0) {
-      toast.error('No employees available');
-      return;
-    }
-    setIsScheduleDialogOpen(true);
+    setDateRange({ from: undefined, to: undefined });
   };
 
   // Export schedules
@@ -1687,51 +1030,71 @@ const EmployeeStandbyScheduler = () => {
     toast.success('Schedules exported successfully');
   };
 
+  // Bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedScheduleIds.length === 0) return;
+    if (!confirm(`Delete ${selectedScheduleIds.length} schedule(s)?`)) return;
+    try {
+      // In a real app, you'd send a batch delete request
+      // For demo, we delete locally
+      setStandbySchedules(prev => prev.filter(s => !selectedScheduleIds.includes(s.id)));
+      setSelectedScheduleIds([]);
+      setSelectAll(false);
+      toast.success(`Deleted ${selectedScheduleIds.length} schedule(s)`);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  // Bulk select toggle
+  useEffect(() => {
+    if (selectAll) {
+      setSelectedScheduleIds(filteredSchedules.map(s => s.id));
+    } else {
+      setSelectedScheduleIds([]);
+    }
+  }, [selectAll, filteredSchedules]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading employee data...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading employee data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <TooltipProvider>
+    <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
         {/* Header */}
-        <header className="sticky top-0 z-50 border-b bg-white shadow-lg">
+        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow">
-                  <ShieldCheck className="w-6 h-6 text-white" />
+                <div className="p-2 bg-gradient-to-br from-primary to-primary/60 rounded-lg shadow">
+                  <ShieldCheck className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Standby Management System</h1>
-                  <p className="text-sm text-gray-600">Manage employee standby assignments and rotations</p>
+                  <h1 className="text-xl font-bold text-foreground">Standby Management System</h1>
+                  <p className="text-sm text-muted-foreground">Manage employee standby assignments</p>
                 </div>
               </div>
-              
               <div className="flex items-center gap-2">
+                <ThemeToggle />
                 {!backendAvailable && (
-                  <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800">
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     Demo Mode
                   </Badge>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchData}
-                  className="hidden sm:flex"
-                >
+                <Button variant="outline" size="sm" onClick={fetchData}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh
                 </Button>
-                <Button onClick={openScheduleDialog} size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                <Button onClick={() => setIsScheduleDialogOpen(true)} size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary">
                   <Plus className="w-4 h-4 mr-2" />
                   New Schedule
                 </Button>
@@ -1750,65 +1113,49 @@ const EmployeeStandbyScheduler = () => {
             </Alert>
           )}
 
-          {/* Demo Mode Alert */}
-          {!backendAvailable && (
-            <Alert className="mb-6 animate-in fade-in duration-300 bg-yellow-50 border-yellow-200">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <AlertTitle className="text-yellow-800">Demo Mode Active</AlertTitle>
-              <AlertDescription className="text-yellow-700">
-                Standby schedules are being managed locally. To enable full API integration, ensure the backend server is running at {API_BASE_URL}
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <TabsList className="flex-wrap bg-gray-100 p-1 rounded-lg">
-                <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsList className="flex-wrap bg-muted p-1 rounded-lg">
+                <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-background">
                   <BarChart3 className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
-                  <span className="sm:hidden">Dash</span>
                 </TabsTrigger>
-                <TabsTrigger value="employees" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <TabsTrigger value="employees" className="gap-2 data-[state=active]:bg-background">
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Employees</span>
-                  <span className="sm:hidden">Emps</span>
                   <Badge variant="secondary" className="ml-2 hidden sm:flex">{employees.length}</Badge>
                 </TabsTrigger>
-                <TabsTrigger value="schedules" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <TabsTrigger value="schedules" className="gap-2 data-[state=active]:bg-background">
                   <CalendarDays className="w-4 h-4" />
                   <span className="hidden sm:inline">Schedules</span>
-                  <span className="sm:hidden">Sched</span>
                   <Badge variant="secondary" className="ml-2 hidden sm:flex">{standbySchedules.length}</Badge>
                 </TabsTrigger>
-                <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-background">
                   <CalendarViewIcon className="w-4 h-4" />
                   <span className="hidden sm:inline">Calendar</span>
-                  <span className="sm:hidden">Cal</span>
                 </TabsTrigger>
               </TabsList>
-              
+
               {/* Search and Filters */}
               <div className="flex flex-col sm:flex-row gap-3 flex-1 max-w-xl">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder={
                       activeTab === 'dashboard' ? 'Search...' :
-                      activeTab === 'employees' ? 'Search employees...' :
-                      'Search schedules...'
+                      activeTab === 'employees' ? 'Search employees...' : 'Search schedules...'
                     }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white shadow-sm"
+                    className="pl-10 bg-background"
                   />
                 </div>
-                
+
                 {activeTab === 'employees' ? (
                   <>
                     <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                      <SelectTrigger className="w-full sm:w-[180px] bg-white shadow-sm">
+                      <SelectTrigger className="w-full sm:w-[180px] bg-background">
                         <Filter className="w-4 h-4 mr-2" />
                         <SelectValue placeholder="Department" />
                       </SelectTrigger>
@@ -1821,7 +1168,7 @@ const EmployeeStandbyScheduler = () => {
                       </SelectContent>
                     </Select>
                     <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-                      <SelectTrigger className="w-full sm:w-[180px] bg-white shadow-sm">
+                      <SelectTrigger className="w-full sm:w-[180px] bg-background">
                         <User className="w-4 h-4 mr-2" />
                         <SelectValue placeholder="Position" />
                       </SelectTrigger>
@@ -1835,23 +1182,53 @@ const EmployeeStandbyScheduler = () => {
                     </Select>
                   </>
                 ) : activeTab === 'schedules' ? (
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-full sm:w-[140px] bg-white shadow-sm">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses.map(st => (
-                        <SelectItem key={st} value={st === 'All Status' ? 'all' : st.toLowerCase()}>
-                          {st}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <>
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-full sm:w-[140px] bg-background">
+                        <Filter className="w-4 h-4 mr-2" />
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map(st => (
+                          <SelectItem key={st} value={st === 'All Status' ? 'all' : st.toLowerCase()}>
+                            {st}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {/* Date range picker */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full sm:w-auto">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateRange.from ? (
+                            dateRange.to ? (
+                              <>
+                                {format(dateRange.from, 'LLL dd')} - {format(dateRange.to, 'LLL dd')}
+                              </>
+                            ) : (
+                              format(dateRange.from, 'LLL dd')
+                            )
+                          ) : (
+                            'Date range'
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="range"
+                          selected={dateRange}
+                          onSelect={setDateRange}
+                          initialFocus
+                          numberOfMonths={2}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </>
                 ) : null}
-                
-                {(searchQuery || selectedDepartment !== 'all' || selectedStatus !== 'all' || selectedPosition !== 'all') && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="sm:flex border shadow-sm">
+
+                {(searchQuery || selectedDepartment !== 'all' || selectedStatus !== 'all' || selectedPosition !== 'all' || dateRange.from) && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
                     <FilterX className="w-4 h-4" />
                     <span className="hidden sm:inline ml-2">Clear</span>
                   </Button>
@@ -1861,7 +1238,6 @@ const EmployeeStandbyScheduler = () => {
 
             {/* Dashboard Tab */}
             <TabsContent value="dashboard" className="mt-0 space-y-6 animate-in fade-in duration-300">
-              {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatsCard
                   title="Total Employees"
@@ -1876,18 +1252,15 @@ const EmployeeStandbyScheduler = () => {
                   value={dashboardStats.activeSchedules}
                   icon={ShieldCheck}
                   color="bg-green-600"
-                  onClick={() => {
-                    setActiveTab('schedules');
-                    setSelectedStatus('active');
-                  }}
-                  description={`${dashboardStats.fittersOnStandby} fitters active`}
+                  onClick={() => { setActiveTab('schedules'); setSelectedStatus('active'); }}
+                  description={`${dashboardStats.fittersOnStandby} fitters`}
                 />
                 <StatsCard
-                  title="Fitters on Standby"
-                  value={dashboardStats.fittersOnStandby}
-                  icon={Wrench}
+                  title="Upcoming"
+                  value={dashboardStats.upcomingSchedules}
+                  icon={CalendarClock}
                   color="bg-orange-600"
-                  description="Class 1 Fitters currently on standby"
+                  description="Scheduled standby"
                 />
                 <StatsCard
                   title="Total Schedules"
@@ -1895,18 +1268,24 @@ const EmployeeStandbyScheduler = () => {
                   icon={CalendarDays}
                   color="bg-purple-600"
                   onClick={() => setActiveTab('schedules')}
-                  description={`${dashboardStats.upcomingSchedules} upcoming`}
                 />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Weekly Standby Overview */}
+                {/* Standby Overview (placeholder) */}
                 <div className="lg:col-span-2">
-                  <StandbyOverview schedules={standbySchedules} />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Weekly Standby Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">Coming soon...</p>
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {/* Quick Actions */}
-                <Card className="h-fit border shadow-sm">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
                       <Zap className="w-4 h-4 text-yellow-500" />
@@ -1915,46 +1294,22 @@ const EmployeeStandbyScheduler = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <Button 
-                        className="w-full justify-start bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                        onClick={openScheduleDialog}
-                      >
+                      <Button className="w-full justify-start" onClick={() => setIsScheduleDialogOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Create New Schedule
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start"
-                        onClick={() => setActiveTab('employees')}
-                      >
+                      <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('employees')}>
                         <Users className="w-4 h-4 mr-2" />
                         View All Employees
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start"
-                        onClick={exportSchedules}
-                      >
+                      <Button variant="outline" className="w-full justify-start" onClick={exportSchedules}>
                         <Download className="w-4 h-4 mr-2" />
                         Export Schedules
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start"
-                        onClick={() => setActiveTab('calendar')}
-                      >
+                      <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('calendar')}>
                         <CalendarViewIcon className="w-4 h-4 mr-2" />
                         View Calendar
                       </Button>
-                      <Separator />
-                      <div className="pt-2">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Need Help?</p>
-                        <p className="text-xs text-gray-600">
-                          {backendAvailable 
-                            ? 'Contact IT Support if you encounter issues with the system'
-                            : 'Running in demo mode. To enable API features, ensure backend is running.'}
-                        </p>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1965,25 +1320,14 @@ const EmployeeStandbyScheduler = () => {
             <TabsContent value="employees" className="mt-0 animate-in fade-in duration-300">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Employee Directory</h2>
-                  <p className="text-sm text-gray-600">
-                    {filteredEmployees.length} of {employees.length} employees
-                    {selectedPosition !== 'all' && ` • Filtered by: ${selectedPosition}`}
-                  </p>
+                  <h2 className="text-lg font-semibold text-foreground">Employee Directory</h2>
+                  <p className="text-sm text-muted-foreground">{filteredEmployees.length} of {employees.length} employees</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant={viewMode === 'grid' ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                  >
+                  <Button variant={viewMode === 'grid' ? 'secondary' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>
                     <Grid className="w-4 h-4" />
                   </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                  >
+                  <Button variant={viewMode === 'list' ? 'secondary' : 'outline'} size="sm" onClick={() => setViewMode('list')}>
                     <List className="w-4 h-4" />
                   </Button>
                 </div>
@@ -1992,116 +1336,62 @@ const EmployeeStandbyScheduler = () => {
               {filteredEmployees.length > 0 ? (
                 viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredEmployees.map(employee => (
-                      <EmployeeCard
-                        key={employee.id}
-                        employee={employee}
-                        onSchedule={(emp) => {
-                          setSelectedEmployeeId(emp.id);
-                          setResidence(emp.location || '');
-                          const today = new Date();
-                          const nextMonday = addDays(today, (1 - today.getDay() + 7) % 7 || 7);
-                          const nextFriday = addDays(nextMonday, 4);
-                          setStartDate(nextMonday);
-                          setEndDate(nextFriday);
-                          setIsScheduleDialogOpen(true);
-                        }}
-                      />
+                    {filteredEmployees.map(emp => (
+                      <EmployeeCard key={emp.id} employee={emp} onSchedule={(emp) => {
+                        form.setValue('employeeId', emp.id);
+                        form.setValue('residence', emp.location || '');
+                        const today = new Date();
+                        const nextMonday = addDays(today, (1 - today.getDay() + 7) % 7 || 7);
+                        const nextFriday = addDays(nextMonday, 4);
+                        form.setValue('startDate', nextMonday);
+                        form.setValue('endDate', nextFriday);
+                        setIsScheduleDialogOpen(true);
+                      }} />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredEmployees.map(employee => {
-                      const phoneNumber = employee.contact?.replace(/\D/g, '');
-                      
-                      return (
-                        <Card key={employee.id} className="hover:shadow-md transition-shadow">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1">
-                                <Avatar className="h-12 w-12">
-                                  <AvatarFallback className="text-sm">
-                                    {getInitials(employee.name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <p className="font-medium text-gray-900">{employee.name}</p>
-                                    {employee.is_active ? (
-                                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                    ) : (
-                                      <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {employee.position}
-                                    </Badge>
-                                    {employee.designation && employee.designation !== employee.position && (
-                                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                        {employee.designation}
-                                      </Badge>
-                                    )}
-                                    <Badge className={`text-xs ${getAvailabilityColor(employee.availability || 'available')}`}>
-                                      {employee.availability?.replace('-', ' ') || 'available'}
-                                    </Badge>
-                                    <span className="text-xs text-gray-600">{employee.department}</span>
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                                    {phoneNumber && (
-                                      <a 
-                                        href={`tel:${phoneNumber}`}
-                                        className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                                      >
-                                        <Phone className="w-3 h-3" />
-                                        {formatPhoneNumber(employee.contact)}
-                                      </a>
-                                    )}
-                                    {employee.email && employee.email !== 'No Email' && (
-                                      <a 
-                                        href={`mailto:${employee.email}`}
-                                        className="text-emerald-600 hover:text-emerald-800 hover:underline flex items-center gap-1"
-                                      >
-                                        <Mail className="w-3 h-3" />
-                                        {employee.email}
-                                      </a>
-                                    )}
-                                  </div>
+                    {filteredEmployees.map(employee => (
+                      <Card key={employee.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <Avatar className="h-12 w-12">
+                                <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="font-medium">{employee.name}</p>
+                                <div className="flex gap-2 mt-1">
+                                  <Badge variant="secondary">{employee.position}</Badge>
+                                  {employee.designation && <Badge variant="outline">{employee.designation}</Badge>}
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedEmployeeId(employee.id);
-                                  setResidence(employee.location || '');
-                                  const today = new Date();
-                                  const nextMonday = addDays(today, (1 - today.getDay() + 7) % 7 || 7);
-                                  const nextFriday = addDays(nextMonday, 4);
-                                  setStartDate(nextMonday);
-                                  setEndDate(nextFriday);
-                                  setIsScheduleDialogOpen(true);
-                                }}
-                              >
-                                Schedule Standby
-                              </Button>
                             </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                            <Button size="sm" onClick={() => {
+                              form.setValue('employeeId', employee.id);
+                              form.setValue('residence', employee.location || '');
+                              const today = new Date();
+                              const nextMonday = addDays(today, (1 - today.getDay() + 7) % 7 || 7);
+                              const nextFriday = addDays(nextMonday, 4);
+                              form.setValue('startDate', nextMonday);
+                              form.setValue('endDate', nextFriday);
+                              setIsScheduleDialogOpen(true);
+                            }}>
+                              Schedule
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 )
               ) : (
-                <Card className="border shadow-sm">
+                <Card>
                   <CardContent className="py-12 text-center">
-                    <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Employees Found</h3>
-                    <p className="text-gray-500 mb-6">
-                      Try adjusting your search or filters
-                    </p>
-                    <Button onClick={clearFilters}>
-                      Clear Filters
-                    </Button>
+                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Employees Found</h3>
+                    <p className="text-muted-foreground mb-6">Try adjusting your filters</p>
+                    <Button onClick={clearFilters}>Clear Filters</Button>
                   </CardContent>
                 </Card>
               )}
@@ -2111,502 +1401,323 @@ const EmployeeStandbyScheduler = () => {
             <TabsContent value="schedules" className="mt-0 animate-in fade-in duration-300">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Standby Schedules</h2>
-                  <p className="text-sm text-gray-600">
-                    {filteredSchedules.length} of {standbySchedules.length} schedules
-                    {selectedStatus !== 'all' && ` • Filtered by: ${selectedStatus}`}
-                  </p>
+                  <h2 className="text-lg font-semibold text-foreground">Standby Schedules</h2>
+                  <p className="text-sm text-muted-foreground">{filteredSchedules.length} schedules</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant={scheduleViewMode === 'grid' ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => setScheduleViewMode('grid')}
-                  >
+                <div className="flex items-center gap-2">
+                  {selectedScheduleIds.length > 0 && (
+                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete ({selectedScheduleIds.length})
+                    </Button>
+                  )}
+                  <Button variant={scheduleViewMode === 'grid' ? 'secondary' : 'outline'} size="sm" onClick={() => setScheduleViewMode('grid')}>
                     <Grid className="w-4 h-4" />
                   </Button>
-                  <Button
-                    variant={scheduleViewMode === 'list' ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => setScheduleViewMode('list')}
-                  >
+                  <Button variant={scheduleViewMode === 'list' ? 'secondary' : 'outline'} size="sm" onClick={() => setScheduleViewMode('list')}>
                     <List className="w-4 h-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={exportSchedules} className="hidden sm:flex">
+                  <Button variant="outline" size="sm" onClick={exportSchedules}>
                     <Download className="w-4 h-4 mr-2" />
                     Export
                   </Button>
-                  <Button onClick={openScheduleDialog} size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                  <Button onClick={() => setIsScheduleDialogOpen(true)} size="sm">
                     <Plus className="w-4 h-4 mr-2" />
-                    New Schedule
+                    New
                   </Button>
                 </div>
               </div>
 
               {filteredSchedules.length > 0 ? (
-                scheduleViewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredSchedules.map(schedule => {
-                      const employee = schedule.employee;
-                      if (!employee) return null;
-                      
-                      return (
-                        <Card key={schedule.id} className="overflow-hidden hover:shadow-lg transition-all duration-200">
-                          <div className={`h-2 ${schedule.status === 'active' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}></div>
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarFallback className="text-sm font-semibold">
-                                    {getInitials(employee.name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <h3 className="font-semibold text-gray-900">{employee.name}</h3>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {employee.position}
-                                    </Badge>
-                                    {employee.designation && employee.designation !== employee.position && (
-                                      <Badge variant="outline" className="text-xs">
-                                        {employee.designation}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <Badge className={getStatusBadgeColor(schedule.status)}>
-                                {schedule.status}
-                              </Badge>
-                            </div>
+                <>
+                  <div className="flex items-center gap-2 mb-4 px-2">
+                    <Checkbox
+                      id="selectAll"
+                      checked={selectAll}
+                      onCheckedChange={(checked) => setSelectAll(!!checked)}
+                    />
+                    <Label htmlFor="selectAll" className="text-sm cursor-pointer">Select all</Label>
+                  </div>
 
-                            <div className="space-y-4">
-                              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Start Date</p>
-                                    <p className="text-sm font-semibold text-gray-900">{formatDate(schedule.start_date)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">End Date</p>
-                                    <p className="text-sm font-semibold text-gray-900">{formatDate(schedule.end_date)}</p>
-                                  </div>
-                                </div>
-                              </div>
-
+                  {scheduleViewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredSchedules.map(schedule => (
+                        <div key={schedule.id} className="relative">
+                          <Checkbox
+                            className="absolute top-2 left-2 z-10"
+                            checked={selectedScheduleIds.includes(schedule.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedScheduleIds(prev => [...prev, schedule.id]);
+                              } else {
+                                setSelectedScheduleIds(prev => prev.filter(id => id !== schedule.id));
+                              }
+                            }}
+                          />
+                          <ScheduleCard schedule={schedule} onView={handleViewSchedule} onDelete={handleDeleteSchedule} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredSchedules.map(schedule => (
+                        <Card key={schedule.id} className="relative">
+                          <Checkbox
+                            className="absolute top-4 left-4 z-10"
+                            checked={selectedScheduleIds.includes(schedule.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedScheduleIds(prev => [...prev, schedule.id]);
+                              } else {
+                                setSelectedScheduleIds(prev => prev.filter(id => id !== schedule.id));
+                              }
+                            }}
+                          />
+                          <CardContent className="p-6 pl-12">
+                            <div className="flex justify-between items-start">
                               <div>
-                                <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                  <MapPin className="w-4 h-4" />
-                                  Residence Location
-                                </p>
-                                <p className="text-sm text-gray-600">{schedule.residence}</p>
+                                <h3 className="font-semibold">{schedule.employee?.name}</h3>
+                                <p className="text-sm text-muted-foreground">{schedule.employee?.position}</p>
+                                <p className="text-sm mt-2">{formatDate(schedule.start_date)} - {formatDate(schedule.end_date)}</p>
+                                <p className="text-sm">{schedule.residence}</p>
                               </div>
-
-                              <div className="flex items-center justify-between pt-2">
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewSchedule(schedule)}
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    View
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-600 hover:text-red-700 hover:border-red-300"
-                                    onClick={() => handleDeleteSchedule(schedule.id)}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                                <Badge className={getPriorityColor(schedule.priority || 'medium')}>
-                                  {schedule.priority}
-                                </Badge>
-                              </div>
+                              <Badge className={getStatusBadgeColor(schedule.status)}>{schedule.status}</Badge>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button variant="outline" size="sm" onClick={() => handleViewSchedule(schedule)}>View</Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>Delete</Button>
                             </div>
                           </CardContent>
                         </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredSchedules.map(schedule => {
-                      const employee = schedule.employee;
-                      if (!employee) return null;
-                      const phoneNumber = employee.contact?.replace(/\D/g, '');
-                      
-                      return (
-                        <Card key={schedule.id} className="hover:shadow-md transition-shadow">
-                          <CardContent className="p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                              <div className="flex items-start gap-3 flex-1">
-                                <Avatar className="h-12 w-12">
-                                  <AvatarFallback className="text-sm font-semibold">
-                                    {getInitials(employee.name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="font-semibold text-gray-900">{employee.name}</h3>
-                                    <Badge className={getStatusBadgeColor(schedule.status)}>
-                                      {schedule.status}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {employee.position}
-                                    </Badge>
-                                    {employee.designation && employee.designation !== employee.position && (
-                                      <Badge variant="outline" className="text-xs">
-                                        {employee.designation}
-                                      </Badge>
-                                    )}
-                                    <span className="text-sm text-gray-600">{employee.department}</span>
-                                  </div>
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div>
-                                      <p className="text-xs text-gray-500 mb-1">Period</p>
-                                      <p className="text-sm font-medium text-gray-900">
-                                        {formatDate(schedule.start_date)} - {formatDate(schedule.end_date)}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-gray-500 mb-1">Residence</p>
-                                      <p className="text-sm font-medium text-gray-900">{schedule.residence}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-gray-500 mb-1">Contact</p>
-                                      {phoneNumber ? (
-                                        <a 
-                                          href={`tel:${phoneNumber}`}
-                                          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                                        >
-                                          {formatPhoneNumber(employee.contact)}
-                                        </a>
-                                      ) : (
-                                        <p className="text-sm font-medium text-gray-900">No Contact</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex flex-col sm:items-end gap-2">
-                                <Badge className={getPriorityColor(schedule.priority || 'medium')}>
-                                  Priority: {schedule.priority}
-                                </Badge>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewSchedule(schedule)}
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    View
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-600 hover:text-red-700 hover:border-red-300"
-                                    onClick={() => handleDeleteSchedule(schedule.id)}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
-                <Card className="border shadow-sm">
+                <Card>
                   <CardContent className="py-12 text-center">
-                    <CalendarDays className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Schedules Found</h3>
-                    <p className="text-gray-500 mb-6">
-                      {standbySchedules.length === 0 
-                        ? 'Create your first standby schedule' 
-                        : 'Try adjusting your search or filters'}
-                    </p>
-                    <Button onClick={openScheduleDialog} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Schedule
-                    </Button>
+                    <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Schedules Found</h3>
+                    <p className="text-muted-foreground mb-6">Create your first standby schedule</p>
+                    <Button onClick={() => setIsScheduleDialogOpen(true)}>Create Schedule</Button>
                   </CardContent>
                 </Card>
               )}
             </TabsContent>
 
             {/* Calendar Tab */}
-            <TabsContent value="calendar" className="mt-0 animate-in fade-in duration-300">
-              <CalendarView
-                schedules={standbySchedules}
-                onView={handleViewSchedule}
-              />
+            <TabsContent value="calendar" className="mt-0">
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <CalendarViewIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground">Calendar View</h3>
+                  <p className="text-muted-foreground">Coming soon with month/week/day views</p>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </main>
 
         {/* Create Schedule Dialog */}
         <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-lg font-semibold">Create Standby Schedule</DialogTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsScheduleDialogOpen(false)}
-                  className="h-8 w-8 p-0"
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              <DialogDescription>
-                Assign a standby duty to an employee
-              </DialogDescription>
+              <DialogTitle>Create Standby Schedule</DialogTitle>
+              <DialogDescription>Assign standby duty to an employee</DialogDescription>
             </DialogHeader>
-            
-            <div className="space-y-6 py-4">
-              {/* Employee Selection */}
-              <EmployeeSelect
-                employees={employees}
-                selectedEmployeeId={selectedEmployeeId}
-                onSelect={setSelectedEmployeeId}
-                label="Employee"
-                placeholder="Select an employee..."
-              />
 
-              {selectedEmployeeId && (
-                <>
-                  <Separator />
-                  
-                  {/* Employee Details Preview */}
-                  {(() => {
-                    const employee = employees.find(e => e.id === selectedEmployeeId);
-                    if (!employee) return null;
-                    const phoneNumber = employee.contact?.replace(/\D/g, '');
-                    
-                    return (
-                      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Avatar>
-                              <AvatarFallback>
-                                {getInitials(employee.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 truncate">{employee.name}</p>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <Badge variant="secondary" className="text-xs">
-                                  {employee.position}
-                                </Badge>
-                                {employee.designation && employee.designation !== employee.position && (
-                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                    {employee.designation}
-                                  </Badge>
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {employee.department}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-gray-600">Contact</p>
-                              {phoneNumber ? (
-                                <a 
-                                  href={`tel:${phoneNumber}`}
-                                  className="font-medium truncate text-blue-600 hover:text-blue-800 hover:underline"
-                                >
-                                  {formatPhoneNumber(employee.contact)}
-                                </a>
-                              ) : (
-                                <p className="font-medium truncate">No Contact</p>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Email</p>
-                              {employee.email !== 'No Email' ? (
-                                <a 
-                                  href={`mailto:${employee.email}`}
-                                  className="font-medium truncate text-emerald-600 hover:text-emerald-800 hover:underline"
-                                >
-                                  {employee.email}
-                                </a>
-                              ) : (
-                                <p className="font-medium truncate">{employee.email}</p>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })()}
-
-                  {/* Schedule Dates */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Start Date *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? format(startDate, 'PPP') : 'Select date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={startDate}
-                            onSelect={setStartDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">End Date *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                            disabled={!startDate}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? format(endDate, 'PPP') : 'Select date'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={endDate}
-                            onSelect={setEndDate}
-                            initialFocus
-                            disabled={startDate ? (date) => date < startDate : undefined}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-
-                  {/* Residence */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Residence Location *</Label>
-                    <Input
-                      placeholder="Where will the employee stay during standby?"
-                      value={residence}
-                      onChange={(e) => setResidence(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Status and Priority */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Status</Label>
-                      <Select value={status} onValueChange={(value: any) => setStatus(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="scheduled">Scheduled</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Priority</Label>
-                      <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="critical">Critical</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Notes (Optional)</Label>
-                    <Textarea
-                      placeholder="Additional notes or instructions..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <DialogFooter className="sticky bottom-0 bg-white pt-4 border-t">
-              <div className="flex w-full justify-between sm:justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsScheduleDialogOpen(false)}
-                  disabled={submitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreateSchedule}
-                  disabled={submitting || !selectedEmployeeId || !startDate || !endDate || !residence.trim()}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Create Schedule
-                    </>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleCreateSchedule)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="employeeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employee *</FormLabel>
+                      <FormControl>
+                        <EmployeeSelect
+                          employees={employees}
+                          selectedEmployeeId={field.value}
+                          onSelect={field.onChange}
+                          label=""
+                          placeholder="Select employee..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Button>
-              </div>
-            </DialogFooter>
+                />
+
+                {form.watch('employeeId') && (
+                  <>
+                    <Separator />
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <p className="text-sm font-medium">Selected Employee</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {employees.find(e => e.id === form.watch('employeeId'))?.name}
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Start Date *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? format(field.value, 'PPP') : 'Select date'}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>End Date *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? format(field.value, 'PPP') : 'Select date'}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={date => date < (form.getValues('startDate') || new Date())}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Residence field – now properly controlled because default value is '' */}
+                <FormField
+                  control={form.control}
+                  name="residence"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Residence *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Where will the employee stay?" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes (optional)</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Additional notes..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsScheduleDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Create Schedule</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
 
         {/* View Schedule Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[500px]">
             {selectedSchedule && selectedSchedule.employee && (
               <>
                 <DialogHeader>
-                  <div className="flex items-center justify-between">
-                    <DialogTitle className="text-lg font-semibold">Schedule Details</DialogTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsViewDialogOpen(false)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <DialogTitle>Schedule Details</DialogTitle>
                   <DialogDescription>
                     Standby assignment for {selectedSchedule.employee.name}
                   </DialogDescription>
@@ -2616,18 +1727,13 @@ const EmployeeStandbyScheduler = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback>
-                          {getInitials(selectedSchedule.employee.name)}
-                        </AvatarFallback>
+                        <AvatarFallback>{getInitials(selectedSchedule.employee.name)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{selectedSchedule.employee.name}</h3>
-                        <p className="text-sm text-gray-600 flex items-center gap-1">
-                          {getPositionIcon(selectedSchedule.employee.position)}
+                        <h3 className="font-semibold">{selectedSchedule.employee.name}</h3>
+                        <p className="text-sm text-muted-foreground">
                           {selectedSchedule.employee.position}
-                          {selectedSchedule.employee.designation && selectedSchedule.employee.designation !== selectedSchedule.employee.position && (
-                            <span className="ml-1 text-blue-600">• {selectedSchedule.employee.designation}</span>
-                          )}
+                          {selectedSchedule.employee.designation && ` • ${selectedSchedule.employee.designation}`}
                         </p>
                       </div>
                     </div>
@@ -2636,104 +1742,69 @@ const EmployeeStandbyScheduler = () => {
                     </Badge>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Start Date</p>
-                          <p className="text-sm font-semibold text-gray-900">{formatDate(selectedSchedule.start_date)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">End Date</p>
-                          <p className="text-sm font-semibold text-gray-900">{formatDate(selectedSchedule.end_date)}</p>
-                        </div>
-                      </div>
-                      {selectedSchedule.duration_days && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {selectedSchedule.duration_days} days total
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">Residence Location</p>
-                      <p className="text-sm text-gray-600">{selectedSchedule.residence}</p>
-                    </div>
-
-                    {selectedSchedule.notes && (
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">Notes</p>
-                        <p className="text-sm text-gray-600">{selectedSchedule.notes}</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">Start</p>
+                        <p className="text-sm font-semibold">{formatDate(selectedSchedule.start_date)}</p>
                       </div>
-                    )}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">End</p>
+                        <p className="text-sm font-semibold">{formatDate(selectedSchedule.end_date)}</p>
+                      </div>
+                    </div>
+                  </div>
 
+                  <div>
+                    <p className="text-sm font-medium mb-1">Residence</p>
+                    <p className="text-sm text-muted-foreground">{selectedSchedule.residence}</p>
+                  </div>
+
+                  {selectedSchedule.notes && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Employee Contact</p>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-sm">
-                          <Phone className="w-4 h-4 text-blue-500" />
-                          <a 
-                            href={`tel:${selectedSchedule.employee.contact.replace(/\D/g, '')}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                          >
-                            {formatPhoneNumber(selectedSchedule.employee.contact)}
-                          </a>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm">
-                          <Mail className="w-4 h-4 text-emerald-500" />
-                          {selectedSchedule.employee.email !== 'No Email' ? (
-                            <a 
-                              href={`mailto:${selectedSchedule.employee.email}`}
-                              className="text-emerald-600 hover:text-emerald-800 hover:underline"
-                            >
-                              {selectedSchedule.employee.email}
-                            </a>
-                          ) : (
-                            <span>{selectedSchedule.employee.email}</span>
-                          )}
-                        </div>
-                        {selectedSchedule.employee.emergency_contact && (
-                          <div className="flex items-center gap-3 text-sm">
-                            <AlertTriangle className="w-4 h-4 text-red-500" />
-                            <span>Emergency: {formatPhoneNumber(selectedSchedule.employee.emergency_contact)}</span>
-                          </div>
-                        )}
+                      <p className="text-sm font-medium mb-1">Notes</p>
+                      <p className="text-sm text-muted-foreground">{selectedSchedule.notes}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm font-medium mb-2">Contact</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <a href={`tel:${selectedSchedule.employee.contact.replace(/\D/g, '')}`} className="hover:underline">
+                          {formatPhoneNumber(selectedSchedule.employee.contact)}
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a href={`mailto:${selectedSchedule.employee.email}`} className="hover:underline">
+                          {selectedSchedule.employee.email}
+                        </a>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 gap-2">
-                      <Badge className={getPriorityColor(selectedSchedule.priority || 'medium')}>
-                        Priority: {selectedSchedule.priority}
-                      </Badge>
-                      <p className="text-xs text-gray-500">
-                        Created: {formatDateTime(selectedSchedule.created_at)}
-                      </p>
-                    </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <Badge className={getPriorityColor(selectedSchedule.priority || 'medium')}>
+                      Priority: {selectedSchedule.priority}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      Created: {formatDateTime(selectedSchedule.created_at)}
+                    </p>
                   </div>
                 </div>
 
-                <DialogFooter className="sticky bottom-0 bg-white pt-4 border-t">
-                  <div className="flex w-full justify-between sm:justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsViewDialogOpen(false)}
-                    >
-                      Close
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        setIsViewDialogOpen(false);
-                        handleDeleteSchedule(selectedSchedule.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </Button>
-                  </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                    Close
+                  </Button>
+                  <Button variant="destructive" onClick={() => {
+                    setIsViewDialogOpen(false);
+                    handleDeleteSchedule(selectedSchedule.id);
+                  }}>
+                    Delete
+                  </Button>
                 </DialogFooter>
               </>
             )}
@@ -2741,47 +1812,23 @@ const EmployeeStandbyScheduler = () => {
         </Dialog>
 
         {/* Footer */}
-        <footer className="mt-12 border-t bg-white shadow-lg">
+        <footer className="mt-12 border-t bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-600">
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium">Standby Management System v2.0</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span>{employees.length} employees</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>{standbySchedules.length} schedules</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>{dashboardStats.activeSchedules} active</span>
-                </div>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                <span className="font-medium">Standby Management System v2.0</span>
               </div>
               <div className="flex items-center gap-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={fetchData}
-                  className="hidden sm:flex"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh Data
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={openScheduleDialog}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Schedule
-                </Button>
+                <span>{employees.length} employees</span>
+                <span>•</span>
+                <span>{standbySchedules.length} schedules</span>
               </div>
             </div>
           </div>
         </footer>
-      </TooltipProvider>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 };
 
