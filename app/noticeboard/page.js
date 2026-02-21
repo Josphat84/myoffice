@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Bell, Plus, Search, Trash2, Edit, 
+  Bell, Plus, Search, Trash2, Edit,
   FileText, AlertTriangle, Loader, Filter,
   Calendar, Tag, RefreshCw, MoreVertical,
   Paperclip, Download, AlertCircle, CheckCircle,
@@ -12,7 +12,10 @@ import {
   Save, Upload, Link, Clock, Share2, Copy,
   ArrowUpRight, Info, File, Users, Zap, Megaphone,
   Printer, EyeOff, Pin, PinOff, Clock4, BarChart,
-  ExternalLink, Mail, Smartphone, Globe
+  ExternalLink, Mail, Smartphone, Globe, FileUp,
+  ThumbsUp, ThumbsDown, MessageCircle, Activity,
+  Grid, List, DownloadCloud, FileText as FileTextIcon,
+  Image, Film, Music, Archive as ArchiveIcon
 } from 'lucide-react';
 
 import {
@@ -90,7 +93,7 @@ const noticeboardApi = {
   async getAllNotices(filters = {}) {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.category && filters.category !== 'all') {
         params.append('category', filters.category);
       }
@@ -109,22 +112,22 @@ const noticeboardApi = {
       if (filters.search) {
         params.append('search', filters.search);
       }
-      
+
       const url = `${API_BASE_URL}${params.toString() ? `?${params.toString()}` : ''}`;
       console.log('Fetching notices from:', url);
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      
+
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -135,7 +138,6 @@ const noticeboardApi = {
 
   async createNotice(data) {
     try {
-      // Format data to match SQL schema EXACTLY
       const sqlFormattedData = {
         title: data.title,
         content: data.content,
@@ -159,17 +161,17 @@ const noticeboardApi = {
 
       const response = await fetch(`${API_BASE_URL}`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(sqlFormattedData)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Create error:', error);
@@ -200,16 +202,16 @@ const noticeboardApi = {
 
       const response = await fetch(`${API_BASE_URL}/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(sqlFormattedData)
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Update error:', error);
@@ -225,11 +227,11 @@ const noticeboardApi = {
           'Content-Type': 'application/json',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       return { success: true, message: 'Notice deleted successfully' };
     } catch (error) {
       console.error('Delete error:', error);
@@ -245,21 +247,38 @@ const noticeboardApi = {
           'Content-Type': 'application/json',
         }
       });
-      
+
       if (response.status === 404) {
         return null;
       }
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Stats error:', error.message);
       return null;
     }
   },
+
+  async togglePin(id, currentPinState) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_pinned: !currentPinState })
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Toggle pin error:', error);
+      throw error;
+    }
+  }
 };
 
 // Constants matching SQL database
@@ -273,27 +292,27 @@ const NOTIFICATION_TYPES = ["General Announcement", "System Alert", "Training", 
 // Helper functions
 const getPriorityStyle = (priority) => {
   switch (priority) {
-    case 'Critical': return { 
+    case 'Critical': return {
       badge: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300',
       icon: <AlertTriangle className="h-3 w-3" />,
       color: 'text-red-600'
     };
-    case 'High': return { 
+    case 'High': return {
       badge: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300',
       icon: <AlertTriangle className="h-3 w-3" />,
       color: 'text-orange-600'
     };
-    case 'Medium': return { 
+    case 'Medium': return {
       badge: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300',
       icon: <AlertCircle className="h-3 w-3" />,
       color: 'text-blue-600'
     };
-    case 'Low': return { 
+    case 'Low': return {
       badge: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300',
       icon: <AlertCircle className="h-3 w-3" />,
       color: 'text-gray-600'
     };
-    default: return { 
+    default: return {
       badge: 'bg-gray-100 text-gray-800 border-gray-200',
       icon: <AlertCircle className="h-3 w-3" />,
       color: 'text-gray-600'
@@ -381,7 +400,7 @@ const calculateClientSideStats = (notices) => {
   const statusBreakdown = {};
   const priorityBreakdown = {};
   const categoryBreakdown = {};
-  
+
   let pinnedCount = 0;
   let expiredCount = 0;
   let expiringSoonCount = 0;
@@ -390,15 +409,15 @@ const calculateClientSideStats = (notices) => {
   notices.forEach(notice => {
     const status = notice.status || 'Draft';
     statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
-    
+
     const priority = notice.priority || 'Medium';
     priorityBreakdown[priority] = (priorityBreakdown[priority] || 0) + 1;
-    
+
     const category = notice.category || 'General';
     categoryBreakdown[category] = (categoryBreakdown[category] || 0) + 1;
-    
+
     if (notice.is_pinned) pinnedCount++;
-    
+
     if (notice.expires_at) {
       try {
         const expiryDate = new Date(notice.expires_at);
@@ -429,66 +448,62 @@ const calculateClientSideStats = (notices) => {
   };
 };
 
-// Enhanced Notice Details Modal Component - WIDENED and IMPROVED
-const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit }) => {
+// ==================== NOTICE DETAILS MODAL ====================
+const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit, onTogglePin }) => {
   if (!notice) return null;
 
   const priorityStyle = getPriorityStyle(notice.priority);
   const isExpired = notice.expires_at && new Date(notice.expires_at) < new Date();
-  const expiresSoon = notice.expires_at && 
-    new Date(notice.expires_at) > new Date() && 
+  const expiresSoon = notice.expires_at &&
+    new Date(notice.expires_at) > new Date() &&
     new Date(notice.expires_at) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  // FIXED: Proper download function for attachments
+  const getFileIcon = () => {
+    if (!notice.attachment_name && !notice.attachment_url) return <FileTextIcon className="h-5 w-5" />;
+    const name = notice.attachment_name || notice.attachment_url || '';
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(ext)) return <Image className="h-5 w-5" />;
+    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) return <Film className="h-5 w-5" />;
+    if (['mp3', 'wav', 'ogg'].includes(ext)) return <Music className="h-5 w-5" />;
+    if (['pdf'].includes(ext)) return <FileText className="h-5 w-5" />;
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return <ArchiveIcon className="h-5 w-5" />;
+    return <FileTextIcon className="h-5 w-5" />;
+  };
+
   const handleDownloadAttachment = async () => {
-    if (notice.attachment_url) {
-      // If it's a URL, open it in a new tab or download it
-      if (notice.attachment_url.startsWith('http')) {
-        try {
-          // Try to fetch the file directly
-          const response = await fetch(notice.attachment_url);
-          if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = notice.attachment_name || 'attachment';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          } else {
-            // Fallback: open in new tab if direct download fails
-            window.open(notice.attachment_url, '_blank');
-          }
-        } catch (error) {
-          console.error('Download error:', error);
-          // Fallback: open in new tab
-          window.open(notice.attachment_url, '_blank');
+    if (!notice.attachment_url && !notice.attachment_name) {
+      alert('No attachment available');
+      return;
+    }
+
+    let url = notice.attachment_url;
+    let filename = notice.attachment_name || 'download';
+
+    if (url) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get('Content-Disposition');
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) filename = match[1].replace(/['"]/g, '');
         }
-      } else {
-        // If it's a data URL or local path
+        const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = notice.attachment_url;
-        link.download = notice.attachment_name || 'attachment';
+        link.href = downloadUrl;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      } catch (error) {
+        console.error('Download error:', error);
+        window.open(url, '_blank');
       }
     } else if (notice.attachment_name) {
-      // If there's only a file name but no URL, create a text file with the notice content
-      const content = `NOTICE: ${notice.title}\n\nDate: ${notice.date}\nCategory: ${notice.category}\nPriority: ${notice.priority}\nStatus: ${notice.status}\nAuthor: ${notice.author}\nDepartment: ${notice.department}\n\nCONTENT:\n${notice.content}`;
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = notice.attachment_name.endsWith('.txt') ? notice.attachment_name : `${notice.attachment_name}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } else {
-      alert('No attachment available for download');
+      const assumedUrl = `${API_BASE_URL.replace('/api/notices', '')}/uploads/${encodeURIComponent(notice.attachment_name)}`;
+      window.open(assumedUrl, '_blank');
     }
   };
 
@@ -505,13 +520,23 @@ const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit }) => {
     }
   };
 
+  const handleTogglePin = async () => {
+    try {
+      await noticeboardApi.togglePin(notice.id, notice.is_pinned);
+      onTogglePin(notice.id, !notice.is_pinned);
+    } catch (error) {
+      alert('Failed to toggle pin: ' + error.message);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-[1200px] max-h-[95vh] overflow-hidden p-0">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0">
+        {/* Header */}
         <DialogHeader className="sticky top-0 z-10 bg-background border-b px-8 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+          <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-2">
                 <DialogTitle className="text-2xl font-bold break-words">
                   {notice.title}
                 </DialogTitle>
@@ -522,50 +547,41 @@ const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit }) => {
                   </Badge>
                 )}
               </div>
-              
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span className="font-medium">{notice.author || 'Not specified'}</span>
+                  <span>{notice.author || 'Unknown'}</span>
                 </div>
-                
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>{formatDate(notice.date)}</span>
                 </div>
-                
                 {notice.department && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Building className="h-4 w-4" />
                     <span>{notice.department}</span>
                   </div>
                 )}
-                
                 <div className="flex items-center gap-2 ml-auto">
-                  <Badge className={`${priorityStyle.badge} shrink-0`}>
+                  <Badge className={priorityStyle.badge}>
                     {priorityStyle.icon}
                     {notice.priority}
                   </Badge>
-                  <Badge className={`${getStatusStyle(notice.status)} shrink-0`}>
+                  <Badge className={getStatusStyle(notice.status)}>
                     {notice.status}
                   </Badge>
                 </div>
               </div>
             </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="absolute right-4 top-4 lg:relative lg:right-0 lg:top-0"
-            >
+            <Button variant="ghost" size="sm" onClick={onClose} className="ml-4 shrink-0">
               <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
-        
+
+        {/* Tabs */}
         <Tabs defaultValue="content" className="w-full h-full">
-          <div className="sticky top-[4.5rem] z-10 bg-background border-b px-8">
+          <div className="sticky top-[6.5rem] z-10 bg-background border-b px-8">
             <TabsList className="grid w-full grid-cols-4 h-12">
               <TabsTrigger value="content" className="gap-2">
                 <FileText className="h-4 w-4" />
@@ -585,260 +601,165 @@ const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit }) => {
               </TabsTrigger>
             </TabsList>
           </div>
-          
+
           <ScrollArea className="h-[calc(95vh-14rem)] px-8">
             <div className="py-6">
-              <TabsContent value="content" className="space-y-6 m-0">
-                {/* Content Section - WIDENED Layout */}
+              {/* Content Tab */}
+              <TabsContent value="content" className="m-0">
                 <Card className="border-0 shadow-none">
-                  <CardContent className="p-0">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3">Notice Content</h3>
-                        <div className="border rounded-lg bg-muted/5 p-6">
-                          <div className="whitespace-pre-wrap leading-relaxed text-base max-w-none">
-                            {notice.content}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Improved Stats Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Card className="bg-card">
-                          <CardContent className="p-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">Category</p>
-                              <Badge variant="outline" className="font-normal text-sm w-full justify-center">
-                                <Tag className="h-3 w-3 mr-1" />
-                                {notice.category}
-                              </Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        <Card className="bg-card">
-                          <CardContent className="p-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">Target Audience</p>
-                              <p className="text-sm font-medium flex items-center gap-2 truncate">
-                                <Users className="h-3 w-3 shrink-0" />
-                                {notice.target_audience || 'All Employees'}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        <Card className="bg-card">
-                          <CardContent className="p-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">Notification Type</p>
-                              <p className="text-sm font-medium flex items-center gap-2 truncate">
-                                <Bell className="h-3 w-3 shrink-0" />
-                                {notice.notification_type || 'General Announcement'}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        <Card className="bg-card">
-                          <CardContent className="p-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">Acknowledgment</p>
-                              <div className="flex items-center gap-2">
-                                <Badge 
-                                  variant={notice.requires_acknowledgment ? "default" : "outline"} 
-                                  className={`${notice.requires_acknowledgment 
-                                    ? "bg-green-100 text-green-800 hover:bg-green-100 border-green-200" 
-                                    : "opacity-70"
-                                  } w-full justify-center`}
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  {notice.requires_acknowledgment ? 'Required' : 'Not Required'}
-                                </Badge>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                  <CardHeader className="px-0 pt-0">
+                    <CardTitle className="text-lg">Notice Content</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-0">
+                    <div className="border rounded-lg bg-muted/5 p-6">
+                      <div className="whitespace-pre-wrap leading-relaxed text-base max-w-none">
+                        {notice.content}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
-              
-              <TabsContent value="details" className="space-y-6 m-0">
-                {/* Details Section - WIDENED Grid Layout */}
+
+              {/* Details Tab */}
+              <TabsContent value="details" className="m-0">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Notice Information - WIDENED */}
+                  {/* Left Column – Metadata */}
                   <Card className="lg:col-span-2">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
                         <Info className="h-5 w-5" />
                         Notice Information
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-1">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
                           <p className="text-sm text-muted-foreground">Category</p>
-                          <Badge variant="outline" className="w-full justify-center">
+                          <Badge variant="outline" className="mt-1">
                             {notice.category}
                           </Badge>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Status</p>
-                          <Badge className={`${getStatusStyle(notice.status)} w-full justify-center`}>
-                            {notice.status}
-                          </Badge>
-                        </div>
-                        <div className="space-y-1">
+                        <div>
                           <p className="text-sm text-muted-foreground">Priority</p>
-                          <Badge className={`${priorityStyle.badge} w-full justify-center`}>
+                          <Badge className={`mt-1 ${priorityStyle.badge}`}>
                             {priorityStyle.icon}
                             {notice.priority}
                           </Badge>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Pinned</p>
-                          <div className="flex items-center justify-center">
-                            {notice.is_pinned ? (
-                              <Pin className="h-5 w-5 text-amber-500" />
-                            ) : (
-                              <PinOff className="h-5 w-5 text-gray-400" />
-                            )}
-                          </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Status</p>
+                          <Badge className={`mt-1 ${getStatusStyle(notice.status)}`}>
+                            {notice.status}
+                          </Badge>
                         </div>
-                        <div className="space-y-1">
+                        <div>
                           <p className="text-sm text-muted-foreground">Target Audience</p>
-                          <p className="text-sm font-medium truncate">{notice.target_audience || 'All Employees'}</p>
+                          <p className="text-sm font-medium mt-1">{notice.target_audience || 'All Employees'}</p>
                         </div>
-                        <div className="space-y-1">
+                        <div>
                           <p className="text-sm text-muted-foreground">Notification Type</p>
-                          <p className="text-sm font-medium truncate">{notice.notification_type || 'General Announcement'}</p>
+                          <p className="text-sm font-medium mt-1">{notice.notification_type || 'General'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Acknowledgment</p>
+                          <Badge
+                            variant={notice.requires_acknowledgment ? "default" : "outline"}
+                            className={`mt-1 ${notice.requires_acknowledgment ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                          >
+                            {notice.requires_acknowledgment ? 'Required' : 'Not Required'}
+                          </Badge>
                         </div>
                       </div>
-                      
                       <Separator />
-                      
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Author</p>
-                            <p className="text-base font-medium">{notice.author || 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Department</p>
-                            <p className="text-base font-medium">{notice.department || 'General'}</p>
-                          </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Author</p>
+                          <p className="text-base font-medium">{notice.author || 'Not specified'}</p>
                         </div>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Requires Acknowledgment</p>
-                            <div className="flex items-center gap-2">
-                              {notice.requires_acknowledgment ? (
-                                <CheckCircle className="h-5 w-5 text-green-500" />
-                              ) : (
-                                <X className="h-5 w-5 text-gray-400" />
-                              )}
-                              <span className="font-medium">
-                                {notice.requires_acknowledgment ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Department</p>
+                          <p className="text-base font-medium">{notice.department || 'General'}</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                  
-                  {/* Timeline Information */}
+
+                  {/* Right Column – Timeline */}
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
                         <Clock className="h-5 w-5" />
                         Timeline
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Published Date</p>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-5 w-5 text-blue-500" />
-                            <p className="text-base font-medium">{formatDate(notice.date)}</p>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Expiry Date</p>
-                          <div className="flex items-center gap-2">
-                            {isExpired ? (
-                              <Clock4 className="h-5 w-5 text-red-500" />
-                            ) : expiresSoon ? (
-                              <Clock className="h-5 w-5 text-amber-500" />
-                            ) : (
-                              <Clock className="h-5 w-5 text-gray-400" />
-                            )}
-                            <p className={`text-base font-medium ${isExpired ? 'text-red-600' : expiresSoon ? 'text-amber-600' : ''}`}>
-                              {notice.expires_at ? formatDate(notice.expires_at) : 'Never'}
-                              {isExpired && <span className="ml-2 text-sm">(Expired)</span>}
-                              {expiresSoon && !isExpired && <span className="ml-2 text-sm">(Expires Soon)</span>}
-                            </p>
-                          </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Published</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-5 w-5 text-blue-500" />
+                          <p className="font-medium">{formatDate(notice.date)}</p>
                         </div>
                       </div>
-                      
+                      <div>
+                        <p className="text-sm text-muted-foreground">Expires</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {isExpired ? (
+                            <Clock4 className="h-5 w-5 text-red-500" />
+                          ) : expiresSoon ? (
+                            <Clock className="h-5 w-5 text-amber-500" />
+                          ) : (
+                            <Clock className="h-5 w-5 text-gray-400" />
+                          )}
+                          <p className={`font-medium ${isExpired ? 'text-red-600' : expiresSoon ? 'text-amber-600' : ''}`}>
+                            {notice.expires_at ? formatDate(notice.expires_at) : 'Never'}
+                            {isExpired && ' (Expired)'}
+                            {expiresSoon && !isExpired && ' (Soon)'}
+                          </p>
+                        </div>
+                      </div>
                       <Separator />
-                      
-                      <div className="space-y-3">
-                        {notice.created_at && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Created</p>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-gray-400" />
-                              <p className="text-sm font-medium">{formatDateTime(notice.created_at)}</p>
-                            </div>
-                          </div>
-                        )}
-                        {notice.updated_at && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Last Updated</p>
-                            <div className="flex items-center gap-2">
-                              <RefreshCw className="h-4 w-4 text-gray-400" />
-                              <p className="text-sm font-medium">{formatDateTime(notice.updated_at)}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      {notice.created_at && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Created</p>
+                          <p className="text-sm font-medium">{formatDateTime(notice.created_at)}</p>
+                        </div>
+                      )}
+                      {notice.updated_at && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Last Updated</p>
+                          <p className="text-sm font-medium">{formatDateTime(notice.updated_at)}</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
               </TabsContent>
-              
-              <TabsContent value="attachment" className="space-y-6 m-0">
-                {/* Attachment Section - IMPROVED Display */}
+
+              {/* Attachment Tab */}
+              <TabsContent value="attachment" className="m-0">
                 <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
                       <Paperclip className="h-5 w-5" />
-                      Attachment Details
+                      Attachment
                     </CardTitle>
-                    <CardDescription className="text-base">
-                      {notice.attachment_name 
-                        ? 'View and download the attached file' 
-                        : 'No attachment available for this notice'
-                      }
+                    <CardDescription>
+                      {notice.attachment_name
+                        ? 'Download or view the attached file'
+                        : 'No attachment for this notice'}
                     </CardDescription>
                   </CardHeader>
-                  
                   {notice.attachment_name || notice.attachment_url ? (
                     <CardContent>
-                      <div className="border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-xl p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                      <div className="border rounded-lg p-6 bg-muted/10">
                         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                              <FileText className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                          <div className="flex items-start gap-4 flex-1 min-w-0">
+                            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                              {getFileIcon()}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-xl mb-2 break-words">
-                                {notice.attachment_name || 'Download File'}
+                              <p className="font-semibold text-lg mb-1 break-words">
+                                {notice.attachment_name || 'Unnamed file'}
                               </p>
                               {notice.attachment_size && (
                                 <p className="text-sm text-muted-foreground mb-2">
@@ -846,279 +767,188 @@ const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit }) => {
                                 </p>
                               )}
                               {notice.attachment_url && (
-                                <div className="flex items-start gap-2 mt-3">
-                                  <Link className="h-4 w-4 text-blue-500 mt-1 shrink-0" />
-                                  <a 
-                                    href={notice.attachment_url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-sm text-blue-600 dark:text-blue-400 break-all hover:underline"
-                                  >
+                                <div className="flex items-center gap-2 text-sm text-blue-600 break-all">
+                                  <Link className="h-4 w-4 shrink-0" />
+                                  <a href={notice.attachment_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                                     {notice.attachment_url}
                                   </a>
                                 </div>
                               )}
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            <Button 
-                              onClick={handleDownloadAttachment}
-                              className="gap-2 px-6"
-                              size="lg"
-                            >
-                              <Download className="h-5 w-5" />
-                              Download File
-                            </Button>
-                            {notice.attachment_url && notice.attachment_url.startsWith('http') && (
-                              <Button 
-                                variant="outline" 
-                                onClick={() => window.open(notice.attachment_url, '_blank')}
-                                className="gap-2 px-6"
-                                size="lg"
-                              >
-                                <ExternalLink className="h-5 w-5" />
-                                Open in Browser
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="mt-6 pt-6 border-t">
-                          <h4 className="font-semibold mb-3">File Information</h4>
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">File Name</p>
-                              <p className="font-medium truncate">{notice.attachment_name || 'Unnamed File'}</p>
-                            </div>
-                            {notice.attachment_size && (
-                              <div className="space-y-1">
-                                <p className="text-sm text-muted-foreground">Size</p>
-                                <p className="font-medium">{notice.attachment_size}</p>
-                              </div>
-                            )}
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">File Type</p>
-                              <p className="font-medium uppercase">
-                                {notice.attachment_name ? notice.attachment_name.split('.').pop() : 'Unknown'}
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">Status</p>
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                Available
-                              </Badge>
-                            </div>
-                          </div>
+                          <Button onClick={handleDownloadAttachment} className="gap-2 shrink-0">
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
                   ) : (
                     <CardContent>
-                      <div className="border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl p-12 text-center">
-                        <Paperclip className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-lg text-muted-foreground mb-2">No attachment available</p>
-                        <p className="text-sm text-muted-foreground">
-                          You can add an attachment when editing this notice
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="mt-6 gap-2"
-                          onClick={() => {
-                            onEdit(notice);
-                            onClose();
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Notice to Add Attachment
-                        </Button>
+                      <div className="border-2 border-dashed rounded-lg p-12 text-center">
+                        <Paperclip className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No attachment available</p>
                       </div>
                     </CardContent>
                   )}
                 </Card>
               </TabsContent>
-              
-              <TabsContent value="actions" className="space-y-6 m-0">
-                {/* Actions Section - WIDENED */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold">Notice Actions</CardTitle>
-                    <CardDescription className="text-base">
-                      Available operations for this notice
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={handleShare}
-                        className="gap-3 h-auto py-4 justify-start"
-                      >
-                        <Share2 className="h-5 w-5" />
-                        <div className="text-left">
-                          <div className="font-semibold">Share Notice</div>
-                          <div className="text-sm text-muted-foreground">Share with others</div>
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${notice.title}\n\n${notice.content}`);
-                          alert('Notice content copied to clipboard!');
-                        }}
-                        className="gap-3 h-auto py-4 justify-start"
-                      >
-                        <Copy className="h-5 w-5" />
-                        <div className="text-left">
-                          <div className="font-semibold">Copy Content</div>
-                          <div className="text-sm text-muted-foreground">Copy to clipboard</div>
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          onEdit(notice);
-                          onClose();
-                        }}
-                        className="gap-3 h-auto py-4 justify-start"
-                      >
-                        <Edit className="h-5 w-5" />
-                        <div className="text-left">
-                          <div className="font-semibold">Edit Notice</div>
-                          <div className="text-sm text-muted-foreground">Modify this notice</div>
-                        </div>
-                      </Button>
-                      
-                      {(notice.attachment_name || notice.attachment_url) && (
-                        <Button 
-                          variant="outline" 
-                          onClick={handleDownloadAttachment}
-                          className="gap-3 h-auto py-4 justify-start"
-                        >
-                          <Download className="h-5 w-5" />
-                          <div className="text-left">
-                            <div className="font-semibold">Download</div>
-                            <div className="text-sm text-muted-foreground">Get attachment</div>
+
+              {/* Actions Tab – REORGANIZED */}
+              <TabsContent value="actions" className="m-0">
+                <div className="space-y-6">
+                  {/* General Actions */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">General Actions</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Card>
+                        <CardContent className="p-4 flex items-start gap-3">
+                          <Share2 className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <div className="flex-1">
+                            <p className="font-medium">Share Notice</p>
+                            <p className="text-sm text-muted-foreground">Share with others via link or copy</p>
+                            <Button variant="outline" size="sm" onClick={handleShare} className="mt-2 w-full">
+                              Share
+                            </Button>
                           </div>
-                        </Button>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          navigator.clipboard.writeText(notice.id);
-                          alert('Notice ID copied to clipboard!');
-                        }}
-                        className="gap-3 h-auto py-4 justify-start"
-                      >
-                        <Copy className="h-5 w-5" />
-                        <div className="text-left">
-                          <div className="font-semibold">Copy ID</div>
-                          <div className="text-sm text-muted-foreground">Copy notice ID</div>
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        variant="destructive" 
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this notice? This action cannot be undone.')) {
-                            onDelete(notice.id);
-                            onClose();
-                          }
-                        }}
-                        className="gap-3 h-auto py-4 justify-start"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                        <div className="text-left">
-                          <div className="font-semibold">Delete Notice</div>
-                          <div className="text-sm">Permanently remove</div>
-                        </div>
-                      </Button>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4 flex items-start gap-3">
+                          <Copy className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <div className="flex-1">
+                            <p className="font-medium">Copy Content</p>
+                            <p className="text-sm text-muted-foreground">Copy full notice to clipboard</p>
+                            <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${notice.title}\n\n${notice.content}`); alert('Copied!'); }} className="mt-2 w-full">
+                              Copy
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4 flex items-start gap-3">
+                          <Edit className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <div className="flex-1">
+                            <p className="font-medium">Edit Notice</p>
+                            <p className="text-sm text-muted-foreground">Modify details and content</p>
+                            <Button variant="outline" size="sm" onClick={() => { onEdit(notice); onClose(); }} className="mt-2 w-full">
+                              Edit
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4 flex items-start gap-3">
+                          {notice.is_pinned ? <PinOff className="h-5 w-5 text-muted-foreground shrink-0" /> : <Pin className="h-5 w-5 text-muted-foreground shrink-0" />}
+                          <div className="flex-1">
+                            <p className="font-medium">{notice.is_pinned ? 'Unpin Notice' : 'Pin Notice'}</p>
+                            <p className="text-sm text-muted-foreground">{notice.is_pinned ? 'Remove from top' : 'Keep at top'}</p>
+                            <Button variant="outline" size="sm" onClick={handleTogglePin} className="mt-2 w-full">
+                              {notice.is_pinned ? 'Unpin' : 'Pin'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Technical Information */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold">Technical Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
+                  </div>
+
+                  {/* Acknowledgments (if required) */}
+                  {notice.requires_acknowledgment && (
+                    <>
+                      <Separator />
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Notice ID</p>
-                        <div className="flex items-center gap-3">
-                          <code className="text-sm bg-muted px-3 py-2 rounded-lg font-mono break-all flex-1">
-                            {notice.id}
-                          </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 w-9 p-0"
-                            onClick={() => {
-                              navigator.clipboard.writeText(notice.id);
-                              alert('ID copied to clipboard!');
-                            }}
-                          >
-                            <Copy className="h-4 w-4" />
+                        <h3 className="text-lg font-semibold mb-3">Acknowledgments</h3>
+                        <Card>
+                          <CardContent className="p-4 flex items-start gap-3">
+                            <ThumbsUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                            <div className="flex-1">
+                              <p className="font-medium">View Acknowledgments</p>
+                              <p className="text-sm text-muted-foreground">See who has read and acknowledged this notice</p>
+                              <Button variant="outline" size="sm" className="mt-2 w-full">
+                                View Report
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Danger Zone */}
+                  <div>
+                    <Separator className="mb-3" />
+                    <h3 className="text-lg font-semibold text-destructive mb-3">Danger Zone</h3>
+                    <Card className="border-destructive/20">
+                      <CardContent className="p-4 flex items-start gap-3">
+                        <Trash2 className="h-5 w-5 text-destructive shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-medium text-destructive">Delete Notice</p>
+                          <p className="text-sm text-muted-foreground">Permanently remove this notice. This action cannot be undone.</p>
+                          <Button variant="destructive" size="sm" onClick={() => { if (window.confirm('Delete this notice?')) { onDelete(notice.id); onClose(); } }} className="mt-2 w-full">
+                            Delete
                           </Button>
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Created</p>
-                          <p className="font-medium">{notice.created_at ? formatDateTime(notice.created_at) : 'Unknown'}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Technical Information */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Technical Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Notice ID</span>
+                          <code className="text-xs bg-muted px-2 py-1 rounded">{notice.id}</code>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Last Updated</p>
-                          <p className="font-medium">{notice.updated_at ? formatDateTime(notice.updated_at) : 'Unknown'}</p>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(notice.id); alert('ID copied!'); }} className="w-full">
+                          <Copy className="h-3 w-3 mr-2" /> Copy ID
+                        </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </div>
           </ScrollArea>
-          
-          <DialogFooter className="sticky bottom-0 bg-background border-t px-8 py-4">
-            <div className="flex w-full justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                Last updated: {notice.updated_at ? formatDateTime(notice.updated_at) : 'Unknown'}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={onClose}>
-                  Close
-                </Button>
-                <Button onClick={() => {
-                  onEdit(notice);
-                  onClose();
-                }}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Notice
-                </Button>
-              </div>
-            </div>
-          </DialogFooter>
         </Tabs>
+
+        {/* Footer */}
+        <DialogFooter className="sticky bottom-0 bg-background border-t px-8 py-4">
+          <div className="flex w-full justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Last updated: {notice.updated_at ? formatDateTime(notice.updated_at) : 'Never'}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>Close</Button>
+              <Button onClick={() => {
+                onEdit(notice);
+                onClose();
+              }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Notice
+              </Button>
+            </div>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-// Notice Card Component - FIXED hydration error
+// ==================== END OF NOTICE DETAILS MODAL ====================
+
+// Notice Card Component – unchanged
 const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => {
   const priorityStyle = getPriorityStyle(notice.priority);
   const statusStyle = getStatusStyle(notice.status);
   const isExpired = notice.expires_at && new Date(notice.expires_at) < new Date();
-  const expiresSoon = notice.expires_at && 
-    new Date(notice.expires_at) > new Date() && 
+  const expiresSoon = notice.expires_at &&
+    new Date(notice.expires_at) > new Date() &&
     new Date(notice.expires_at) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  // FIXED: Table view mode - removed whitespace issue
   if (viewMode === 'table') {
     return (
       <TableRow className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
@@ -1149,30 +979,13 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
         <TableCell>{formatShortDate(notice.date)}</TableCell>
         <TableCell>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onView(notice)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => onView(notice)} className="h-8 w-8 p-0">
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(notice)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => onEdit(notice)} className="h-8 w-8 p-0">
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (window.confirm('Delete this notice?')) onDelete(notice.id);
-              }}
-              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
+            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this notice?')) onDelete(notice.id); }} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -1191,7 +1004,7 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
           </Badge>
         </div>
       )}
-      
+
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="space-y-1 pr-8">
@@ -1215,12 +1028,12 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
           {notice.content}
         </p>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge variant="outline">
@@ -1243,13 +1056,13 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
               <Paperclip className="h-4 w-4 text-blue-500" />
             )}
           </div>
-          
+
           <div className="text-xs text-muted-foreground">
             {notice.notification_type || 'General Announcement'}
           </div>
         </div>
       </CardContent>
-      
+
       <CardFooter className="pt-2 border-t">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2">
@@ -1261,14 +1074,9 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
               {notice.status}
             </Badge>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onView(notice)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => onView(notice)} className="h-8 w-8 p-0">
               <Eye className="h-4 w-4" />
             </Button>
             <DropdownMenu>
@@ -1287,11 +1095,9 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
                   Edit Notice
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() => {
-                    if (window.confirm('Delete this notice?')) onDelete(notice.id);
-                  }}
+                  onClick={() => { if (window.confirm('Delete this notice?')) onDelete(notice.id); }}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Notice
@@ -1305,7 +1111,7 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
   );
 };
 
-// Statistics Card Component
+// Statistics Card Component – unchanged
 const StatisticsCard = ({ title, value, icon: Icon, trend, description, className = '' }) => (
   <Card className={className}>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1323,7 +1129,7 @@ const StatisticsCard = ({ title, value, icon: Icon, trend, description, classNam
   </Card>
 );
 
-// Edit Notice Modal Component (keep your existing version, just ensuring it's included)
+// Edit Notice Modal Component – unchanged
 const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -1432,7 +1238,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
             {notice ? 'Update the notice details below.' : 'Fill in the details to create a new notice.'}
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
             <div className="space-y-4">
@@ -1452,7 +1258,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     className={errors.title ? 'border-red-500' : ''}
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="content" className="flex items-center gap-1">
                     Content <span className="text-red-500">*</span>
@@ -1467,7 +1273,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     className={`min-h-[150px] ${errors.content ? 'border-red-500' : ''}`}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="date" className="flex items-center gap-1">
@@ -1483,14 +1289,14 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                       className={errors.date ? 'border-red-500' : ''}
                     />
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="category" className="flex items-center gap-1">
                       Category <span className="text-red-500">*</span>
                       {errors.category && <span className="text-red-500 text-xs">({errors.category})</span>}
                     </Label>
-                    <Select 
-                      value={formData.category} 
+                    <Select
+                      value={formData.category}
                       onValueChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
                     >
                       <SelectTrigger className={errors.category ? 'border-red-500' : ''}>
@@ -1514,8 +1320,8 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select 
-                    value={formData.priority} 
+                  <Select
+                    value={formData.priority}
                     onValueChange={(val) => setFormData(prev => ({ ...prev, priority: val }))}
                   >
                     <SelectTrigger>
@@ -1533,11 +1339,11 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select 
-                    value={formData.status} 
+                  <Select
+                    value={formData.status}
                     onValueChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
                   >
                     <SelectTrigger>
@@ -1571,11 +1377,11 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     placeholder="Enter author name"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="department">Department</Label>
-                  <Select 
-                    value={formData.department} 
+                  <Select
+                    value={formData.department}
                     onValueChange={(val) => setFormData(prev => ({ ...prev, department: val }))}
                   >
                     <SelectTrigger>
@@ -1588,11 +1394,11 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="target_audience">Target Audience</Label>
-                  <Select 
-                    value={formData.target_audience} 
+                  <Select
+                    value={formData.target_audience}
                     onValueChange={(val) => setFormData(prev => ({ ...prev, target_audience: val }))}
                   >
                     <SelectTrigger>
@@ -1605,11 +1411,11 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="notification_type">Notification Type</Label>
-                  <Select 
-                    value={formData.notification_type} 
+                  <Select
+                    value={formData.notification_type}
                     onValueChange={(val) => setFormData(prev => ({ ...prev, notification_type: val }))}
                   >
                     <SelectTrigger>
@@ -1657,7 +1463,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     placeholder="e.g., policy.pdf"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="attachment_url">File URL</Label>
                   <Input
@@ -1667,7 +1473,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     placeholder="https://example.com/file.pdf"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="attachment_size">File Size</Label>
                   <Input
@@ -1678,7 +1484,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                   />
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <Label htmlFor="attachment-upload" className="cursor-pointer">
                   <div className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted transition-colors">
@@ -1720,7 +1526,7 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
                     <p className="text-xs text-muted-foreground">Keep this notice at the top of the list</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="requires_acknowledgment"
@@ -1738,21 +1544,12 @@ const EditNoticeModal = ({ isOpen, onClose, notice, onSave, isLoading }) => {
               </div>
             </div>
           </div>
-          
+
           <DialogFooter className="gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="min-w-[120px]"
-            >
+            <Button type="submit" disabled={isLoading} className="min-w-[120px]">
               {isLoading ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
@@ -1799,7 +1596,7 @@ export default function NoticeboardManagement() {
     const timer = setTimeout(() => {
       fetchNotices();
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [filters, search]);
 
@@ -1811,7 +1608,7 @@ export default function NoticeboardManagement() {
         search: search || undefined,
         is_pinned: filters.is_pinned !== null ? filters.is_pinned : undefined
       };
-      
+
       const notices = await noticeboardApi.getAllNotices(apiFilters);
       setData(Array.isArray(notices) ? notices : []);
     } catch (error) {
@@ -1836,25 +1633,25 @@ export default function NoticeboardManagement() {
     setIsLoading(true);
     try {
       console.log('Saving notice with data:', noticeData);
-      
+
       let result;
       if (editingNotice) {
         result = await noticeboardApi.updateNotice(editingNotice.id, noticeData);
       } else {
         result = await noticeboardApi.createNotice(noticeData);
       }
-      
+
       console.log('Save result:', result);
-      
+
       await fetchNotices();
       setIsModalOpen(false);
       setEditingNotice(null);
-      
+
       alert(`Notice ${editingNotice ? 'updated' : 'created'} successfully!`);
-      
+
     } catch (error) {
       console.error('Save error:', error);
-      
+
       if (error.message.includes('405')) {
         alert('Error: Method Not Allowed. Please check the API endpoint and method.');
       } else if (error.message.includes('400')) {
@@ -1896,11 +1693,18 @@ export default function NoticeboardManagement() {
     setIsModalOpen(true);
   };
 
+  const handleTogglePin = (id, newPinState) => {
+    setData(prev => prev.map(n => n.id === id ? { ...n, is_pinned: newPinState } : n));
+    if (selectedNotice && selectedNotice.id === id) {
+      setSelectedNotice(prev => ({ ...prev, is_pinned: newPinState }));
+    }
+  };
+
   const calculatedStats = calculateClientSideStats(data);
-  
+
   const pinnedNotices = data.filter(notice => notice.is_pinned);
   const regularNotices = data.filter(notice => !notice.is_pinned);
-  const expiredNotices = data.filter(notice => 
+  const expiredNotices = data.filter(notice =>
     notice.expires_at && new Date(notice.expires_at) < new Date()
   );
 
@@ -1916,7 +1720,7 @@ export default function NoticeboardManagement() {
             Create, manage, and monitor all company notices and announcements
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button onClick={() => {
             setEditingNotice(null);
@@ -1971,7 +1775,7 @@ export default function NoticeboardManagement() {
               {PRIORITIES.map(priority => {
                 const count = calculatedStats.priority_breakdown[priority] || 0;
                 const percentage = data.length > 0 ? (count / data.length * 100) : 0;
-                
+
                 return (
                   <div key={priority} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1980,14 +1784,13 @@ export default function NoticeboardManagement() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-32">
-                        <Progress 
-                          value={percentage} 
-                          className={`h-2 ${
-                            priority === 'Critical' ? 'bg-red-100' :
-                            priority === 'High' ? 'bg-orange-100' :
-                            priority === 'Medium' ? 'bg-blue-100' :
-                            'bg-gray-100'
-                          }`}
+                        <Progress
+                          value={percentage}
+                          className={`h-2 ${priority === 'Critical' ? 'bg-red-100' :
+                              priority === 'High' ? 'bg-orange-100' :
+                                priority === 'Medium' ? 'bg-blue-100' :
+                                  'bg-gray-100'
+                            }`}
                         />
                       </div>
                       <span className="text-sm font-medium w-8 text-right">
@@ -2012,7 +1815,7 @@ export default function NoticeboardManagement() {
               </CardTitle>
               <CardDescription>Filter notices by various criteria</CardDescription>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
                 <TabsList>
@@ -2034,7 +1837,7 @@ export default function NoticeboardManagement() {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="space-y-4">
             <div className="relative">
@@ -2056,7 +1859,7 @@ export default function NoticeboardManagement() {
                 </Button>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="filter-category" className="text-xs">Category</Label>
@@ -2075,7 +1878,7 @@ export default function NoticeboardManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="filter-priority" className="text-xs">Priority</Label>
                 <Select
@@ -2098,7 +1901,7 @@ export default function NoticeboardManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="filter-status" className="text-xs">Status</Label>
                 <Select
@@ -2120,7 +1923,7 @@ export default function NoticeboardManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="filter-department" className="text-xs">Department</Label>
                 <Select
@@ -2138,7 +1941,7 @@ export default function NoticeboardManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="filter-pinned" className="text-xs">Pinned Status</Label>
                 <Select
@@ -2162,7 +1965,7 @@ export default function NoticeboardManagement() {
                 </Select>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
@@ -2182,7 +1985,7 @@ export default function NoticeboardManagement() {
                 <X className="h-4 w-4" />
                 Clear Filters
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -2206,14 +2009,14 @@ export default function NoticeboardManagement() {
                 {isLoading ? 'Loading...' : `Showing ${data.length} notice${data.length !== 1 ? 's' : ''}`}
               </CardDescription>
             </div>
-            
+
             <div className="text-sm text-muted-foreground">
               {pinnedNotices.length > 0 && `${pinnedNotices.length} pinned, `}
               {regularNotices.length} regular
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -2225,7 +2028,7 @@ export default function NoticeboardManagement() {
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No notices found</h3>
               <p className="text-muted-foreground text-center mb-4">
-                {search || Object.values(filters).some(f => f !== 'all' && f !== null) 
+                {search || Object.values(filters).some(f => f !== 'all' && f !== null)
                   ? 'Try adjusting your search or filters'
                   : 'Get started by creating your first notice'}
               </p>
@@ -2303,7 +2106,7 @@ export default function NoticeboardManagement() {
                   <Separator className="my-6" />
                 </div>
               )}
-              
+
               <div>
                 <h3 className="text-lg font-semibold mb-4">
                   All Notices ({regularNotices.length})
@@ -2324,7 +2127,7 @@ export default function NoticeboardManagement() {
             </div>
           )}
         </CardContent>
-        
+
         {data.length > 0 && !isLoading && (
           <CardFooter className="flex justify-between border-t pt-6">
             <div className="text-sm text-muted-foreground">
@@ -2336,10 +2139,7 @@ export default function NoticeboardManagement() {
               Showing {data.length} notice{data.length !== 1 ? 's' : ''}
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Printer className="h-4 w-4" />
-                Print List
-              </Button>
+              {/* Print button removed */}
               <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" />
                 Export CSV
@@ -2388,7 +2188,7 @@ export default function NoticeboardManagement() {
         onSave={handleSaveNotice}
         isLoading={isLoading}
       />
-      
+
       <NoticeDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => {
@@ -2401,6 +2201,7 @@ export default function NoticeboardManagement() {
           setIsDetailsModalOpen(false);
           handleEditNotice(notice);
         }}
+        onTogglePin={handleTogglePin}
       />
     </div>
   );
