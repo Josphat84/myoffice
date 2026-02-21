@@ -7,7 +7,7 @@ import {
   FileText, AlertTriangle, Loader, Filter,
   Calendar, Tag, RefreshCw, MoreVertical,
   Paperclip, Download, AlertCircle, CheckCircle,
-  Eye, ChevronDown, X, User, Building,
+  Eye, ChevronDown, ChevronUp, X, User, Building,
   Archive, ChevronRight, ChevronLeft, Settings,
   Save, Upload, Link, Clock, Share2, Copy,
   ArrowUpRight, Info, File, Users, Zap, Megaphone,
@@ -940,8 +940,8 @@ const NoticeDetailsModal = ({ isOpen, onClose, notice, onDelete, onEdit, onToggl
 
 // ==================== END OF NOTICE DETAILS MODAL ====================
 
-// Notice Card Component – unchanged
-const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => {
+// Notice Card Component – with expand/collapse functionality
+const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid', isExpanded, onToggleExpand }) => {
   const priorityStyle = getPriorityStyle(notice.priority);
   const statusStyle = getStatusStyle(notice.status);
   const isExpired = notice.expires_at && new Date(notice.expires_at) < new Date();
@@ -951,46 +951,104 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
 
   if (viewMode === 'table') {
     return (
-      <TableRow className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-        <TableCell>
-          <div className="flex items-center gap-3">
-            {notice.is_pinned && <Pin className="h-4 w-4 text-amber-500" />}
-            <div>
-              <div className="font-medium">{notice.title}</div>
-              <div className="text-sm text-muted-foreground">
-                {truncateText(notice.content, 60)}
+      <>
+        <TableRow className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+          <TableCell>
+            <div className="flex items-center gap-3">
+              {notice.is_pinned && <Pin className="h-4 w-4 text-amber-500" />}
+              <div>
+                <div className="font-medium">{notice.title}</div>
+                <div className="text-sm text-muted-foreground">
+                  {truncateText(notice.content, 60)}
+                </div>
               </div>
             </div>
-          </div>
-        </TableCell>
-        <TableCell>
-          <Badge variant="outline">{notice.category}</Badge>
-        </TableCell>
-        <TableCell>
-          <Badge className={priorityStyle.badge}>
-            {priorityStyle.icon}
-            {notice.priority}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          <Badge className={statusStyle}>{notice.status}</Badge>
-        </TableCell>
-        <TableCell>{notice.author || '-'}</TableCell>
-        <TableCell>{formatShortDate(notice.date)}</TableCell>
-        <TableCell>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onView(notice)} className="h-8 w-8 p-0">
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => onEdit(notice)} className="h-8 w-8 p-0">
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this notice?')) onDelete(notice.id); }} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </TableCell>
-      </TableRow>
+          </TableCell>
+          <TableCell>
+            <Badge variant="outline">{notice.category}</Badge>
+          </TableCell>
+          <TableCell>
+            <Badge className={priorityStyle.badge}>
+              {priorityStyle.icon}
+              {notice.priority}
+            </Badge>
+          </TableCell>
+          <TableCell>
+            <Badge className={statusStyle}>{notice.status}</Badge>
+          </TableCell>
+          <TableCell>{notice.author || '-'}</TableCell>
+          <TableCell>{formatShortDate(notice.date)}</TableCell>
+          <TableCell>
+            <div className="flex gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={() => onToggleExpand(notice.id)} className="h-8 w-8 p-0">
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isExpanded ? 'Collapse' : 'Expand to view details'}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={() => onView(notice)} className="h-8 w-8 p-0">
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Open details modal</p>
+                </TooltipContent>
+              </Tooltip>
+              <Button variant="ghost" size="sm" onClick={() => onEdit(notice)} className="h-8 w-8 p-0">
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this notice?')) onDelete(notice.id); }} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
+        {isExpanded && (
+          <TableRow className="bg-muted/30">
+            <TableCell colSpan={7} className="p-4">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Full Content</h4>
+                  <div className="text-sm whitespace-pre-wrap border rounded-lg p-3 bg-background">
+                    {notice.content}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Target Audience</p>
+                    <p className="text-sm">{notice.target_audience || 'All Employees'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Notification Type</p>
+                    <p className="text-sm">{notice.notification_type || 'General'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Acknowledgment</p>
+                    <p className="text-sm">{notice.requires_acknowledgment ? 'Required' : 'Not Required'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Expires</p>
+                    <p className="text-sm">{notice.expires_at ? formatDate(notice.expires_at) : 'Never'}</p>
+                  </div>
+                </div>
+                {notice.attachment_name && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Paperclip className="h-4 w-4 text-blue-500" />
+                    <span>{notice.attachment_name}</span>
+                    {notice.attachment_size && <span className="text-muted-foreground">({notice.attachment_size})</span>}
+                  </div>
+                )}
+              </div>
+            </TableCell>
+          </TableRow>
+        )}
+      </>
     );
   }
 
@@ -1076,9 +1134,26 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onView(notice)} className="h-8 w-8 p-0">
-              <Eye className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => onToggleExpand(notice.id)} className="h-8 w-8 p-0">
+                  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isExpanded ? 'Collapse' : 'Expand to view details'}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => onView(notice)} className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Open details modal</p>
+              </TooltipContent>
+            </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -1088,7 +1163,7 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onView(notice)}>
                   <Eye className="h-4 w-4 mr-2" />
-                  View Details
+                  View Details Modal
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(notice)}>
                   <Edit className="h-4 w-4 mr-2" />
@@ -1107,6 +1182,43 @@ const NoticeCard = ({ notice, onView, onEdit, onDelete, viewMode = 'grid' }) => 
           </div>
         </div>
       </CardFooter>
+
+      {/* Expanded content section */}
+      {isExpanded && (
+        <div className="border-t p-4 bg-muted/30 space-y-4">
+          <div>
+            <h4 className="text-sm font-medium mb-2">Full Content</h4>
+            <div className="text-sm whitespace-pre-wrap border rounded-lg p-3 bg-background">
+              {notice.content}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Target Audience</p>
+              <p className="text-sm">{notice.target_audience || 'All Employees'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Notification Type</p>
+              <p className="text-sm">{notice.notification_type || 'General'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Acknowledgment</p>
+              <p className="text-sm">{notice.requires_acknowledgment ? 'Required' : 'Not Required'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Expires</p>
+              <p className="text-sm">{notice.expires_at ? formatDate(notice.expires_at) : 'Never'}</p>
+            </div>
+          </div>
+          {notice.attachment_name && (
+            <div className="flex items-center gap-2 text-sm">
+              <Paperclip className="h-4 w-4 text-blue-500" />
+              <span>{notice.attachment_name}</span>
+              {notice.attachment_size && <span className="text-muted-foreground">({notice.attachment_size})</span>}
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 };
@@ -1580,6 +1692,7 @@ export default function NoticeboardManagement() {
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
+  const [expandedNotices, setExpandedNotices] = useState(new Set());
   const [filters, setFilters] = useState({
     category: 'all',
     priority: 'all',
@@ -1676,6 +1789,12 @@ export default function NoticeboardManagement() {
         setIsDetailsModalOpen(false);
         setSelectedNotice(null);
       }
+      // Remove from expanded set if deleted
+      setExpandedNotices(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
       alert('Notice deleted successfully!');
     } catch (error) {
       console.error('Delete error:', error);
@@ -1700,6 +1819,18 @@ export default function NoticeboardManagement() {
     }
   };
 
+  const handleToggleExpand = (id) => {
+    setExpandedNotices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   const calculatedStats = calculateClientSideStats(data);
 
   const pinnedNotices = data.filter(notice => notice.is_pinned);
@@ -1709,389 +1840,355 @@ export default function NoticeboardManagement() {
   );
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Megaphone className="h-8 w-8 text-primary" />
-            Noticeboard Management
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Create, manage, and monitor all company notices and announcements
-          </p>
+    <TooltipProvider>
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <Megaphone className="h-8 w-8 text-primary" />
+              Noticeboard Management
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Create, manage, and monitor all company notices and announcements
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button onClick={() => {
+              setEditingNotice(null);
+              setIsModalOpen(true);
+            }} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Create Notice
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button onClick={() => {
-            setEditingNotice(null);
-            setIsModalOpen(true);
-          }} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Notice
-          </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatisticsCard
+            title="Total Notices"
+            value={data.length}
+            icon={FileText}
+            trend={`${calculatedStats.total_notices} total`}
+          />
+          <StatisticsCard
+            title="Active"
+            value={data.filter(n => n.status === 'Active').length}
+            icon={CheckCircle}
+            trend={`${calculatedStats.status_breakdown.Active || 0} active`}
+            className="border-green-200 dark:border-green-800"
+          />
+          <StatisticsCard
+            title="Pinned"
+            value={pinnedNotices.length}
+            icon={Pin}
+            trend={`${calculatedStats.pinned_count} pinned`}
+            className="border-amber-200 dark:border-amber-800"
+          />
+          <StatisticsCard
+            title="Expired"
+            value={expiredNotices.length}
+            icon={Clock4}
+            trend={`${calculatedStats.expired_count} expired`}
+            className="border-red-200 dark:border-red-800"
+          />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatisticsCard
-          title="Total Notices"
-          value={data.length}
-          icon={FileText}
-          trend={`${calculatedStats.total_notices} total`}
-        />
-        <StatisticsCard
-          title="Active"
-          value={data.filter(n => n.status === 'Active').length}
-          icon={CheckCircle}
-          trend={`${calculatedStats.status_breakdown.Active || 0} active`}
-          className="border-green-200 dark:border-green-800"
-        />
-        <StatisticsCard
-          title="Pinned"
-          value={pinnedNotices.length}
-          icon={Pin}
-          trend={`${calculatedStats.pinned_count} pinned`}
-          className="border-amber-200 dark:border-amber-800"
-        />
-        <StatisticsCard
-          title="Expired"
-          value={expiredNotices.length}
-          icon={Clock4}
-          trend={`${calculatedStats.expired_count} expired`}
-          className="border-red-200 dark:border-red-800"
-        />
-      </div>
+        {calculatedStats.priority_breakdown && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart className="h-4 w-4" />
+                Priority Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {PRIORITIES.map(priority => {
+                  const count = calculatedStats.priority_breakdown[priority] || 0;
+                  const percentage = data.length > 0 ? (count / data.length * 100) : 0;
 
-      {calculatedStats.priority_breakdown && (
+                  return (
+                    <div key={priority} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getPriorityStyle(priority).icon}
+                        <span className="text-sm">{priority}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-32">
+                          <Progress
+                            value={percentage}
+                            className={`h-2 ${priority === 'Critical' ? 'bg-red-100' :
+                                priority === 'High' ? 'bg-orange-100' :
+                                  priority === 'Medium' ? 'bg-blue-100' :
+                                    'bg-gray-100'
+                              }`}
+                          />
+                        </div>
+                        <span className="text-sm font-medium w-8 text-right">
+                          {count}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <BarChart className="h-4 w-4" />
-              Priority Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {PRIORITIES.map(priority => {
-                const count = calculatedStats.priority_breakdown[priority] || 0;
-                const percentage = data.length > 0 ? (count / data.length * 100) : 0;
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filters & Search
+                </CardTitle>
+                <CardDescription>Filter notices by various criteria</CardDescription>
+              </div>
 
-                return (
-                  <div key={priority} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getPriorityStyle(priority).icon}
-                      <span className="text-sm">{priority}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-32">
-                        <Progress
-                          value={percentage}
-                          className={`h-2 ${priority === 'Critical' ? 'bg-red-100' :
-                              priority === 'High' ? 'bg-orange-100' :
-                                priority === 'Medium' ? 'bg-blue-100' :
-                                  'bg-gray-100'
-                            }`}
-                        />
+              <div className="flex items-center gap-2">
+                <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
+                  <TabsList>
+                    <TabsTrigger value="grid" className="gap-2">
+                      <div className="grid grid-cols-2 gap-0.5">
+                        <div className="h-2 w-2 bg-current rounded-sm"></div>
+                        <div className="h-2 w-2 bg-current rounded-sm"></div>
+                        <div className="h-2 w-2 bg-current rounded-sm"></div>
+                        <div className="h-2 w-2 bg-current rounded-sm"></div>
                       </div>
-                      <span className="text-sm font-medium w-8 text-right">
-                        {count}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                      Grid
+                    </TabsTrigger>
+                    <TabsTrigger value="table" className="gap-2">
+                      <Table className="h-4 w-4" />
+                      Table
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search notices by title or content..."
+                  className="pl-10"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 h-6 w-6 p-0"
+                    onClick={() => setSearch('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="filter-category" className="text-xs">Category</Label>
+                  <Select
+                    value={filters.category}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger id="filter-category">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="filter-priority" className="text-xs">Priority</Label>
+                  <Select
+                    value={filters.priority}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}
+                  >
+                    <SelectTrigger id="filter-priority">
+                      <SelectValue placeholder="All priorities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priorities</SelectItem>
+                      {PRIORITIES.map(p => (
+                        <SelectItem key={p} value={p}>
+                          <div className="flex items-center gap-2">
+                            {getPriorityStyle(p).icon}
+                            {p}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="filter-status" className="text-xs">Status</Label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger id="filter-status">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      {STATUSES.map(s => (
+                        <SelectItem key={s} value={s}>
+                          <Badge className={getStatusStyle(s)}>
+                            {s}
+                          </Badge>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="filter-department" className="text-xs">Department</Label>
+                  <Select
+                    value={filters.department}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, department: value }))}
+                  >
+                    <SelectTrigger id="filter-department">
+                      <SelectValue placeholder="All departments" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Departments</SelectItem>
+                      {DEPARTMENTS.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="filter-pinned" className="text-xs">Pinned Status</Label>
+                  <Select
+                    value={filters.is_pinned === null ? 'all' : filters.is_pinned.toString()}
+                    onValueChange={(value) => {
+                      if (value === 'all') {
+                        setFilters(prev => ({ ...prev, is_pinned: null }));
+                      } else {
+                        setFilters(prev => ({ ...prev, is_pinned: value === 'true' }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="filter-pinned">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Notices</SelectItem>
+                      <SelectItem value="true">Pinned Only</SelectItem>
+                      <SelectItem value="false">Not Pinned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFilters({
+                      category: 'all',
+                      priority: 'all',
+                      status: 'all',
+                      department: 'all',
+                      is_pinned: null
+                    });
+                    setSearch('');
+                  }}
+                  className="gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Clear Filters
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchNotices}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filters & Search
-              </CardTitle>
-              <CardDescription>Filter notices by various criteria</CardDescription>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
-                <TabsList>
-                  <TabsTrigger value="grid" className="gap-2">
-                    <div className="grid grid-cols-2 gap-0.5">
-                      <div className="h-2 w-2 bg-current rounded-sm"></div>
-                      <div className="h-2 w-2 bg-current rounded-sm"></div>
-                      <div className="h-2 w-2 bg-current rounded-sm"></div>
-                      <div className="h-2 w-2 bg-current rounded-sm"></div>
-                    </div>
-                    Grid
-                  </TabsTrigger>
-                  <TabsTrigger value="table" className="gap-2">
-                    <Table className="h-4 w-4" />
-                    Table
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search notices by title or content..."
-                className="pl-10"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-2 h-6 w-6 p-0"
-                  onClick={() => setSearch('')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="filter-category" className="text-xs">Category</Label>
-                <Select
-                  value={filters.category}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
-                >
-                  <SelectTrigger id="filter-category">
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div>
+                <CardTitle>Notices ({data.length})</CardTitle>
+                <CardDescription>
+                  {isLoading ? 'Loading...' : `Showing ${data.length} notice${data.length !== 1 ? 's' : ''}`}
+                </CardDescription>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="filter-priority" className="text-xs">Priority</Label>
-                <Select
-                  value={filters.priority}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}
-                >
-                  <SelectTrigger id="filter-priority">
-                    <SelectValue placeholder="All priorities" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    {PRIORITIES.map(p => (
-                      <SelectItem key={p} value={p}>
-                        <div className="flex items-center gap-2">
-                          {getPriorityStyle(p).icon}
-                          {p}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="filter-status" className="text-xs">Status</Label>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                >
-                  <SelectTrigger id="filter-status">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {STATUSES.map(s => (
-                      <SelectItem key={s} value={s}>
-                        <Badge className={getStatusStyle(s)}>
-                          {s}
-                        </Badge>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="filter-department" className="text-xs">Department</Label>
-                <Select
-                  value={filters.department}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, department: value }))}
-                >
-                  <SelectTrigger id="filter-department">
-                    <SelectValue placeholder="All departments" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
-                    {DEPARTMENTS.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="filter-pinned" className="text-xs">Pinned Status</Label>
-                <Select
-                  value={filters.is_pinned === null ? 'all' : filters.is_pinned.toString()}
-                  onValueChange={(value) => {
-                    if (value === 'all') {
-                      setFilters(prev => ({ ...prev, is_pinned: null }));
-                    } else {
-                      setFilters(prev => ({ ...prev, is_pinned: value === 'true' }));
-                    }
-                  }}
-                >
-                  <SelectTrigger id="filter-pinned">
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Notices</SelectItem>
-                    <SelectItem value="true">Pinned Only</SelectItem>
-                    <SelectItem value="false">Not Pinned</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="text-sm text-muted-foreground">
+                {pinnedNotices.length > 0 && `${pinnedNotices.length} pinned, `}
+                {regularNotices.length} regular
               </div>
             </div>
+          </CardHeader>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilters({
-                    category: 'all',
-                    priority: 'all',
-                    status: 'all',
-                    department: 'all',
-                    is_pinned: null
-                  });
-                  setSearch('');
-                }}
-                className="gap-2"
-              >
-                <X className="h-4 w-4" />
-                Clear Filters
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchNotices}
-                className="gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              <CardTitle>Notices ({data.length})</CardTitle>
-              <CardDescription>
-                {isLoading ? 'Loading...' : `Showing ${data.length} notice${data.length !== 1 ? 's' : ''}`}
-              </CardDescription>
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              {pinnedNotices.length > 0 && `${pinnedNotices.length} pinned, `}
-              {regularNotices.length} regular
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">Loading notices...</p>
-            </div>
-          ) : data.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No notices found</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                {search || Object.values(filters).some(f => f !== 'all' && f !== null)
-                  ? 'Try adjusting your search or filters'
-                  : 'Get started by creating your first notice'}
-              </p>
-              {(!search && Object.values(filters).every(f => f === 'all' || f === null)) && (
-                <Button onClick={() => {
-                  setEditingNotice(null);
-                  setIsModalOpen(true);
-                }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Notice
-                </Button>
-              )}
-            </div>
-          ) : viewMode === 'table' ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pinnedNotices.map(notice => (
-                    <NoticeCard
-                      key={notice.id}
-                      notice={notice}
-                      onView={handleViewDetails}
-                      onEdit={handleEditNotice}
-                      onDelete={handleDeleteNotice}
-                      viewMode="table"
-                    />
-                  ))}
-                  {regularNotices.map(notice => (
-                    <NoticeCard
-                      key={notice.id}
-                      notice={notice}
-                      onView={handleViewDetails}
-                      onEdit={handleEditNotice}
-                      onDelete={handleDeleteNotice}
-                      viewMode="table"
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {pinnedNotices.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Bell className="h-5 w-5 text-amber-500" />
-                    <h3 className="text-lg font-semibold">Pinned Notices</h3>
-                    <Badge variant="outline" className="ml-2">
-                      {pinnedNotices.length}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent>
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground">Loading notices...</p>
+              </div>
+            ) : data.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No notices found</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  {search || Object.values(filters).some(f => f !== 'all' && f !== null)
+                    ? 'Try adjusting your search or filters'
+                    : 'Get started by creating your first notice'}
+                </p>
+                {(!search && Object.values(filters).every(f => f === 'all' || f === null)) && (
+                  <Button onClick={() => {
+                    setEditingNotice(null);
+                    setIsModalOpen(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Notice
+                  </Button>
+                )}
+              </div>
+            ) : viewMode === 'table' ? (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Author</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {pinnedNotices.map(notice => (
                       <NoticeCard
                         key={notice.id}
@@ -2099,110 +2196,153 @@ export default function NoticeboardManagement() {
                         onView={handleViewDetails}
                         onEdit={handleEditNotice}
                         onDelete={handleDeleteNotice}
+                        viewMode="table"
+                        isExpanded={expandedNotices.has(notice.id)}
+                        onToggleExpand={handleToggleExpand}
+                      />
+                    ))}
+                    {regularNotices.map(notice => (
+                      <NoticeCard
+                        key={notice.id}
+                        notice={notice}
+                        onView={handleViewDetails}
+                        onEdit={handleEditNotice}
+                        onDelete={handleDeleteNotice}
+                        viewMode="table"
+                        isExpanded={expandedNotices.has(notice.id)}
+                        onToggleExpand={handleToggleExpand}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {pinnedNotices.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Bell className="h-5 w-5 text-amber-500" />
+                      <h3 className="text-lg font-semibold">Pinned Notices</h3>
+                      <Badge variant="outline" className="ml-2">
+                        {pinnedNotices.length}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {pinnedNotices.map(notice => (
+                        <NoticeCard
+                          key={notice.id}
+                          notice={notice}
+                          onView={handleViewDetails}
+                          onEdit={handleEditNotice}
+                          onDelete={handleDeleteNotice}
+                          viewMode={viewMode}
+                          isExpanded={expandedNotices.has(notice.id)}
+                          onToggleExpand={handleToggleExpand}
+                        />
+                      ))}
+                    </div>
+                    <Separator className="my-6" />
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    All Notices ({regularNotices.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {regularNotices.map(notice => (
+                      <NoticeCard
+                        key={notice.id}
+                        notice={notice}
+                        onView={handleViewDetails}
+                        onEdit={handleEditNotice}
+                        onDelete={handleDeleteNotice}
                         viewMode={viewMode}
+                        isExpanded={expandedNotices.has(notice.id)}
+                        onToggleExpand={handleToggleExpand}
                       />
                     ))}
                   </div>
-                  <Separator className="my-6" />
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">
-                  All Notices ({regularNotices.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {regularNotices.map(notice => (
-                    <NoticeCard
-                      key={notice.id}
-                      notice={notice}
-                      onView={handleViewDetails}
-                      onEdit={handleEditNotice}
-                      onDelete={handleDeleteNotice}
-                      viewMode={viewMode}
-                    />
-                  ))}
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
+            )}
+          </CardContent>
 
-        {data.length > 0 && !isLoading && (
-          <CardFooter className="flex justify-between border-t pt-6">
-            <div className="text-sm text-muted-foreground">
-              {expiredNotices.length > 0 && (
-                <span className="text-red-600 mr-3">
-                  {expiredNotices.length} expired notice{expiredNotices.length !== 1 ? 's' : ''}
-                </span>
-              )}
-              Showing {data.length} notice{data.length !== 1 ? 's' : ''}
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Print button removed */}
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export CSV
+          {data.length > 0 && !isLoading && (
+            <CardFooter className="flex justify-between border-t pt-6">
+              <div className="text-sm text-muted-foreground">
+                {expiredNotices.length > 0 && (
+                  <span className="text-red-600 mr-3">
+                    {expiredNotices.length} expired notice{expiredNotices.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+                Showing {data.length} notice{data.length !== 1 ? 's' : ''}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+              </div>
+            </CardFooter>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Common actions for notice management
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="gap-2">
+                <Archive className="h-4 w-4" />
+                Archive All Expired
+              </Button>
+              <Button variant="outline" className="gap-2">
+                <EyeOff className="h-4 w-4" />
+                Hide Expired Notices
+              </Button>
+              <Button variant="outline" className="gap-2">
+                <PinOff className="h-4 w-4" />
+                Unpin All
+              </Button>
+              <Button variant="outline" className="gap-2">
+                <Users className="h-4 w-4" />
+                View Acknowledgment Reports
               </Button>
             </div>
-          </CardFooter>
-        )}
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>
-            Common actions for notice management
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="gap-2">
-              <Archive className="h-4 w-4" />
-              Archive All Expired
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <EyeOff className="h-4 w-4" />
-              Hide Expired Notices
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <PinOff className="h-4 w-4" />
-              Unpin All
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Users className="h-4 w-4" />
-              View Acknowledgment Reports
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <EditNoticeModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingNotice(null);
+          }}
+          notice={editingNotice}
+          onSave={handleSaveNotice}
+          isLoading={isLoading}
+        />
 
-      <EditNoticeModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingNotice(null);
-        }}
-        notice={editingNotice}
-        onSave={handleSaveNotice}
-        isLoading={isLoading}
-      />
-
-      <NoticeDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={() => {
-          setIsDetailsModalOpen(false);
-          setSelectedNotice(null);
-        }}
-        notice={selectedNotice}
-        onDelete={handleDeleteNotice}
-        onEdit={(notice) => {
-          setIsDetailsModalOpen(false);
-          handleEditNotice(notice);
-        }}
-        onTogglePin={handleTogglePin}
-      />
-    </div>
+        <NoticeDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => {
+            setIsDetailsModalOpen(false);
+            setSelectedNotice(null);
+          }}
+          notice={selectedNotice}
+          onDelete={handleDeleteNotice}
+          onEdit={(notice) => {
+            setIsDetailsModalOpen(false);
+            handleEditNotice(notice);
+          }}
+          onTogglePin={handleTogglePin}
+        />
+      </div>
+    </TooltipProvider>
   );
 }
