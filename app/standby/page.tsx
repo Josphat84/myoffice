@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { format, isToday, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks } from 'date-fns';
 import { useTheme } from 'next-themes';
 
-// shadcn/ui components
+// shadcn/ui components (imports unchanged)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,7 +125,7 @@ interface StandbySchedule {
   duration_days?: number;
 }
 
-// ---------- Utility Functions ----------
+// ---------- Utility Functions (unchanged) ----------
 const getStatusBadgeColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case "scheduled": return "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800";
@@ -279,11 +279,13 @@ const Cpu = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ---------- Form Schema ----------
+// ---------- Form Schema (fixed for Zod compatibility) ----------
 const scheduleFormSchema = z.object({
-  employeeId: z.string({ required_error: 'Please select an employee' }),
-  startDate: z.date({ required_error: 'Start date is required' }),
-  endDate: z.date({ required_error: 'End date is required' }),
+  // For employeeId: use .min(1) to ensure it's not empty
+  employeeId: z.string().min(1, 'Please select an employee'),
+  // For dates: use refine to provide a custom error message (compatible with older Zod)
+  startDate: z.date().refine(val => val !== undefined, { message: 'Start date is required' }),
+  endDate: z.date().refine(val => val !== undefined, { message: 'End date is required' }),
   residence: z.string().min(1, 'Residence is required'),
   status: z.enum(['scheduled', 'active', 'completed', 'cancelled']).default('scheduled'),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
@@ -649,7 +651,7 @@ const EmployeeStandbyScheduler = () => {
   const [selectedScheduleIds, setSelectedScheduleIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // ---------- FIX: Provide default values for all form fields ----------
+  // ---------- Form with default values (controlled inputs) ----------
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
