@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -64,12 +64,25 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 
 // API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const OVERTIME_API = `${API_BASE}/api/overtime`;
+const EMPLOYEES_API = `${API_BASE}/api/employees`;
 
-// Overtime Types (no rate info in UI)
+// Overtime Types
 const OVERTIME_TYPES = {
   regular: {
     name: 'Regular Overtime',
@@ -145,6 +158,22 @@ const calculateHours = (startTime, endTime, date) => {
   }
 };
 
+const getInitials = (name) => {
+  if (!name || typeof name !== 'string') return '??';
+  const names = name.trim().split(' ');
+  const first = names[0]?.[0] || '';
+  const last = names.length > 1 ? names[names.length - 1]?.[0] || '' : '';
+  return (first + last).toUpperCase();
+};
+
+// Helper to replace empty optional fields with a single space (workaround for backend min length 1)
+const preparePayload = (data) => {
+  const payload = { ...data };
+  if (payload.contact_number === '') payload.contact_number = ' ';
+  if (payload.emergency_contact === '') payload.emergency_contact = ' ';
+  return payload;
+};
+
 // API Functions
 const fetchOvertime = async (filters = {}) => {
   const params = new URLSearchParams();
@@ -161,22 +190,30 @@ const fetchOvertime = async (filters = {}) => {
 };
 
 const createOvertime = async (data) => {
+  const payload = preparePayload(data);
   const res = await fetch(OVERTIME_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Failed to create overtime');
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to create overtime: ${res.status} - ${errorText}`);
+  }
   return res.json();
 };
 
 const updateOvertime = async (id, data) => {
+  const payload = preparePayload(data);
   const res = await fetch(`${OVERTIME_API}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Failed to update overtime');
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to update overtime: ${res.status} - ${errorText}`);
+  }
   return res.json();
 };
 
@@ -219,8 +256,8 @@ const exportToExcel = (data, filename = `overtime-${new Date().toISOString().spl
       item.end_time,
       hours.toFixed(2),
       item.reason,
-      item.contact_number,
-      item.emergency_contact || '',
+      item.contact_number?.trim() ? item.contact_number : '',
+      item.emergency_contact?.trim() ? item.emergency_contact : '',
       item.status,
       item.applied_date || '',
       item.notes || '',
@@ -301,7 +338,7 @@ const StatCard = ({ title, value, icon: Icon, onClick }) => (
   </Card>
 );
 
-// Overtime Card (Grid View) with inline expand/collapse and visible label
+// Overtime Card (Grid View)
 const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
   const typeConfig = OVERTIME_TYPES[overtime.overtime_type];
@@ -398,9 +435,11 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-xs text-muted-foreground">Contact</p>
-                <p className="font-medium break-words">{overtime.contact_number}</p>
+                <p className="font-medium break-words">
+                  {overtime.contact_number && overtime.contact_number.trim() ? overtime.contact_number : 'Not provided'}
+                </p>
               </div>
-              {overtime.emergency_contact && (
+              {overtime.emergency_contact && overtime.emergency_contact.trim() && (
                 <div>
                   <p className="text-xs text-muted-foreground">Emergency</p>
                   <p className="font-medium break-words">{overtime.emergency_contact}</p>
@@ -425,7 +464,7 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   );
 };
 
-// Overtime Application Form
+// ============= Overtime Application Form (with optional contact) =============
 const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
   const [formData, setFormData] = useState(
     editData || {
@@ -443,14 +482,103 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
     }
   );
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [employees, setEmployees] = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Fetch employees on mount
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setLoadingEmployees(true);
+      try {
+        const response = await fetch(EMPLOYEES_API);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Employee API error:', errorText);
+          toast.error(`Failed to load employees: ${response.status}`);
+          return;
+        }
+        const data = await response.json();
+        const employeeList = Array.isArray(data) ? data : [];
+        const normalized = employeeList.map((emp) => {
+          const id = emp.id || emp.employee_id || 0;
+          let fullName = '';
+          if (emp.first_name && emp.last_name) {
+            fullName = `${emp.first_name} ${emp.last_name}`;
+          } else {
+            fullName = emp.name || emp.employee_name || emp.full_name || emp.Name || '';
+          }
+          const designation = emp.designation || emp.position || emp.job_title || '';
+          const phone = emp.phone || emp.contact_number || emp.mobile || '';
+          const supervisor = emp.supervisor || emp.manager_name || emp.manager || '';
+          const department = emp.department || emp.dept || '';
+          return {
+            id: id,
+            name: fullName,
+            designation: designation,
+            phone: phone,
+            supervisor: supervisor,
+            department: department,
+          };
+        });
+        setEmployees(normalized);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        toast.error('Could not load employee list');
+      } finally {
+        setLoadingEmployees(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const { [field]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleEmployeeSelect = (employee) => {
+    const numericId = employee.id.toString();
+    setFormData({
+      ...formData,
+      employee_id: numericId,
+      employee_name: employee.name || `Employee ${employee.id}`,
+      position: employee.designation || '',
+      contact_number: employee.phone || '',
+      emergency_contact: employee.supervisor || '',
+    });
+    setEmployeeSelectOpen(false);
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.employee_name?.trim()) errors.employee_name = 'Full name is required';
+    if (!formData.position?.trim()) errors.position = 'Position is required';
+    if (!formData.date) errors.date = 'Date is required';
+    if (!formData.reason?.trim()) errors.reason = 'Reason is required';
+    // Contact number is optional – no validation
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Submit clicked');
+    if (!validateForm()) {
+      console.log('Validation failed', validationErrors);
+      return;
+    }
     setLoading(true);
+    setError('');
     try {
       if (editData) {
         await onUpdate(editData.id, formData);
@@ -461,14 +589,26 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
       }
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error(error.message);
+    } catch (err) {
+      console.error('Submit error:', err);
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   const hours = calculateHours(formData.start_time, formData.end_time, formData.date);
+
+  const filteredEmployees = useMemo(() => {
+    if (!employeeSearch.trim()) return employees;
+    const term = employeeSearch.toLowerCase();
+    return employees.filter(emp => 
+      emp.name.toLowerCase().includes(term) ||
+      emp.id.toString().includes(term) ||
+      (emp.designation && emp.designation.toLowerCase().includes(term)) ||
+      (emp.department && emp.department.toLowerCase().includes(term))
+    );
+  }, [employees, employeeSearch]);
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -480,43 +620,130 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Employee selection dropdown */}
+          <div className="space-y-2">
+            <Label>Employee *</Label>
+            <Popover open={employeeSelectOpen} onOpenChange={setEmployeeSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between"
+                  disabled={!!editData}
+                >
+                  {formData.employee_name ? (
+                    <div className="flex items-center gap-2 truncate">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-xs">
+                          {getInitials(formData.employee_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-left truncate">
+                        <div className="truncate font-medium">{formData.employee_name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {formData.position} • {formData.employee_id}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Select employee...</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search employees..." 
+                    value={employeeSearch}
+                    onValueChange={setEmployeeSearch}
+                  />
+                  <CommandEmpty>No employee found.</CommandEmpty>
+                  <CommandGroup className="max-h-64 overflow-y-auto">
+                    {loadingEmployees ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : (
+                      filteredEmployees.map((emp) => (
+                        <CommandItem
+                          key={emp.id}
+                          value={`${emp.name} ${emp.id}`}
+                          onSelect={() => handleEmployeeSelect(emp)}
+                          className="flex items-center gap-2"
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">{getInitials(emp.name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{emp.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {emp.designation} • {emp.department}
+                            </p>
+                          </div>
+                        </CommandItem>
+                      ))
+                    )}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Auto-filled employee fields (employee_id editable, others read-only) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Full Name *</label>
+              <Label htmlFor="employee_id">Employee ID * (add prefix manually)</Label>
               <Input
-                required
-                value={formData.employee_name}
-                onChange={(e) => handleChange('employee_name', e.target.value)}
-                placeholder="e.g., John Smith"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Employee ID *</label>
-              <Input
+                id="employee_id"
                 required
                 value={formData.employee_id}
                 onChange={(e) => handleChange('employee_id', e.target.value)}
-                placeholder="e.g., EMP001"
+                placeholder="e.g., C1165"
+                disabled={!!editData}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Position *</label>
+              <Label htmlFor="position">Position</Label>
               <Input
-                required
+                id="position"
                 value={formData.position}
-                onChange={(e) => handleChange('position', e.target.value)}
-                placeholder="e.g., Technician"
+                readOnly
+                disabled
+                className="bg-muted"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Contact Number *</label>
+              {/* Contact Number - now optional */}
+              <Label htmlFor="contact_number">Contact Number</Label>
               <Input
-                required
+                id="contact_number"
                 value={formData.contact_number}
-                onChange={(e) => handleChange('contact_number', e.target.value)}
-                placeholder="+1 234 567 890"
+                readOnly
+                disabled
+                className="bg-muted"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="emergency_contact">Emergency Contact (optional)</Label>
+              <Input
+                id="emergency_contact"
+                value={formData.emergency_contact}
+                readOnly
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          </div>
+
+          {/* Other fields (editable) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Overtime Type *</label>
               <Select
@@ -543,6 +770,9 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 value={formData.date}
                 onChange={(e) => handleChange('date', e.target.value)}
               />
+              {validationErrors.date && (
+                <p className="text-sm text-destructive">{validationErrors.date}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Start Time *</label>
@@ -580,15 +810,9 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
               onChange={(e) => handleChange('reason', e.target.value)}
               placeholder="Please provide details about why overtime is required..."
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Emergency Contact (optional)</label>
-            <Input
-              value={formData.emergency_contact}
-              onChange={(e) => handleChange('emergency_contact', e.target.value)}
-              placeholder="Name and phone number"
-            />
+            {validationErrors.reason && (
+              <p className="text-sm text-destructive">{validationErrors.reason}</p>
+            )}
           </div>
 
           <input type="hidden" name="hourly_rate" value={formData.hourly_rate} />
@@ -665,8 +889,10 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
                 <p><span className="text-muted-foreground">Name:</span> {overtime.employee_name}</p>
                 <p><span className="text-muted-foreground">ID:</span> {overtime.employee_id}</p>
                 <p><span className="text-muted-foreground">Position:</span> {overtime.position}</p>
-                <p><span className="text-muted-foreground">Contact:</span> {overtime.contact_number}</p>
-                {overtime.emergency_contact && (
+                <p><span className="text-muted-foreground">Contact:</span> {
+                  overtime.contact_number && overtime.contact_number.trim() ? overtime.contact_number : 'Not provided'
+                }</p>
+                {overtime.emergency_contact && overtime.emergency_contact.trim() && (
                   <p><span className="text-muted-foreground">Emergency:</span> {overtime.emergency_contact}</p>
                 )}
               </CardContent>
@@ -1326,9 +1552,11 @@ export default function OvertimeManagementPage() {
                                   <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                       <p className="text-xs text-muted-foreground">Contact</p>
-                                      <p className="font-medium break-words">{ot.contact_number}</p>
+                                      <p className="font-medium break-words">
+                                        {ot.contact_number && ot.contact_number.trim() ? ot.contact_number : 'Not provided'}
+                                      </p>
                                     </div>
-                                    {ot.emergency_contact && (
+                                    {ot.emergency_contact && ot.emergency_contact.trim() && (
                                       <div>
                                         <p className="text-xs text-muted-foreground">Emergency</p>
                                         <p className="font-medium break-words">{ot.emergency_contact}</p>

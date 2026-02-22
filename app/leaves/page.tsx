@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -70,8 +70,43 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 
-// Type definitions
+// ============= Employee search result type =============
+interface EmployeeSearchResult {
+  id: number;
+  name: string;
+  designation: string;
+  phone: string;
+  supervisor: string;
+  department: string;
+}
+
+const COMMON_REASONS = [
+  "Annual leave",
+  "Sick leave",
+  "Family emergency",
+  "Medical appointment",
+  "Personal reasons",
+  "Bereavement",
+  "Study leave",
+  "Maternity leave",
+  "Paternity leave",
+  "Unpaid leave"
+];
+
+// ---------- Leave Types ----------
 interface LeaveType {
   name: string;
   shortName: string;
@@ -83,61 +118,6 @@ interface LeaveType {
   description: string;
 }
 
-interface LeaveBalanceData {
-  total: number;
-  used: number;
-  pending: number;
-  remaining: number;
-}
-
-interface Leave {
-  id: string;
-  employee_name: string;
-  employee_id: string;
-  position: string;
-  leave_type: keyof typeof LEAVE_TYPES;
-  start_date: string;
-  end_date: string;
-  reason: string;
-  contact_number: string;
-  emergency_contact?: string;
-  handover_to?: string;
-  status: 'pending' | 'approved' | 'rejected';
-  total_days: number;
-  applied_date: string;
-  updated_at?: string;
-  department?: string;
-  manager_name?: string;
-  manager_approval?: 'pending' | 'approved' | 'rejected';
-  hr_approval?: 'pending' | 'approved' | 'rejected';
-  supporting_docs?: string[];
-}
-
-interface LeaveBalance {
-  annual: LeaveBalanceData;
-  sick: LeaveBalanceData;
-  emergency: LeaveBalanceData;
-  compassionate: LeaveBalanceData;
-  maternity: LeaveBalanceData;
-  study: LeaveBalanceData;
-}
-
-interface Stats {
-  total: number;
-  pending: number;
-  approved: number;
-  rejected: number;
-  on_leave_now: number;
-  approvalRate: number;
-  total_days_requested: number;
-  average_days: number;
-}
-
-// API Configuration
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const LEAVES_API = `${API_BASE}/api/leaves`;
-
-// Leave Types Constants
 const LEAVE_TYPES: Record<string, LeaveType> = {
   annual: { 
     name: 'Annual Leave', 
@@ -201,7 +181,47 @@ const LEAVE_TYPES: Record<string, LeaveType> = {
   }
 };
 
-// Utility functions
+// ---------- Types ----------
+interface Leave {
+  id: string;
+  employee_id: string;
+  employee_name: string;
+  position: string;
+  leave_type: keyof typeof LEAVE_TYPES;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  contact_number: string;
+  emergency_contact?: string;
+  handover_to?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  total_days: number;
+  applied_date: string;
+  updated_at?: string;
+  department?: string;
+  manager_name?: string;
+  manager_approval?: 'pending' | 'approved' | 'rejected';
+  hr_approval?: 'pending' | 'approved' | 'rejected';
+  supporting_docs?: string[];
+}
+
+interface Stats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  on_leave_now: number;
+  approvalRate: number;
+  total_days_requested: number;
+  average_days: number;
+}
+
+// API Configuration
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const LEAVES_API = `${API_BASE}/api/leaves`;
+const EMPLOYEES_API = `${API_BASE}/api/employees`;
+
+// ---------- Utility Functions ----------
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return 'Not specified';
   try {
@@ -251,7 +271,15 @@ const formatDays = (days: number): string => {
   return `${days} days`;
 };
 
-// API Functions
+const getInitials = (name: string): string => {
+  if (!name || typeof name !== 'string') return '??';
+  const names = name.trim().split(' ');
+  const first = names[0]?.[0] || '';
+  const last = names.length > 1 ? names[names.length - 1]?.[0] || '' : '';
+  return (first + last).toUpperCase();
+};
+
+// ---------- API Functions ----------
 const fetchLeaves = async (filters: Record<string, string> = {}): Promise<Leave[]> => {
   try {
     const params = new URLSearchParams();
@@ -265,26 +293,17 @@ const fetchLeaves = async (filters: Record<string, string> = {}): Promise<Leave[
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!response.ok) throw new Error(`Failed to fetch leaves: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server error (leaves):', errorText);
+      throw new Error(`Failed to fetch leaves: ${response.status} - ${errorText}`);
+    }
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching leaves:', error);
+    toast.error('Could not load leave requests');
     return [];
-  }
-};
-
-const fetchLeaveBalance = async (employeeId: string = 'MNT001'): Promise<LeaveBalance> => {
-  try {
-    const response = await fetch(`${LEAVES_API}/balance/${employeeId}`, {
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) return getDefaultBalance();
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching balance:', error);
-    return getDefaultBalance();
   }
 };
 
@@ -326,7 +345,6 @@ const updateLeave = async (leaveId: string, leaveData: Partial<Leave>): Promise<
     const data = await response.json();
     return data;
   } else {
-    // No content returned, assume success and construct a response
     return {
       ...leaveData,
       id: leaveId,
@@ -357,18 +375,8 @@ const deleteLeave = async (leaveId: string): Promise<{ success: boolean; message
   return await response.json();
 };
 
-const getDefaultBalance = (): LeaveBalance => ({
-  annual: { total: 21, used: 0, pending: 0, remaining: 21 },
-  sick: { total: 10, used: 0, pending: 0, remaining: 10 },
-  emergency: { total: 5, used: 0, pending: 0, remaining: 5 },
-  compassionate: { total: 5, used: 0, pending: 0, remaining: 5 },
-  maternity: { total: 90, used: 0, pending: 0, remaining: 90 },
-  study: { total: 10, used: 0, pending: 0, remaining: 10 }
-});
-
-// ============= FIXED: Status Badge Component =============
+// ---------- StatusBadge component ----------
 const StatusBadge = ({ status }: { status: Leave['status'] }) => {
-  // Map status to variant and custom class (since 'success' is not a valid Badge variant)
   const config = {
     pending: { 
       variant: 'secondary' as const, 
@@ -445,74 +453,7 @@ const StatCard = ({ title, value, icon: Icon, color, onClick, subtitle }: {
   );
 };
 
-// Leave Balance Card Component
-const LeaveBalanceCard = ({ type, data }: { type: keyof typeof LEAVE_TYPES; data: LeaveBalanceData }) => {
-  const leaveType = LEAVE_TYPES[type] || LEAVE_TYPES.annual;
-  const Icon = leaveType.icon;
-  const percentage = data.total ? (data.used / data.total) * 100 : 0;
-  
-  return (
-    <Card className="hover:shadow-lg transition-all">
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${leaveType.bgColor} border ${leaveType.borderColor}`}>
-            <Icon className={`h-5 w-5 ${leaveType.textColor}`} />
-          </div>
-          <div>
-            <CardTitle className="text-base font-semibold">{leaveType.name}</CardTitle>
-            <CardDescription className="text-xs">{leaveType.description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{data.remaining}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">Available</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold">{data.used}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">Used</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold">{data.total}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">Total</div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Usage</span>
-              <span className="font-medium" style={{ color: leaveType.color }}>
-                {Math.round(percentage)}%
-              </span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-              <div 
-                className="h-2 rounded-full transition-all duration-1000 ease-out"
-                style={{ 
-                  width: `${percentage}%`,
-                  backgroundColor: leaveType.color,
-                }}
-              />
-            </div>
-          </div>
-
-          {data.pending > 0 && (
-            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">{data.pending} days pending approval</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Leave Card Component (Grid View)
+// Leave Card Component
 const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   leave: Leave;
   onView: (leave: Leave) => void;
@@ -521,7 +462,6 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
 }) => {
   const leaveType = LEAVE_TYPES[leave.leave_type] || LEAVE_TYPES.annual;
   const Icon = leaveType.icon;
-  const [showActions, setShowActions] = useState(false);
   const [deleting, setDeleting] = useState(false);
   
   const handleDelete = async () => {
@@ -529,7 +469,6 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
     setDeleting(true);
     try {
       await onDelete(leave.id);
-      setShowActions(false);
     } catch (error) {
       console.error(error);
     } finally {
@@ -618,16 +557,15 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   );
 };
 
-// Leave Application Form
-const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT001' }: {
+// ============= UPDATED Leave Application Form =============
+const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
   onClose: () => void;
   onSuccess: (message: string, leave?: Leave) => void;
   editData?: Leave | null;
-  employeeId?: string;
 }) => {
   const [formData, setFormData] = useState<Partial<Leave>>(
     editData ? {
-      employee_id: editData.employee_id || employeeId,
+      employee_id: editData.employee_id || '',
       employee_name: editData.employee_name || '',
       position: editData.position || '',
       leave_type: editData.leave_type || 'annual',
@@ -641,13 +579,13 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
       manager_name: editData.manager_name || '',
       applied_date: editData.applied_date
     } : {
-      employee_id: employeeId,
+      employee_id: '',
       employee_name: '',
       position: '',
       leave_type: 'annual',
       start_date: '',
       end_date: '',
-      reason: '',
+      reason: 'Annual leave',
       contact_number: '',
       emergency_contact: '',
       handover_to: '',
@@ -658,6 +596,100 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [employees, setEmployees] = useState<EmployeeSearchResult[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
+
+  // Fetch employees on mount
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setLoadingEmployees(true);
+      try {
+        const response = await fetch(EMPLOYEES_API);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Employee API error:', errorText);
+          toast.error(`Failed to load employees: ${response.status}`);
+          return;
+        }
+        const data = await response.json();
+        const employeeList = Array.isArray(data) ? data : [];
+        
+        // Normalize field names – combine first_name and last_name
+        const normalized = employeeList.map((emp: any) => {
+          // Try to get id – handle both id and employee_id
+          const id = emp.id || emp.employee_id || 0;
+          
+          // Build full name from first_name + last_name if available
+          let fullName = '';
+          if (emp.first_name && emp.last_name) {
+            fullName = `${emp.first_name} ${emp.last_name}`;
+          } else {
+            fullName = emp.name || emp.employee_name || emp.full_name || emp.Name || '';
+          }
+          
+          const designation = emp.designation || emp.position || emp.job_title || '';
+          const phone = emp.phone || emp.contact_number || emp.mobile || '';
+          const supervisor = emp.supervisor || emp.manager_name || emp.manager || '';
+          const department = emp.department || emp.dept || '';
+          
+          return {
+            id: id,
+            name: fullName,
+            designation: designation,
+            phone: phone,
+            supervisor: supervisor,
+            department: department,
+          };
+        });
+        
+        setEmployees(normalized);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        toast.error('Could not load employee list');
+      } finally {
+        setLoadingEmployees(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  // Reason autocomplete
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+
+  const handleReasonChange = (value: string) => {
+    setFormData(prev => ({ ...prev, reason: value }));
+    if (value.trim()) {
+      const filtered = COMMON_REASONS.filter(r => 
+        r.toLowerCase().startsWith(value.toLowerCase()) && r.toLowerCase() !== value.toLowerCase()
+      );
+      setSuggestions(filtered);
+      setSelectedSuggestionIndex(-1);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleReasonKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (suggestions.length > 0 && e.key === 'Tab') {
+      e.preventDefault();
+      const suggestion = suggestions[selectedSuggestionIndex === -1 ? 0 : selectedSuggestionIndex];
+      setFormData(prev => ({ ...prev, reason: suggestion }));
+      setSuggestions([]);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedSuggestionIndex(prev => 
+        prev < suggestions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedSuggestionIndex(prev => (prev > -1 ? prev - 1 : -1));
+    } else if (e.key === 'Escape') {
+      setSuggestions([]);
+    }
+  };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -684,6 +716,21 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
     if (validationErrors[field]) {
       setValidationErrors(prev => { const { [field]: _, ...rest } = prev; return rest; });
     }
+  };
+
+  const handleEmployeeSelect = (employee: EmployeeSearchResult) => {
+    // Set employee_id to just the numeric ID (as string) – user will add prefix manually
+    const numericId = employee.id.toString();
+    setFormData({
+      ...formData,
+      employee_id: numericId,
+      employee_name: employee.name || `Employee ${employee.id}`,
+      position: employee.designation || '',
+      contact_number: employee.phone || '',
+      manager_name: employee.supervisor || '',
+      department: employee.department || '',
+    });
+    setEmployeeSelectOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -713,6 +760,17 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
   const calculatedDays = calculateDays(formData.start_date, formData.end_date);
   const selectedLeaveType = LEAVE_TYPES[formData.leave_type || 'annual'];
 
+  const filteredEmployees = useMemo(() => {
+    if (!employeeSearch.trim()) return employees;
+    const term = employeeSearch.toLowerCase();
+    return employees.filter(emp => 
+      emp.name.toLowerCase().includes(term) ||
+      emp.id.toString().includes(term) ||
+      (emp.designation && emp.designation.toLowerCase().includes(term)) ||
+      (emp.department && emp.department.toLowerCase().includes(term))
+    );
+  }, [employees, employeeSearch]);
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -730,77 +788,131 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
             </div>
           )}
 
+          {/* Employee selection dropdown */}
+          <div className="space-y-2">
+            <Label>Employee *</Label>
+            <Popover open={employeeSelectOpen} onOpenChange={setEmployeeSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between"
+                  disabled={!!editData}
+                >
+                  {formData.employee_name ? (
+                    <div className="flex items-center gap-2 truncate">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-xs">
+                          {getInitials(formData.employee_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-left truncate">
+                        <div className="truncate font-medium">{formData.employee_name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {formData.position} • {formData.employee_id}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Select employee...</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search employees..." 
+                    value={employeeSearch}
+                    onValueChange={setEmployeeSearch}
+                  />
+                  <CommandEmpty>No employee found.</CommandEmpty>
+                  <CommandGroup className="max-h-64 overflow-y-auto">
+                    {loadingEmployees ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : (
+                      filteredEmployees.map((emp) => (
+                        <CommandItem
+                          key={emp.id}
+                          value={`${emp.name} ${emp.id}`}
+                          onSelect={() => handleEmployeeSelect(emp)}
+                          className="flex items-center gap-2"
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">{getInitials(emp.name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{emp.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {emp.designation} • {emp.department}
+                            </p>
+                          </div>
+                        </CommandItem>
+                      ))
+                    )}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Auto-filled employee fields (with employee_id now editable) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="employee_name">Full Name *</Label>
-              <Input
-                id="employee_name"
-                required
-                value={formData.employee_name || ''}
-                onChange={(e) => handleChange('employee_name', e.target.value)}
-                placeholder="e.g., John Smith"
-              />
-              {validationErrors.employee_name && (
-                <p className="text-sm text-destructive">{validationErrors.employee_name}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employee_id">Employee ID *</Label>
+              <Label htmlFor="employee_id">Employee ID * (add prefix manually)</Label>
               <Input
                 id="employee_id"
                 required
                 value={formData.employee_id || ''}
                 onChange={(e) => handleChange('employee_id', e.target.value)}
-                placeholder="e.g., MNT001"
+                placeholder="e.g., C1165"
                 disabled={!!editData}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="position">Position *</Label>
+              <Label htmlFor="position">Position</Label>
               <Input
                 id="position"
-                required
                 value={formData.position || ''}
-                onChange={(e) => handleChange('position', e.target.value)}
-                placeholder="e.g., Senior Technician"
+                readOnly
+                disabled
+                className="bg-muted"
               />
-              {validationErrors.position && (
-                <p className="text-sm text-destructive">{validationErrors.position}</p>
-              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="department">Department</Label>
               <Input
                 id="department"
                 value={formData.department || ''}
-                onChange={(e) => handleChange('department', e.target.value)}
-                placeholder="e.g., Engineering"
+                readOnly
+                disabled
+                className="bg-muted"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contact_number">Contact Number *</Label>
+              <Label htmlFor="contact_number">Contact Number</Label>
               <Input
                 id="contact_number"
-                required
                 value={formData.contact_number || ''}
-                onChange={(e) => handleChange('contact_number', e.target.value)}
-                placeholder="+263 XXX XXX XXX"
+                readOnly
+                disabled
+                className="bg-muted"
               />
-              {validationErrors.contact_number && (
-                <p className="text-sm text-destructive">{validationErrors.contact_number}</p>
-              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="manager_name">Manager Name</Label>
               <Input
                 id="manager_name"
                 value={formData.manager_name || ''}
-                onChange={(e) => handleChange('manager_name', e.target.value)}
-                placeholder="Your direct supervisor"
+                readOnly
+                disabled
+                className="bg-muted"
               />
             </div>
           </div>
 
+          {/* Leave Type (editable) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="leave_type">Leave Type *</Label>
@@ -825,6 +937,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
             </div>
           </div>
 
+          {/* Dates (editable) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">Start Date *</Label>
@@ -834,7 +947,6 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
                 required
                 value={formData.start_date || ''}
                 onChange={(e) => handleChange('start_date', e.target.value)}
-                // No min attribute – allows past dates
               />
               {validationErrors.start_date && (
                 <p className="text-sm text-destructive">{validationErrors.start_date}</p>
@@ -863,21 +975,45 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
             </div>
           )}
 
-          <div className="space-y-2">
+          {/* Reason with autocomplete (editable) */}
+          <div className="space-y-2 relative">
             <Label htmlFor="reason">Reason for Leave *</Label>
             <Textarea
               id="reason"
               required
               rows={4}
               value={formData.reason || ''}
-              onChange={(e) => handleChange('reason', e.target.value)}
-              placeholder="Please provide detailed reasons..."
+              onChange={(e) => handleReasonChange(e.target.value)}
+              onKeyDown={handleReasonKeyDown}
+              placeholder="Type a reason or choose from suggestions..."
             />
             {validationErrors.reason && (
               <p className="text-sm text-destructive">{validationErrors.reason}</p>
             )}
+            {suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                {suggestions.map((s, index) => (
+                  <div
+                    key={s}
+                    className={`px-3 py-2 cursor-pointer hover:bg-muted ${
+                      index === selectedSuggestionIndex ? 'bg-muted' : ''
+                    }`}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, reason: s }));
+                      setSuggestions([]);
+                    }}
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Press Tab to accept suggestion, Esc to dismiss.
+            </p>
           </div>
 
+          {/* Emergency contact and handover (editable) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_contact">Emergency Contact</Label>
@@ -912,7 +1048,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData, employeeId = 'MNT0
   );
 };
 
-// Leave Details Modal
+// Leave Details Modal (unchanged)
 const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }: {
   leave: Leave;
   onClose: () => void;
@@ -1113,7 +1249,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
   );
 };
 
-// Main Component
+// ============= Main Component =============
 export default function LeaveManagementPage() {
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
@@ -1125,12 +1261,9 @@ export default function LeaveManagementPage() {
   const [dateTo, setDateTo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date-desc');
-  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState({ leaves: true, stats: false, balance: false });
+  const [loading, setLoading] = useState({ leaves: true });
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [leaveBalance, setLeaveBalance] = useState<LeaveBalance>(getDefaultBalance());
-  const [showBalance, setShowBalance] = useState(false);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     pending: 0,
@@ -1141,20 +1274,15 @@ export default function LeaveManagementPage() {
     total_days_requested: 0,
     average_days: 0
   });
-  const [selectedEmployeeId] = useState('MNT001');
 
   const fetchAllData = async () => {
     try {
       setError(null);
-      setLoading(prev => ({ ...prev, leaves: true, stats: true, balance: true }));
+      setLoading(prev => ({ ...prev, leaves: true }));
       
-      const [leavesData, balanceData] = await Promise.all([
-        fetchLeaves(),
-        fetchLeaveBalance(selectedEmployeeId)
-      ]);
+      const leavesData = await fetchLeaves();
       
       setLeaves(leavesData);
-      setLeaveBalance(balanceData);
       
       const today = new Date().toISOString().split('T')[0];
       const approvedLeaves = leavesData.filter(l => l.status === 'approved');
@@ -1175,10 +1303,10 @@ export default function LeaveManagementPage() {
         average_days: avgDays
       });
       
-      setLoading(prev => ({ ...prev, leaves: false, stats: false, balance: false }));
+      setLoading(prev => ({ ...prev, leaves: false }));
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data');
-      setLoading(prev => ({ ...prev, leaves: false, stats: false, balance: false }));
+      setLoading(prev => ({ ...prev, leaves: false }));
     }
   };
 
@@ -1281,9 +1409,6 @@ export default function LeaveManagementPage() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">
-              {selectedEmployeeId}
-            </span>
             <Button variant="outline" size="sm" onClick={fetchAllData} disabled={loading.leaves}>
               {loading.leaves ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
@@ -1298,7 +1423,7 @@ export default function LeaveManagementPage() {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Leave Management</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Manage employee leave requests, track balances, and approve time off.
+            Manage employee leave requests, track status, and approve time off.
           </p>
         </div>
 
@@ -1308,37 +1433,6 @@ export default function LeaveManagementPage() {
           <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} color="emerald" onClick={() => setFilter('approved')} />
           <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
         </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-base">Leave Balance</CardTitle>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setShowBalance(!showBalance)} className="gap-2">
-                {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {showBalance ? 'Hide' : 'Show'} Balance
-              </Button>
-            </div>
-            <CardDescription>Available leave days for {selectedEmployeeId}</CardDescription>
-          </CardHeader>
-          {showBalance && (
-            <CardContent>
-              {loading.balance ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.entries(leaveBalance).map(([key, data]) => (
-                    <LeaveBalanceCard key={key} type={key as keyof typeof LEAVE_TYPES} data={data} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          )}
-        </Card>
 
         <Card>
           <CardHeader className="pb-3">
@@ -1548,7 +1642,6 @@ export default function LeaveManagementPage() {
           onClose={() => { setShowForm(false); setEditData(null); }}
           onSuccess={handleFormSuccess}
           editData={editData}
-          employeeId={selectedEmployeeId}
         />
       )}
 
