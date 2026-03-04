@@ -1686,7 +1686,7 @@ export default function WorkStoppagePage() {
   // Handlers
   const handleSaveReport = async (reportData: Partial<WorkStoppageReport>) => {
     try {
-      let savedReport;
+      let savedReport: WorkStoppageReport | null = null;
       
       if (editingReport) {
         savedReport = await updateReport(editingReport.id, reportData);
@@ -2110,7 +2110,7 @@ export default function WorkStoppagePage() {
                       <CalendarComponent
                         mode="single"
                         selected={dateRange.from || undefined}
-                        onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                        onSelect={(date) => setDateRange(prev => ({ ...prev, from: date || null }))}
                         initialFocus
                       />
                     </PopoverContent>
@@ -2127,7 +2127,7 @@ export default function WorkStoppagePage() {
                       <CalendarComponent
                         mode="single"
                         selected={dateRange.to || undefined}
-                        onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                        onSelect={(date) => setDateRange(prev => ({ ...prev, to: date || null }))}
                         initialFocus
                       />
                     </PopoverContent>
