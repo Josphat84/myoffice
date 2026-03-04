@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format, addDays, addWeeks, addMonths, addYears, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, eachYearOfInterval, setDate, setMonth, getDay } from 'date-fns';
-import { CalendarIcon, Plus, Trash2, Loader2, RefreshCw, Eye } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2, Loader2, RefreshCw, Eye, Check, ChevronsUpDown } from 'lucide-react';
 import Link from 'next/link';
 
 // shadcn/ui components
@@ -89,7 +89,6 @@ const recurrenceSchema = z.discriminatedUnion('type', [
     type: z.literal('monthly'),
     interval: z.number().int().min(1).default(1),
     dayOfMonth: z.number().int().min(1).max(31).optional(),
-    // could also add "weekday of month" but keeping simple
     endType: z.enum(['never', 'after', 'on']),
     endAfter: z.number().int().min(1).optional(),
     endDate: z.date().optional(),
@@ -109,10 +108,20 @@ type Recurrence = z.infer<typeof recurrenceSchema>;
 
 // ---------- Form Schema ----------
 const scheduleSchema = z.object({
-  equipment_id: z.number({ required_error: 'Equipment is required' }),
+  equipment_id: z.union([
+    z.number({
+      required_error: 'Equipment is required',
+      invalid_type_error: 'Equipment must be a number',
+    }),
+    z.string().min(1, 'Equipment name is required'), // For custom equipment
+  ]),
+  equipment_name: z.string().optional(), // For custom equipment
   title: z.string().min(1, 'Title is required'),
   type: z.enum(['maintenance', 'compliance', 'inspection']),
-  start_date: z.date({ required_error: 'Start date is required' }),
+  start_date: z.date({
+    required_error: 'Start date is required',
+    invalid_type_error: 'Start date must be a valid date',
+  }),
   recurrence: recurrenceSchema,
   assigned_persons: z.array(
     z.object({
@@ -156,21 +165,14 @@ function generateRecurringDates(rule: Recurrence, start: Date): Date[] {
         current = addDays(current, rule.interval);
         break;
       case 'weekly':
-        // For weekly, we need to find the next occurrence that matches weekDays
-        // This is simplified: we just add interval weeks and keep the same weekday
-        // A full implementation would generate all weekDays within the interval, but for simplicity we'll just add interval weeks.
-        // More advanced: generate all weekDays between current and current+interval*7
-        // We'll keep it simple: add interval weeks, and the day of week stays the same.
         current = addWeeks(current, rule.interval);
         break;
       case 'monthly':
         if (rule.dayOfMonth) {
-          // Try to set to same day of month, fallback to last day of month
           let next = setDate(addMonths(current, rule.interval), rule.dayOfMonth);
-          if (next < current) next = addMonths(next, 1); // adjust if day overflow
+          if (next < current) next = addMonths(next, 1);
           current = next;
         } else {
-          // just same day of month as start
           current = addMonths(current, rule.interval);
         }
         break;
@@ -187,6 +189,17 @@ function generateRecurringDates(rule: Recurrence, start: Date): Date[] {
 const fetchEquipment = async (): Promise<Equipment[]> => {
   const res = await fetch(EQUIPMENT_API);
   if (!res.ok) throw new Error('Failed to fetch equipment');
+  return res.json();
+};
+
+// NEW: Create equipment function
+const createEquipment = async (name: string): Promise<Equipment> => {
+  const res = await fetch(EQUIPMENT_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, code: name.substring(0, 3).toUpperCase() }),
+  });
+  if (!res.ok) throw new Error('Failed to create equipment');
   return res.json();
 };
 
@@ -233,7 +246,174 @@ const deleteSchedule = async (id: number): Promise<void> => {
   if (!res.ok) throw new Error('Failed to delete');
 };
 
-// ---------- Employee Multi-Select Component (unchanged) ----------
+// ---------- Equipment Combobox Component ----------
+interface EquipmentComboboxProps {
+  value: number | string | undefined;
+  onChange: (value: number | string, equipmentName?: string) => void;
+  equipment: Equipment[];
+  onEquipmentCreated?: (newEquipment: Equipment) => void;
+}
+
+const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({ 
+  value, 
+  onChange, 
+  equipment,
+  onEquipmentCreated 
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const filteredEquipment = useMemo(() => {
+    if (!search) return equipment;
+    const q = search.toLowerCase();
+    return equipment.filter(eq => 
+      eq.name.toLowerCase().includes(q) || 
+      eq.code?.toLowerCase().includes(q)
+    );
+  }, [equipment, search]);
+
+  const selectedEquipment = equipment.find(eq => eq.id === value);
+
+  const handleSelect = (eqId: number) => {
+    onChange(eqId);
+    setOpen(false);
+    setSearch('');
+  };
+
+  const handleCreateNew = async () => {
+    if (!search.trim()) return;
+    
+    setCreating(true);
+    try {
+      const newEquipment = await createEquipment(search.trim());
+      toast.success(`Created new equipment: ${newEquipment.name}`);
+      onEquipmentCreated?.(newEquipment);
+      onChange(newEquipment.id, newEquipment.name);
+      setOpen(false);
+      setSearch('');
+    } catch (error) {
+      toast.error('Failed to create equipment');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCustomInput = () => {
+    // Allow typing custom equipment name without creating in DB
+    // This will store just the string as equipment_id
+    if (search.trim()) {
+      onChange(search.trim(), search.trim());
+      setOpen(false);
+      setSearch('');
+    }
+  };
+
+  // Get display value
+  const displayValue = typeof value === 'number' 
+    ? selectedEquipment?.name 
+    : typeof value === 'string' && value.length > 0 
+      ? value 
+      : '';
+
+  return (
+    <div className="space-y-2">
+      <Label>Equipment *</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+          >
+            {displayValue || 'Select or type equipment...'}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+          <Command>
+            <CommandInput 
+              placeholder="Search equipment or type new name..." 
+              value={search}
+              onValueChange={setSearch}
+            />
+            
+            {/* Create new options */}
+            {search && (
+              <CommandGroup heading="Create New">
+                {/* Option 1: Create as new equipment in database */}
+                <CommandItem
+                  onSelect={handleCreateNew}
+                  disabled={creating}
+                  className="text-primary"
+                >
+                  {creating ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                  )}
+                  Create "{search}" as new equipment
+                </CommandItem>
+                
+                {/* Option 2: Use as custom name (don't create in DB) */}
+                <CommandItem
+                  onSelect={handleCustomInput}
+                  className="text-muted-foreground"
+                >
+                  <span className="mr-2">✏️</span>
+                  Use "{search}" as custom name
+                </CommandItem>
+              </CommandGroup>
+            )}
+
+            {/* Existing equipment */}
+            {filteredEquipment.length > 0 && (
+              <CommandGroup heading="Existing Equipment">
+                {filteredEquipment.map((eq) => (
+                  <CommandItem
+                    key={eq.id}
+                    value={eq.name}
+                    onSelect={() => handleSelect(eq.id)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === eq.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div>
+                      <span>{eq.name}</span>
+                      {eq.code && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({eq.code})
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {/* No results and no search */}
+            {!search && filteredEquipment.length === 0 && (
+              <CommandEmpty>No equipment found. Type to create new.</CommandEmpty>
+            )}
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {/* Show warning for custom equipment */}
+      {typeof value === 'string' && value.length > 0 && (
+        <p className="text-xs text-amber-600 mt-1">
+          ⚠️ Using custom equipment name. It won't be added to the equipment list.
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ---------- Employee Multi-Select Component ----------
 interface EmployeeMultiSelectProps {
   value: ScheduleFormValues['assigned_persons'];
   onChange: (value: ScheduleFormValues['assigned_persons']) => void;
@@ -554,6 +734,7 @@ export default function MaintenanceSchedulesPage() {
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
       equipment_id: undefined,
+      equipment_name: '',
       title: '',
       type: 'maintenance',
       start_date: undefined,
@@ -599,10 +780,32 @@ export default function MaintenanceSchedulesPage() {
     loadData();
   }, []);
 
+  const handleEquipmentCreated = (newEquipment: Equipment) => {
+    setEquipment(prev => [...prev, newEquipment]);
+  };
+
   const onSubmit = async (values: ScheduleFormValues) => {
     try {
+      // Prepare equipment_id - it could be number (existing) or string (custom)
+      let equipmentId: number | string = values.equipment_id;
+      let equipmentName: string;
+
+      if (typeof values.equipment_id === 'number') {
+        // Existing equipment from database
+        const eq = equipment.find(e => e.id === values.equipment_id);
+        equipmentName = eq?.name || '';
+      } else {
+        // Custom equipment name
+        equipmentName = values.equipment_id;
+        // For custom equipment, we need to handle it differently
+        // You might want to create it in the database or just use the name
+        // For now, we'll use a placeholder ID for custom equipment
+        equipmentId = -1; // Placeholder for custom equipment
+      }
+
       const basePayload = {
-        equipment_id: values.equipment_id,
+        equipment_id: equipmentId,
+        equipment_name: equipmentName,
         title: values.title,
         type: values.type,
         assigned_persons: values.assigned_persons.map(p => 
@@ -659,6 +862,7 @@ export default function MaintenanceSchedulesPage() {
     setEditingSchedule(schedule);
     form.reset({
       equipment_id: schedule.equipment_id,
+      equipment_name: schedule.equipment_name,
       title: schedule.title,
       type: schedule.type,
       start_date: new Date(schedule.scheduled_date),
@@ -874,28 +1078,19 @@ export default function MaintenanceSchedulesPage() {
             </DialogHeader>
 
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Equipment selection */}
-              <div className="space-y-2">
-                <Label htmlFor="equipment">Equipment *</Label>
-                <Select
-                  value={form.watch('equipment_id')?.toString()}
-                  onValueChange={(val) => form.setValue('equipment_id', parseInt(val))}
-                >
-                  <SelectTrigger id="equipment">
-                    <SelectValue placeholder="Select equipment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {equipment.map(eq => (
-                      <SelectItem key={eq.id} value={eq.id.toString()}>
-                        {eq.name} {eq.code && `(${eq.code})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.equipment_id && (
-                  <p className="text-sm text-destructive">{form.formState.errors.equipment_id.message}</p>
-                )}
-              </div>
+              {/* Equipment selection with combobox */}
+              <EquipmentCombobox
+                value={form.watch('equipment_id')}
+                onChange={(value, name) => {
+                  form.setValue('equipment_id', value);
+                  if (name) form.setValue('equipment_name', name);
+                }}
+                equipment={equipment}
+                onEquipmentCreated={handleEquipmentCreated}
+              />
+              {form.formState.errors.equipment_id && (
+                <p className="text-sm text-destructive -mt-4">{form.formState.errors.equipment_id.message}</p>
+              )}
 
               {/* Title */}
               <div className="space-y-2">
