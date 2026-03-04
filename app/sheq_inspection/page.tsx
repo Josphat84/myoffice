@@ -1525,7 +1525,7 @@ export default function SHEQInspectionPage() {
                 </SelectContent>
               </Select>
 
-              {/* Date Range Filter */}
+              {/* Date Range Filter - FIXED */}
               <div className="flex gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -1538,7 +1538,10 @@ export default function SHEQInspectionPage() {
                     <CalendarComponent
                       mode="single"
                       selected={dateRange.from || undefined}
-                      onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                      onSelect={(date) => setDateRange(prev => ({ 
+                        ...prev, 
+                        from: date || null 
+                      }))}
                       initialFocus
                     />
                   </PopoverContent>
@@ -1555,7 +1558,10 @@ export default function SHEQInspectionPage() {
                     <CalendarComponent
                       mode="single"
                       selected={dateRange.to || undefined}
-                      onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                      onSelect={(date) => setDateRange(prev => ({ 
+                        ...prev, 
+                        to: date || null 
+                      }))}
                       initialFocus
                     />
                   </PopoverContent>
