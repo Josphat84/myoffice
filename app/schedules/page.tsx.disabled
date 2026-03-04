@@ -107,15 +107,16 @@ const recurrenceSchema = z.discriminatedUnion('type', [
 type Recurrence = z.infer<typeof recurrenceSchema>;
 
 // ---------- Form Schema ----------
+// Fix: Properly structure the union with correct error messages
 const scheduleSchema = z.object({
   equipment_id: z.union([
     z.number({
       required_error: 'Equipment is required',
       invalid_type_error: 'Equipment must be a number',
     }),
-    z.string().min(1, 'Equipment name is required'), // For custom equipment
+    z.string().min(1, 'Equipment name is required'),
   ]),
-  equipment_name: z.string().optional(), // For custom equipment
+  equipment_name: z.string().optional(),
   title: z.string().min(1, 'Title is required'),
   type: z.enum(['maintenance', 'compliance', 'inspection']),
   start_date: z.date({
@@ -192,7 +193,7 @@ const fetchEquipment = async (): Promise<Equipment[]> => {
   return res.json();
 };
 
-// NEW: Create equipment function
+// Create equipment function
 const createEquipment = async (name: string): Promise<Equipment> => {
   const res = await fetch(EQUIPMENT_API, {
     method: 'POST',
@@ -300,8 +301,6 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
   };
 
   const handleCustomInput = () => {
-    // Allow typing custom equipment name without creating in DB
-    // This will store just the string as equipment_id
     if (search.trim()) {
       onChange(search.trim(), search.trim());
       setOpen(false);
@@ -309,7 +308,6 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
     }
   };
 
-  // Get display value
   const displayValue = typeof value === 'number' 
     ? selectedEquipment?.name 
     : typeof value === 'string' && value.length > 0 
@@ -339,10 +337,8 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
               onValueChange={setSearch}
             />
             
-            {/* Create new options */}
             {search && (
               <CommandGroup heading="Create New">
-                {/* Option 1: Create as new equipment in database */}
                 <CommandItem
                   onSelect={handleCreateNew}
                   disabled={creating}
@@ -356,7 +352,6 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
                   Create "{search}" as new equipment
                 </CommandItem>
                 
-                {/* Option 2: Use as custom name (don't create in DB) */}
                 <CommandItem
                   onSelect={handleCustomInput}
                   className="text-muted-foreground"
@@ -367,7 +362,6 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
               </CommandGroup>
             )}
 
-            {/* Existing equipment */}
             {filteredEquipment.length > 0 && (
               <CommandGroup heading="Existing Equipment">
                 {filteredEquipment.map((eq) => (
@@ -395,7 +389,6 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
               </CommandGroup>
             )}
 
-            {/* No results and no search */}
             {!search && filteredEquipment.length === 0 && (
               <CommandEmpty>No equipment found. Type to create new.</CommandEmpty>
             )}
@@ -403,7 +396,6 @@ const EquipmentCombobox: React.FC<EquipmentComboboxProps> = ({
         </PopoverContent>
       </Popover>
 
-      {/* Show warning for custom equipment */}
       {typeof value === 'string' && value.length > 0 && (
         <p className="text-xs text-amber-600 mt-1">
           ⚠️ Using custom equipment name. It won't be added to the equipment list.
@@ -786,20 +778,14 @@ export default function MaintenanceSchedulesPage() {
 
   const onSubmit = async (values: ScheduleFormValues) => {
     try {
-      // Prepare equipment_id - it could be number (existing) or string (custom)
       let equipmentId: number | string = values.equipment_id;
       let equipmentName: string;
 
       if (typeof values.equipment_id === 'number') {
-        // Existing equipment from database
         const eq = equipment.find(e => e.id === values.equipment_id);
         equipmentName = eq?.name || '';
       } else {
-        // Custom equipment name
         equipmentName = values.equipment_id;
-        // For custom equipment, we need to handle it differently
-        // You might want to create it in the database or just use the name
-        // For now, we'll use a placeholder ID for custom equipment
         equipmentId = -1; // Placeholder for custom equipment
       }
 
@@ -816,7 +802,6 @@ export default function MaintenanceSchedulesPage() {
       };
 
       if (editingSchedule) {
-        // Edit mode – just update the single schedule
         const payload = {
           ...basePayload,
           scheduled_date: values.start_date.toISOString().split('T')[0],
@@ -830,18 +815,15 @@ export default function MaintenanceSchedulesPage() {
         return;
       }
 
-      // Create mode – generate multiple dates if recurring
       const datesToCreate = values.recurrence.type === 'none'
         ? [values.start_date]
         : generateRecurringDates(values.recurrence, values.start_date);
 
-      // Limit to a reasonable number (e.g., 50) to avoid abuse
       if (datesToCreate.length > 50) {
         toast.error('Too many occurrences (max 50). Please adjust recurrence.');
         return;
       }
 
-      // Create each schedule
       for (const date of datesToCreate) {
         const payload = {
           ...basePayload,
@@ -866,7 +848,7 @@ export default function MaintenanceSchedulesPage() {
       title: schedule.title,
       type: schedule.type,
       start_date: new Date(schedule.scheduled_date),
-      recurrence: { type: 'none' }, // editing a single schedule – no recurrence
+      recurrence: { type: 'none' },
       assigned_persons: schedule.assigned_persons,
       notes: schedule.notes || '',
       status: schedule.status,
@@ -895,7 +877,6 @@ export default function MaintenanceSchedulesPage() {
     }
   };
 
-  // Filter schedules based on selected filters
   const filteredSchedules = useMemo(() => {
     return schedules.filter(s => {
       if (filterEquipment !== 'all' && s.equipment_id.toString() !== filterEquipment) return false;
