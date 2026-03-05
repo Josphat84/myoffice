@@ -43,7 +43,11 @@ import {
   ShoppingCart,
   Utensils,
   Sprout,
-  Church
+  Church,
+  AlertOctagon,
+  ShieldAlert,
+  ClipboardList,
+  FileWarning
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -487,7 +491,7 @@ export default function HomePage() {
     'time-attendance': true,
     'safety-compliance': true,
     'analytics': true,
-    'other-products': true, // Added Other Products category
+    'other-products': true,
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -512,7 +516,7 @@ export default function HomePage() {
     window.location.reload();
   };
 
-  // Define categories
+  // Define categories - UPDATED with new Safety & Compliance modules
   const categories: Category[] = [
     {
       id: 'core',
@@ -539,6 +543,7 @@ export default function HomePage() {
         { icon: Package, title: "Spares", description: "Spare parts inventory management", color: "green", link: "/spares" },
         { icon: Fan, title: "Compressors", description: "Monitor compressor performance", color: "cyan", link: "/compressors" },
         { icon: Clock, title: "Standby", description: "On-call schedules and coverage", color: "purple", link: "/standby" },
+        { icon: CalendarDays, title: "Schedules", description: "Maintenance and task schedules", color: "amber", link: "/schedules" },
       ]
     },
     {
@@ -560,8 +565,11 @@ export default function HomePage() {
       icon: Shield,
       color: 'blue',
       modules: [
-        { icon: Shield, title: "PPE", description: "Protective equipment tracking", color: "blue", link: "/ppe" },
-        { icon: FileCheck, title: "SHEQ", description: "Safety, Health, Environment & Quality", color: "green", link: "/sheq" },
+        { icon: HardHat, title: "PPE", description: "Protective equipment tracking", color: "blue", link: "/ppe" },
+        { icon: ClipboardList, title: "SHEQ Inspections", description: "Safety, Health, Environment & Quality inspections", color: "green", link: "/sheq_inspection" },
+        { icon: FileWarning, title: "Near Miss", description: "Track and report near miss incidents", color: "amber", link: "/near_miss" },
+        { icon: AlertOctagon, title: "Work Stoppage", description: "SHEQ hold points and work stoppage tracking", color: "red", link: "/work_stoppage" },
+        { icon: ShieldAlert, title: "SHEQ", description: "Safety, Health, Environment & Quality", color: "purple", link: "/sheq" },
       ]
     },
     {
@@ -576,7 +584,6 @@ export default function HomePage() {
         { icon: Megaphone, title: "Notice Board", description: "Company announcements", color: "pink", link: "/noticeboard" },
       ]
     },
-    // NEW: Other Products Category
     {
       id: 'other-products',
       title: 'Other Products',
@@ -595,6 +602,7 @@ export default function HomePage() {
 
   const coreModules = categories.find(cat => cat.id === 'core')?.modules || [];
   const operationsModules = categories.find(cat => cat.id === 'operations')?.modules || [];
+  const safetyModules = categories.find(cat => cat.id === 'safety-compliance')?.modules || [];
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => ({
@@ -715,11 +723,26 @@ export default function HomePage() {
                     </div>
                   </div>
 
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
+                      Safety
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
+                      {safetyModules.slice(0, 5).map((module) => {
+                        const Icon = module.icon;
+                        return (
+                          <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                            <Icon className="h-4 w-4 text-white/70" />
+                            {module.title}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <Link href="/timesheets" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                     Timesheets
-                  </Link>
-                  <Link href="/sheq" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                    SHEQ
                   </Link>
 
                   {/* New: Other Products Dropdown */}
@@ -740,6 +763,14 @@ export default function HomePage() {
                       <Link href="/restaurant" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
                         <Utensils className="h-4 w-4 text-white/70" />
                         Restaurant
+                      </Link>
+                      <Link href="/farm" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                        <Sprout className="h-4 w-4 text-white/70" />
+                        Farm
+                      </Link>
+                      <Link href="/church" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                        <Church className="h-4 w-4 text-white/70" />
+                        Church
                       </Link>
                     </div>
                   </div>
@@ -840,6 +871,26 @@ export default function HomePage() {
                       </div>
                     </div>
 
+                    <div className="px-4 py-2">
+                      <div className="text-sm text-white/90 font-medium mb-2">Safety & Compliance</div>
+                      <div className="flex flex-col space-y-2 pl-4">
+                        {safetyModules.slice(0, 5).map((module) => {
+                          const Icon = module.icon;
+                          return (
+                            <Link 
+                              key={module.link} 
+                              href={module.link} 
+                              className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4 inline mr-2" />
+                              {module.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <Link 
                       href="/timesheets" 
                       className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium"
@@ -847,15 +898,8 @@ export default function HomePage() {
                     >
                       Timesheets
                     </Link>
-                    <Link 
-                      href="/sheq" 
-                      className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      SHEQ
-                    </Link>
 
-                    {/* New: Other Products in Mobile Menu */}
+                    {/* Other Products in Mobile Menu */}
                     <div className="px-4 py-2">
                       <div className="text-sm text-white/90 font-medium mb-2">Other Products</div>
                       <div className="flex flex-col space-y-2 pl-4">
@@ -882,6 +926,22 @@ export default function HomePage() {
                         >
                           <Utensils className="h-4 w-4 inline mr-2" />
                           Restaurant
+                        </Link>
+                        <Link 
+                          href="/farm" 
+                          className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Sprout className="h-4 w-4 inline mr-2" />
+                          Farm
+                        </Link>
+                        <Link 
+                          href="/church" 
+                          className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Church className="h-4 w-4 inline mr-2" />
+                          Church
                         </Link>
                       </div>
                     </div>
@@ -1158,8 +1218,8 @@ export default function HomePage() {
                             </Link>
                           </Button>
                           <Button asChild variant="outline" size="lg" className="bg-slate-100/80 backdrop-blur-sm border-slate-300/40 hover:bg-slate-200/80 text-gray-800">
-                            <Link href="/sheq">
-                              SHEQ Module
+                            <Link href="/sheq_inspection">
+                              Safety & Compliance
                             </Link>
                           </Button>
                         </>
@@ -1215,7 +1275,8 @@ export default function HomePage() {
                   <ul className="space-y-2">
                     <li><Link href="/employees" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Personnel</Link></li>
                     <li><Link href="/leaves" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Leaves</Link></li>
-                    <li><Link href="/sheq" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">SHEQ</Link></li>
+                    <li><Link href="/sheq_inspection" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">SHEQ Inspections</Link></li>
+                    <li><Link href="/work_stoppage" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Work Stoppage</Link></li>
                   </ul>
                 </div>
                 
@@ -1225,6 +1286,7 @@ export default function HomePage() {
                     <li><Link href="/roomRental" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Room Rental</Link></li>
                     <li><Link href="/ecommerce" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">E-commerce</Link></li>
                     <li><Link href="/restaurant" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Restaurant</Link></li>
+                    <li><Link href="/farm" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Farm</Link></li>
                   </ul>
                 </div>
                 
