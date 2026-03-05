@@ -1691,13 +1691,13 @@ export default function WorkStoppagePage() {
       if (editingReport) {
         savedReport = await updateReport(editingReport.id, reportData);
         if (savedReport) {
-          setReports(prev => prev.map(r => r.id === savedReport?.id ? savedReport : r));
+          setReports(prev => prev.map(r => r.id === savedReport!.id ? savedReport! : r));
           toast.success('Work stoppage updated successfully');
         }
       } else {
         savedReport = await createReport(reportData);
         if (savedReport) {
-          setReports(prev => [savedReport, ...prev]);
+          setReports(prev => [savedReport!, ...prev]);
           toast.success('Work stoppage issued successfully');
         }
       }
