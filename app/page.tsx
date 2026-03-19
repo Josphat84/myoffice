@@ -47,7 +47,37 @@ import {
   AlertOctagon,
   ShieldAlert,
   ClipboardList,
-  FileWarning
+  FileWarning,
+  PackageOpen,
+  ClipboardPlus,
+  ListChecks,
+  Gauge,
+  Truck,
+  Car,
+  Fuel,
+  Route,
+  MapPin,
+  Timer,
+  Briefcase,
+  CalendarCheck,
+  Umbrella,
+  HeartHandshake,
+  Wheat,
+  Tractor,
+  Trees,
+  Mountain,
+  Waves,
+  Sunset,
+  Sunrise,
+  CloudSun,
+  CloudMoon,
+  Stars,
+  Sparkles,
+  EyeIcon,
+  Target,
+  Activity,
+  Flag,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,20 +93,79 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-// =============== ANIMATION STYLES ===============
+// =============== STUNNING NATURE WALLPAPER COLLECTION ===============
+// Replaced the first wallpaper with a stunning Iceland ice cave image
+const natureWallpapers = [
+  {
+    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070", // Iceland ice cave
+    credit: "Unsplash - Iceland Ice Cave",
+    location: "Iceland - Crystal Ice Cave"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Enchanted Forest",
+    location: "Pacific Northwest"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Misty Morning",
+    location: "Great Smoky Mountains"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Sunbeams Through Forest",
+    location: "Olympic National Park"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Alpine Lake",
+    location: "Canadian Rockies"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Waterfall Valley",
+    location: "Yosemite National Park"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Desert Dunes",
+    location: "Namibia"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Mountain Lake Reflection",
+    location: "Lake Moraine, Canada"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Majestic Waterfall",
+    location: "Iguazu Falls"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Desert Rock Formation",
+    location: "Monument Valley"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Rolling Hills",
+    location: "Tuscany, Italy"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Mountain Wildflowers",
+    location: "Colorado Rockies"
+  }
+];
+
+// =============== SIMPLE ANIMATION STYLES - FAST AND FUN ===============
 const animationStyles = `
-  @keyframes fly-in-from-right {
-    from {
-      opacity: 0;
-      transform: translateX(120px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
-  @keyframes fade-in-up-slow {
+  @keyframes slide-up {
     from {
       opacity: 0;
       transform: translateY(20px);
@@ -87,53 +176,34 @@ const animationStyles = `
     }
   }
 
-  @keyframes float-slow {
+  @keyframes bounce-light {
     0%, 100% {
       transform: translateY(0);
     }
     50% {
-      transform: translateY(-10px);
+      transform: translateY(-5px);
     }
   }
 
-  @keyframes fade-in-slow {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes pulse-slow {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.8;
-    }
-  }
-
-  .animate-fly-in-from-right {
-    animation: fly-in-from-right 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  }
-
-  .animate-fade-in-up-slow {
-    animation: fade-in-up-slow 1.8s ease-out forwards;
-  }
-
-  .animate-float-slow {
-    animation: float-slow 4s ease-in-out infinite;
-  }
-
-  .animate-fade-in-slow {
-    animation: fade-in-slow 1.5s ease-out forwards;
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
     opacity: 0;
   }
 
-  .animate-pulse-slow {
-    animation: pulse-slow 2.5s ease-in-out infinite;
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+    opacity: 0;
   }
+
+  .animate-bounce-light {
+    animation: bounce-light 2s ease-in-out infinite;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
 `;
 
 // =============== TYPES ===============
@@ -184,7 +254,7 @@ function AuthForm() {
       
       setLoading(false);
       window.location.reload();
-    }, 1000);
+    }, 500);
   };
 
   const toggleMode = () => {
@@ -375,23 +445,20 @@ function getColorClasses(color: ColorType) {
   return colorMap[color] || colorMap.indigo;
 }
 
-// Module Card Component with slow fly-in from far right
-function ModuleCard({ module, index, isVisible }: { module: ModuleItem; index: number; isVisible: boolean }) {
+// Module Card Component - FAST SIMPLE ANIMATION
+function ModuleCard({ module, index }: { module: ModuleItem; index: number }) {
   const colors = getColorClasses(module.color);
   const IconComponent = module.icon;
+  const delayClass = index <= 5 ? `delay-${index * 100}` : '';
   
   return (
     <Link href={module.link} className="block group">
-      <div className={`h-full transition-all duration-1500 ease-out ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-60'}`}
-        style={{ 
-          transitionDelay: `${index * 250}ms`,
-          transitionTimingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
-        }}>
-        <Card className={`border ${colors.border} h-full hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2 ${colors.card} backdrop-blur-sm`}>
+      <div className={`h-full animate-slide-up ${delayClass}`}>
+        <Card className={`border ${colors.border} h-full hover:shadow-2xl transition-all duration-300 hover:scale-105 ${colors.card} backdrop-blur-sm`}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <div className={`p-2.5 rounded-lg ${colors.light} flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm`}>
-                <IconComponent className={`h-5 w-5 ${colors.icon} transition-all duration-500 group-hover:scale-110`} />
+              <div className={`p-2.5 rounded-lg ${colors.light} flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:shadow-md backdrop-blur-sm`}>
+                <IconComponent className={`h-5 w-5 ${colors.icon} transition-all duration-300`} />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-800 text-sm mb-1 truncate group-hover:text-gray-900 transition-colors duration-300">
@@ -409,41 +476,27 @@ function ModuleCard({ module, index, isVisible }: { module: ModuleItem; index: n
   );
 }
 
-// Category Accordion Component
+// Category Accordion Component - FAST SIMPLE ANIMATION
 function CategoryAccordion({ 
   category, 
   isExpanded, 
-  onToggle,
-  index 
+  onToggle 
 }: { 
   category: Category; 
   isExpanded: boolean; 
   onToggle: () => void;
-  index: number;
 }) {
   const colors = getColorClasses(category.color);
-  const [modulesVisible, setModulesVisible] = useState(false);
   const CategoryIcon = category.icon;
   
-  useEffect(() => {
-    if (isExpanded) {
-      const timer = setTimeout(() => {
-        setModulesVisible(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setModulesVisible(false);
-    }
-  }, [isExpanded]);
-  
   return (
-    <div className="rounded-xl border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-xl hover:shadow-2xl mb-6 transition-all duration-500">
+    <div className="rounded-xl border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-xl mb-6 transition-all duration-300">
       <button
         onClick={onToggle}
-        className="w-full p-5 flex items-center justify-between hover:bg-slate-200/50 rounded-t-xl transition-all duration-500"
+        className="w-full p-5 flex items-center justify-between hover:bg-slate-200/50 rounded-t-xl transition-all duration-300"
       >
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-xl ${colors.light} transition-all duration-500 ${isExpanded ? 'scale-110 shadow-lg' : 'shadow-md'} backdrop-blur-sm`}>
+          <div className={`p-3 rounded-xl ${colors.light} transition-all duration-300 shadow-md backdrop-blur-sm`}>
             <CategoryIcon className={`h-6 w-6 ${colors.icon}`} />
           </div>
           <div className="text-left">
@@ -452,16 +505,16 @@ function CategoryAccordion({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className={`text-xs ${colors.text} ${colors.border} bg-white/60 backdrop-blur-sm transition-all duration-500 ${isExpanded ? 'scale-110' : ''}`}>
+          <Badge variant="outline" className={`text-xs ${colors.text} ${colors.border} bg-white/60 backdrop-blur-sm`}>
             {category.modules.length} modules
           </Badge>
-          <div className={`p-2 rounded-full ${colors.light} transition-all duration-500 shadow-md backdrop-blur-sm`}>
-            <ChevronDown className={`h-5 w-5 ${colors.icon} transition-transform duration-700 ${isExpanded ? 'rotate-180' : ''}`} />
+          <div className={`p-2 rounded-full ${colors.light} transition-transform duration-500 shadow-md backdrop-blur-sm`}>
+            <ChevronDown className={`h-5 w-5 ${colors.icon} transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`} />
           </div>
         </div>
       </button>
 
-      <div className={`overflow-hidden transition-all duration-1000 ease-in-out ${isExpanded ? 'max-h-[2000px]' : 'max-h-0'}`}>
+      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[2000px]' : 'max-h-0'}`}>
         <div className="p-5 pt-0 border-t border-slate-300/40">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 pt-5">
             {category.modules.map((module, moduleIndex) => (
@@ -469,7 +522,6 @@ function CategoryAccordion({
                 key={module.link} 
                 module={module} 
                 index={moduleIndex}
-                isVisible={modulesVisible}
               />
             ))}
           </div>
@@ -494,6 +546,15 @@ export default function HomePage() {
     'other-products': true,
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
+
+  // Rotating nature wallpaper every 2 minutes (120,000 ms)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
+    }, 120000); // 2 minutes
+    return () => clearInterval(interval);
+  }, []);
 
   // FASTER LOADING - Remove setTimeout for initial auth check
   useEffect(() => {
@@ -516,7 +577,7 @@ export default function HomePage() {
     window.location.reload();
   };
 
-  // Define categories - UPDATED with new Safety & Compliance modules
+  // Define categories - UPDATED with VFL and PTO descriptions fixed
   const categories: Category[] = [
     {
       id: 'core',
@@ -540,10 +601,11 @@ export default function HomePage() {
       modules: [
         { icon: ClipboardCheck, title: "Maintenance", description: "Work orders and preventive maintenance", color: "orange", link: "/maintenance" },
         { icon: AlertTriangle, title: "Breakdowns", description: "Track equipment breakdowns", color: "red", link: "/breakdowns" },
-        { icon: Package, title: "Spares", description: "Spare parts inventory management", color: "green", link: "/spares" },
+        { icon: PackageOpen, title: "Spares", description: "Spare parts inventory management", color: "green", link: "/spares" },
         { icon: Fan, title: "Compressors", description: "Monitor compressor performance", color: "cyan", link: "/compressors" },
         { icon: Clock, title: "Standby", description: "On-call schedules and coverage", color: "purple", link: "/standby" },
         { icon: CalendarDays, title: "Schedules", description: "Maintenance and task schedules", color: "amber", link: "/schedules" },
+        { icon: ClipboardPlus, title: "Requisitions", description: "Purchase and supply requisitions", color: "blue", link: "/requisitions" },
       ]
     },
     {
@@ -570,6 +632,8 @@ export default function HomePage() {
         { icon: FileWarning, title: "Near Miss", description: "Track and report near miss incidents", color: "amber", link: "/near_miss" },
         { icon: AlertOctagon, title: "Work Stoppage", description: "SHEQ hold points and work stoppage tracking", color: "red", link: "/work_stoppage" },
         { icon: ShieldAlert, title: "SHEQ", description: "Safety, Health, Environment & Quality", color: "purple", link: "/sheq" },
+        { icon: EyeIcon, title: "VFL", description: "Visible Felt Leadership - Safety observations and engagement", color: "cyan", link: "/vfl" },
+        { icon: Target, title: "PTO", description: "Planned Task Observation - Safety task observations", color: "green", link: "/pto" },
       ]
     },
     {
@@ -596,6 +660,7 @@ export default function HomePage() {
         { icon: Utensils, title: "Restaurant", description: "Restaurant management and ordering system", color: "orange", link: "/restaurant" },
         { icon: Sprout, title: "Farm", description: "Farm management and agricultural tracking", color: "green", link: "/farm" },
         { icon: Church, title: "Church", description: "Church management and community platform", color: "blue", link: "/church" },
+        { icon: Database, title: "Stores", description: "Store inventory and management system", color: "cyan", link: "/stores" },
       ]
     }
   ];
@@ -603,6 +668,7 @@ export default function HomePage() {
   const coreModules = categories.find(cat => cat.id === 'core')?.modules || [];
   const operationsModules = categories.find(cat => cat.id === 'operations')?.modules || [];
   const safetyModules = categories.find(cat => cat.id === 'safety-compliance')?.modules || [];
+  const timeAttendanceModules = categories.find(cat => cat.id === 'time-attendance')?.modules || [];
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => ({
@@ -629,7 +695,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-indigo-600" />
           <p className="text-white text-sm font-medium drop-shadow-lg">Loading MyOffice...</p>
@@ -642,34 +708,45 @@ export default function HomePage() {
     <>
       <style jsx global>{animationStyles}</style>
       <div className="min-h-screen">
-        {/* Stunning Icelandic Waterfall Background - OPTIMIZED LOADING */}
+        {/* Rotating Nature Wallpaper Background - 12 stunning wallpapers with Iceland ice cave as first */}
         <div className="fixed inset-0 z-0">
-          <div 
-            className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-teal-900/20"
-            style={{
-              backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=60&w=800')",
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              opacity: 0.9,
-              filter: 'brightness(1.05) contrast(1.05) saturate(1.05)'
-            }}
-          />
+          {natureWallpapers.map((wallpaper, index) => (
+            <div
+              key={index}
+              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
+              style={{
+                backgroundImage: `url('${wallpaper.url}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: index === currentWallpaperIndex ? 1 : 0,
+                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
+                transition: 'opacity 2000ms ease-in-out',
+              }}
+            />
+          ))}
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/30" />
+          
+          {/* Optional: Display current wallpaper location (subtle) */}
+          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
+            {natureWallpapers[currentWallpaperIndex].location}
+          </div>
         </div>
 
         <div className="relative z-10">
-          {/* Header - IMPROVED VISIBILITY ON MOBILE */}
+          {/* Header */}
           <header className="sticky top-0 z-50 w-full border-b border-white/30 bg-black/40 backdrop-blur-xl backdrop-saturate-150">
             <div className="container mx-auto px-4">
               <div className="flex h-16 items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600/90 to-purple-600/90 shadow-lg">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600/90 to-purple-600/90 shadow-lg animate-bounce-light">
                     <Database className="h-5 w-5 text-white" />
                   </div>
                   <span className="font-bold text-white text-lg drop-shadow-lg">MyOffice</span>
                 </Link>
 
-                {/* MOBILE MENU BUTTON - ALWAYS VISIBLE */}
+                {/* MOBILE MENU BUTTON */}
                 <div className="lg:hidden">
                   <Button
                     variant="ghost"
@@ -681,7 +758,7 @@ export default function HomePage() {
                   </Button>
                 </div>
 
-                {/* Desktop Navigation - HIDDEN ON MOBILE */}
+                {/* Desktop Navigation */}
                 <nav className="hidden lg:flex items-center gap-1">
                   <Link href="/" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                     Home
@@ -725,11 +802,11 @@ export default function HomePage() {
 
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                      Safety
+                      Time & Attendance
                       <ChevronDown className="h-4 w-4" />
                     </button>
                     <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
-                      {safetyModules.slice(0, 5).map((module) => {
+                      {timeAttendanceModules.slice(0, 5).map((module) => {
                         const Icon = module.icon;
                         return (
                           <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
@@ -741,11 +818,25 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <Link href="/timesheets" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                    Timesheets
-                  </Link>
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
+                      Safety
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
+                      {safetyModules.slice(0, 7).map((module) => {
+                        const Icon = module.icon;
+                        return (
+                          <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                            <Icon className="h-4 w-4 text-white/70" />
+                            {module.title}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                  {/* New: Other Products Dropdown */}
+                  {/* Other Products Dropdown */}
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
                       Other Products
@@ -771,6 +862,10 @@ export default function HomePage() {
                       <Link href="/church" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
                         <Church className="h-4 w-4 text-white/70" />
                         Church
+                      </Link>
+                      <Link href="/stores" className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
+                        <Database className="h-4 w-4 text-white/70" />
+                        Stores
                       </Link>
                     </div>
                   </div>
@@ -819,7 +914,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* MOBILE MENU - VISIBLE WHEN TOGGLED */}
+              {/* MOBILE MENU */}
               {mobileMenuOpen && (
                 <div className="lg:hidden border-t border-white/20 mt-2 pb-4">
                   <div className="flex flex-col space-y-2 pt-4">
@@ -872,9 +967,9 @@ export default function HomePage() {
                     </div>
 
                     <div className="px-4 py-2">
-                      <div className="text-sm text-white/90 font-medium mb-2">Safety & Compliance</div>
+                      <div className="text-sm text-white/90 font-medium mb-2">Time & Attendance</div>
                       <div className="flex flex-col space-y-2 pl-4">
-                        {safetyModules.slice(0, 5).map((module) => {
+                        {timeAttendanceModules.slice(0, 3).map((module) => {
                           const Icon = module.icon;
                           return (
                             <Link 
@@ -891,13 +986,25 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <Link 
-                      href="/timesheets" 
-                      className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Timesheets
-                    </Link>
+                    <div className="px-4 py-2">
+                      <div className="text-sm text-white/90 font-medium mb-2">Safety & Compliance</div>
+                      <div className="flex flex-col space-y-2 pl-4">
+                        {safetyModules.slice(0, 7).map((module) => {
+                          const Icon = module.icon;
+                          return (
+                            <Link 
+                              key={module.link} 
+                              href={module.link} 
+                              className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4 inline mr-2" />
+                              {module.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     {/* Other Products in Mobile Menu */}
                     <div className="px-4 py-2">
@@ -942,6 +1049,14 @@ export default function HomePage() {
                         >
                           <Church className="h-4 w-4 inline mr-2" />
                           Church
+                        </Link>
+                        <Link 
+                          href="/stores" 
+                          className="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-300"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Database className="h-4 w-4 inline mr-2" />
+                          Stores
                         </Link>
                       </div>
                     </div>
@@ -1011,20 +1126,20 @@ export default function HomePage() {
           </header>
 
           <main className="flex-1">
-            {/* Hero Section */}
+            {/* Hero Section - FASTER ANIMATIONS */}
             <section className="py-12 md:py-20 px-4">
               <div className="container mx-auto">
                 <div className="text-center mb-12">
-                  <div className="flex justify-center items-center gap-3 mb-6 animate-float-slow">
+                  <div className="flex justify-center items-center gap-3 mb-6 animate-bounce-light">
                     <Database className="h-8 w-8 text-white drop-shadow-lg" />
                     <Layers className="h-8 w-8 text-white drop-shadow-lg" />
                     <Server className="h-8 w-8 text-white drop-shadow-lg" />
                   </div>
                   
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 animate-fade-in-slow drop-shadow-lg">
+                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 animate-fade-in drop-shadow-lg">
                     Organize Your Information
                   </h1>
-                  <p className="text-white/95 text-base md:text-lg max-w-2xl mx-auto animate-fade-in-slow drop-shadow-lg" style={{ animationDelay: '200ms' }}>
+                  <p className="text-white/95 text-base md:text-lg max-w-2xl mx-auto animate-fade-in delay-200 drop-shadow-lg">
                     Structured database architecture powers our platform to organize your personnel, 
                     assets, operations, and analytics in one unified system.
                   </p>
@@ -1033,12 +1148,12 @@ export default function HomePage() {
                 <div className="flex justify-center gap-4 mb-12">
                   {isLoggedIn ? (
                     <>
-                      <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 animate-fade-in-slow shadow-xl hover:shadow-2xl text-white" style={{ animationDelay: '400ms' }}>
+                      <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 animate-fade-in delay-400 shadow-xl hover:shadow-2xl text-white">
                         <Link href="/employees">
                           Start Managing
                         </Link>
                       </Button>
-                      <Button asChild variant="outline" size="lg" className="bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-white animate-fade-in-slow" style={{ animationDelay: '500ms' }}>
+                      <Button asChild variant="outline" size="lg" className="bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-white animate-fade-in delay-500">
                         <Link href="/leaves">
                           Manage Leaves
                         </Link>
@@ -1048,7 +1163,7 @@ export default function HomePage() {
                     <>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 animate-fade-in-slow shadow-xl hover:shadow-2xl text-white" style={{ animationDelay: '400ms' }}>
+                          <Button size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 animate-fade-in delay-400 shadow-xl hover:shadow-2xl text-white">
                             Get Started
                           </Button>
                         </DialogTrigger>
@@ -1058,7 +1173,7 @@ export default function HomePage() {
                       </Dialog>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="lg" className="bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-white animate-fade-in-slow" style={{ animationDelay: '500ms' }}>
+                          <Button variant="outline" size="lg" className="bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-white animate-fade-in delay-500">
                             Sign In
                           </Button>
                         </DialogTrigger>
@@ -1076,10 +1191,10 @@ export default function HomePage() {
             <section className="pb-12 md:pb-20 px-4">
               <div className="container mx-auto">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-3 animate-fade-in-slow drop-shadow-lg">
+                  <h2 className="text-2xl font-bold text-white mb-3 animate-fade-in drop-shadow-lg">
                     Database-Powered Modules
                   </h2>
-                  <p className="text-white/90 text-sm animate-fade-in-slow drop-shadow-lg" style={{ animationDelay: '100ms' }}>
+                  <p className="text-white/90 text-sm animate-fade-in delay-100 drop-shadow-lg">
                     Each module connects to our structured database architecture
                   </p>
                 </div>
@@ -1093,7 +1208,7 @@ export default function HomePage() {
                     </TabsList>
                     
                     {activeTab === 'all' && (
-                      <div className="flex gap-3 animate-fade-in-slow" style={{ animationDelay: '200ms' }}>
+                      <div className="flex gap-3 animate-fade-in delay-200">
                         <Button variant="outline" size="sm" onClick={expandAll} className="bg-slate-100/80 backdrop-blur-sm border-slate-300/40 hover:bg-slate-200/80 text-gray-800 text-sm hover:scale-105 transition-all duration-300 shadow-md">
                           Expand All
                         </Button>
@@ -1105,84 +1220,29 @@ export default function HomePage() {
                   </div>
 
                   <TabsContent value="all" className="mt-0">
-                    {categories.map((category, index) => (
+                    {categories.map((category) => (
                       <CategoryAccordion
                         key={category.id}
                         category={category}
                         isExpanded={expandedCategories[category.id]}
                         onToggle={() => toggleCategory(category.id)}
-                        index={index}
                       />
                     ))}
                   </TabsContent>
 
                   <TabsContent value="core" className="mt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {coreModules.map((module, index) => {
-                        const Icon = module.icon;
-                        const colors = getColorClasses(module.color);
-                        return (
-                          <div key={module.link} className="animate-fly-in-from-right" style={{ 
-                            animationDelay: `${index * 250}ms`,
-                            animationFillMode: 'both'
-                          }}>
-                            <Link href={module.link} className="block group">
-                              <Card className="border border-slate-300/40 hover:shadow-2xl transition-all duration-500 h-full hover:scale-[1.04] hover:-translate-y-2 bg-slate-50/80 backdrop-blur-sm shadow-lg">
-                                <CardContent className="p-5">
-                                  <div className="flex items-start gap-3">
-                                    <div className={`p-3 rounded-xl ${colors.light} flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm`}>
-                                      <Icon className={`h-5 w-5 ${colors.icon}`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <h3 className="font-semibold text-gray-800 text-sm mb-1 truncate group-hover:text-gray-900">
-                                        {module.title}
-                                      </h3>
-                                      <p className="text-gray-700/90 text-xs line-clamp-2">
-                                        {module.description}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </Link>
-                          </div>
-                        );
-                      })}
+                      {coreModules.map((module, index) => (
+                        <ModuleCard key={module.link} module={module} index={index} />
+                      ))}
                     </div>
                   </TabsContent>
 
                   <TabsContent value="operations" className="mt-0">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {operationsModules.map((module, index) => {
-                        const Icon = module.icon;
-                        const colors = getColorClasses(module.color);
-                        return (
-                          <div key={module.link} className="animate-fly-in-from-right" style={{ 
-                            animationDelay: `${index * 250}ms`,
-                            animationFillMode: 'both'
-                          }}>
-                            <Link href={module.link} className="block group">
-                              <Card className="border border-slate-300/40 hover:shadow-2xl transition-all duration-500 h-full hover:scale-[1.04] hover:-translate-y-2 bg-slate-50/80 backdrop-blur-sm shadow-lg">
-                                <CardContent className="p-5">
-                                  <div className="flex items-start gap-3">
-                                    <div className={`p-3 rounded-xl ${colors.light} flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm`}>
-                                      <Icon className={`h-5 w-5 ${colors.icon}`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <h3 className="font-semibold text-gray-800 text-sm mb-1 truncate group-hover:text-gray-900">
-                                        {module.title}
-                                      </h3>
-                                      <p className="text-gray-700/90 text-xs line-clamp-2">
-                                        {module.description}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </Link>
-                          </div>
-                        );
-                      })}
+                      {operationsModules.map((module, index) => (
+                        <ModuleCard key={module.link} module={module} index={index} />
+                      ))}
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -1192,11 +1252,11 @@ export default function HomePage() {
             {/* CTA Section */}
             <section className="py-12 px-4">
               <div className="container mx-auto">
-                <Card className="border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-2xl animate-fade-in-up-slow">
+                <Card className="border border-slate-300/40 bg-slate-100/70 backdrop-blur-sm shadow-2xl animate-slide-up">
                   <CardContent className="p-8 text-center">
                     <div className="flex justify-center mb-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600/80 to-purple-600/80 shadow-lg backdrop-blur-sm">
-                        <Database className="h-6 w-6 text-white animate-pulse-slow" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600/80 to-purple-600/80 shadow-lg backdrop-blur-sm animate-bounce-light">
+                        <Database className="h-6 w-6 text-white" />
                       </div>
                     </div>
                     
@@ -1287,6 +1347,7 @@ export default function HomePage() {
                     <li><Link href="/ecommerce" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">E-commerce</Link></li>
                     <li><Link href="/restaurant" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Restaurant</Link></li>
                     <li><Link href="/farm" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Farm</Link></li>
+                    <li><Link href="/stores" className="text-xs text-slate-300 hover:text-white transition-all duration-300 hover:translate-x-2 hover:font-medium">Stores</Link></li>
                   </ul>
                 </div>
                 
