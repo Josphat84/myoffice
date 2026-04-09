@@ -162,7 +162,7 @@ interface SparePart {
 }
 
 interface Breakdown {
-  id: number;  // This is the numeric primary key from the database
+  id: number;
   breakdown_uid?: string;
   machine_id: string;
   machine_name: string;
@@ -468,26 +468,22 @@ const calculateTotalDowntime = (breakdowns: Breakdown[]): number => {
   }, 0);
 };
 
-// Get the numeric ID from breakdown - ALWAYS use the numeric id field from the database
+// Get the numeric ID from breakdown
 const getBreakdownId = (breakdown: Breakdown): number => {
   if (!breakdown) {
     console.warn('getBreakdownId called with null/undefined breakdown');
     return 0;
   }
   
-  // The database uses integer IDs from Supabase
   if (breakdown.id && typeof breakdown.id === 'number') {
     return breakdown.id;
   }
   
-  // If id is a string that looks like a number, parse it
   if (breakdown.id && typeof breakdown.id === 'string' && /^\d+$/.test(breakdown.id)) {
     return parseInt(breakdown.id, 10);
   }
   
   console.error('Could not find numeric ID in breakdown:', breakdown);
-  console.log('Breakdown.id value:', breakdown.id, 'type:', typeof breakdown.id);
-  console.log('Breakdown.breakdown_uid:', breakdown.breakdown_uid);
   return 0;
 };
 
@@ -532,13 +528,8 @@ const fetchBreakdowns = async (filters: Record<string, string> = {}): Promise<Br
       breakdowns = [];
     }
     
-    // Log the first breakdown to verify ID field
     if (breakdowns.length > 0) {
-      console.log('=== BREAKDOWN DATA STRUCTURE ===');
       console.log('First breakdown:', breakdowns[0]);
-      console.log('Breakdown keys:', Object.keys(breakdowns[0]));
-      console.log('ID field value:', breakdowns[0].id, 'type:', typeof breakdowns[0].id);
-      console.log('breakdown_uid field value:', breakdowns[0].breakdown_uid);
     }
     
     return breakdowns;
@@ -762,12 +753,10 @@ const deleteBreakdown = async (breakdownId: number): Promise<any> => {
     
     console.log('Delete response status:', response.status);
     
-    // Handle 204 No Content (successful deletion)
     if (response.status === 204) {
       return { success: true };
     }
     
-    // Handle 200 OK with JSON response
     if (response.ok) {
       const text = await response.text();
       if (text) {
@@ -1069,7 +1058,7 @@ const FilterBar = ({
         </div>
         
         {/* Date Range Picker */}
-        {showDateRange && (
+        if (showDateRange && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="flex-1">
@@ -2186,7 +2175,7 @@ const BreakdownsPage = () => {
     }
   }, [filters, startDate, endDate]);
 
-  // Apply local filters and search
+  // Apply local filters and search - FIXED SORTING LOGIC
   useEffect(() => {
     let result = [...breakdowns];
     
@@ -2201,19 +2190,25 @@ const BreakdownsPage = () => {
       );
     }
     
+    // FIXED: Proper sorting that handles both strings and numbers
     result.sort((a, b) => {
       let aVal = a[sortField as keyof Breakdown];
       let bVal = b[sortField as keyof Breakdown];
 
+      // Special handling for date field
       if (sortField === 'breakdown_date') {
         const aDate = new Date(aVal as string);
         const bDate = new Date(bVal as string);
-        return sortDirection === 'asc' ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
+        const comparison = aDate.getTime() - bDate.getTime();
+        return sortDirection === 'asc' ? comparison : -comparison;
       }
 
-      const aStr = aVal ?? '';
-      const bStr = bVal ?? '';
-      return sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+      // Safely convert values to strings for comparison
+      const aStr = aVal == null ? '' : String(aVal);
+      const bStr = bVal == null ? '' : String(bVal);
+      
+      const comparison = aStr.localeCompare(bStr);
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
     
     setFilteredBreakdowns(result);
