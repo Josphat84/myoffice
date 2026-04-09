@@ -8,7 +8,6 @@ import {
   Search,
   RefreshCw,
   Calendar,
-  MapPin,
   Filter,
   ChevronDown,
   ChevronUp,
