@@ -83,7 +83,6 @@ import {
   Banknote,
   Coins,
   Receipt,
-  Invoice,
   Building,
   Factory,
   Store,
