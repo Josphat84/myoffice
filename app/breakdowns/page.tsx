@@ -1058,7 +1058,7 @@ const FilterBar = ({
         </div>
         
         {/* Date Range Picker */}
-        if (showDateRange && (
+        {showDateRange && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="flex-1">
