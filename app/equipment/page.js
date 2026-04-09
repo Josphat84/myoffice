@@ -1,6 +1,8 @@
 ﻿// app/equipment/page.js
 'use client';
 
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import EquipmentForm from "@/components/EquipmentForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -36,12 +38,169 @@ import {
     AlertTriangle,
     CheckCircle,
     XCircle,
-    Cpu
+    Cpu,
+    LayoutGrid,
+    List,
+    ChevronUp,
+    ChevronDown,
+    Minimize2,
+    Maximize2,
+    Server,
+    Package,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    Filter,
+    FilterX,
+    Info,
+    HelpCircle,
+    Download,
+    RefreshCw,
+    Grid3x3,
+    Settings
 } from "lucide-react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-// ✅ Correct - using the environment variable name
+// ============= STUNNING NATURE WALLPAPER COLLECTION =============
+const natureWallpapers = [
+  {
+    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Iceland Ice Cave",
+    location: "Iceland - Crystal Ice Cave"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Enchanted Forest",
+    location: "Pacific Northwest"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Misty Morning",
+    location: "Great Smoky Mountains"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Sunbeams Through Forest",
+    location: "Olympic National Park"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Alpine Lake",
+    location: "Canadian Rockies"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Waterfall Valley",
+    location: "Yosemite National Park"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Desert Dunes",
+    location: "Namibia"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Mountain Lake Reflection",
+    location: "Lake Moraine, Canada"
+  }
+];
+
+// ============= ANIMATION STYLES =============
+const animationStyles = `
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes expand {
+    from {
+      opacity: 0;
+      transform: scaleY(0);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+      max-height: 500px;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-expand {
+    animation: expand 0.3s ease-out forwards;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+`;
+
+// API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://myofficebackend.onrender.com';
-const API_BASE_URL = `${API_BASE}/api/equipment`; // ✅ Define the complete API URL
+const API_BASE_URL = `${API_BASE}/api/equipment`;
+
+// Pagination configuration
+const ITEMS_PER_PAGE = 12;
 
 // --- Utility Functions ---
 const getStatusBadgeColor = (status) => {
@@ -52,6 +211,16 @@ const getStatusBadgeColor = (status) => {
         case "retired": return "bg-gray-100 text-gray-800 border-gray-300";
         case "reserved": return "bg-blue-100 text-blue-800 border-blue-300";
         default: return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+};
+
+const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+        case "operational": return CheckCircle;
+        case "maintenance": return Wrench;
+        case "out_of_service": return XCircle;
+        case "reserved": return Package;
+        default: return Server;
     }
 };
 
@@ -114,19 +283,67 @@ const getMaintenanceStatusColor = (status) => {
     }
 };
 
-// Helper functions for click-to-call
 const handlePhoneClick = (phoneNumber) => {
     if (phoneNumber) {
         window.open(`tel:${phoneNumber}`, '_self');
     }
 };
 
-// --- Visualization Components ---
-const EquipmentMetrics = ({ equipment }) => {
+// --- Compact Metrics Card ---
+const CompactMetricsCard = ({ title, value, icon: Icon, color, subtitle, onClick, tooltip }) => {
+    const colorClasses = {
+        blue: "from-blue-500 to-blue-600",
+        green: "from-green-500 to-green-600",
+        yellow: "from-yellow-500 to-yellow-600",
+        red: "from-red-500 to-red-600",
+        purple: "from-purple-500 to-purple-600",
+        indigo: "from-indigo-500 to-indigo-600",
+        emerald: "from-emerald-500 to-emerald-600",
+        amber: "from-amber-500 to-amber-600"
+    };
+
+    const gradient = colorClasses[color] || colorClasses.blue;
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card 
+                        className={`transition-all hover:shadow-lg hover:scale-105 bg-white/90 backdrop-blur-sm ${onClick ? 'cursor-pointer' : ''}`}
+                        onClick={onClick}
+                    >
+                        <CardContent className="p-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className={`p-1.5 rounded-lg bg-gradient-to-br ${gradient} text-white shadow-md`}>
+                                        <Icon className="h-3.5 w-3.5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">{title}</p>
+                                        <p className="text-lg font-bold">{value}</p>
+                                        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{tooltip || `Click to filter by ${title.toLowerCase()}`}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
+// --- Metrics Row ---
+const MetricsRow = ({ equipment, onStatusClick }) => {
     const metrics = useMemo(() => {
         const operational = equipment.filter(item => item.status?.toLowerCase() === 'operational').length;
         const underMaintenance = equipment.filter(item => item.status?.toLowerCase() === 'maintenance').length;
         const outOfService = equipment.filter(item => item.status?.toLowerCase() === 'out_of_service').length;
+        const reserved = equipment.filter(item => item.status?.toLowerCase() === 'reserved').length;
+        const retired = equipment.filter(item => item.status?.toLowerCase() === 'retired').length;
         
         const avgAge = equipment.reduce((sum, item) => {
             if (!item.commission_date) return sum;
@@ -136,522 +353,564 @@ const EquipmentMetrics = ({ equipment }) => {
             return sum + age;
         }, 0) / equipment.length;
 
+        const totalValue = equipment.reduce((sum, item) => sum + (item.current_value || 0), 0);
+        const totalCost = equipment.reduce((sum, item) => sum + (item.purchase_cost || 0), 0);
+
         return {
+            total: equipment.length,
             operational,
             underMaintenance,
             outOfService,
-            operationalRate: (operational / equipment.length) * 100,
-            avgAge: avgAge.toFixed(1)
+            reserved,
+            retired,
+            operationalRate: equipment.length ? ((operational / equipment.length) * 100).toFixed(0) : 0,
+            avgAge: avgAge.toFixed(1),
+            totalValue: totalValue.toLocaleString(),
+            totalCost: totalCost.toLocaleString()
         };
     }, [equipment]);
 
     return (
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-50 to-pink-100">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-bold text-gray-800 flex items-center">
-                    <Activity className="h-5 w-5 mr-2 text-purple-600" />
-                    Equipment Metrics
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                        <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                        <div className="text-2xl font-bold text-green-600">{metrics.operational}</div>
-                        <div className="text-xs text-gray-600">Operational</div>
-                        <div className="text-xs text-green-500 mt-1">{metrics.operationalRate.toFixed(1)}% availability</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                        <Wrench className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-                        <div className="text-2xl font-bold text-yellow-600">{metrics.underMaintenance}</div>
-                        <div className="text-xs text-gray-600">Maintenance</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                        <XCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                        <div className="text-2xl font-bold text-red-600">{metrics.outOfService}</div>
-                        <div className="text-xs text-gray-600">Out of Service</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                        <Clock className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                        <div className="text-2xl font-bold text-blue-600">{metrics.avgAge}</div>
-                        <div className="text-xs text-gray-600">Avg Age (years)</div>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 animate-slide-up delay-100">
+            <CompactMetricsCard 
+                title="Total Assets" 
+                value={metrics.total} 
+                icon={Server} 
+                color="blue"
+                tooltip="Total number of equipment assets in the system"
+            />
+            <CompactMetricsCard 
+                title="Operational" 
+                value={metrics.operational} 
+                icon={CheckCircle} 
+                color="green"
+                subtitle={`${metrics.operationalRate}%`}
+                onClick={() => onStatusClick('operational')}
+                tooltip="Click to filter operational equipment"
+            />
+            <CompactMetricsCard 
+                title="Maintenance" 
+                value={metrics.underMaintenance} 
+                icon={Wrench} 
+                color="yellow"
+                onClick={() => onStatusClick('maintenance')}
+                tooltip="Click to filter equipment under maintenance"
+            />
+            <CompactMetricsCard 
+                title="Out of Service" 
+                value={metrics.outOfService} 
+                icon={XCircle} 
+                color="red"
+                onClick={() => onStatusClick('out_of_service')}
+                tooltip="Click to filter out of service equipment"
+            />
+            <CompactMetricsCard 
+                title="Reserved" 
+                value={metrics.reserved} 
+                icon={Package} 
+                color="purple"
+                onClick={() => onStatusClick('reserved')}
+                tooltip="Click to filter reserved equipment"
+            />
+            <CompactMetricsCard 
+                title="Retired" 
+                value={metrics.retired} 
+                icon={Target} 
+                color="amber"
+                onClick={() => onStatusClick('retired')}
+                tooltip="Click to filter retired equipment"
+            />
+            <CompactMetricsCard 
+                title="Avg Age" 
+                value={`${metrics.avgAge}y`} 
+                icon={Clock} 
+                color="indigo"
+                tooltip="Average age of all equipment"
+            />
+            <CompactMetricsCard 
+                title="Total Value" 
+                value={`$${metrics.totalValue}`} 
+                icon={BarChart3} 
+                color="emerald"
+                tooltip="Total current value of all equipment"
+            />
+        </div>
     );
 };
 
-const EquipmentCategoryChart = ({ equipment }) => {
-    const categoryData = useMemo(() => {
-        const categoryCounts = equipment.reduce((acc, item) => {
-            const category = item.category || "Uncategorized";
-            acc[category] = (acc[category] || 0) + 1;
-            return acc;
-        }, {});
-
-        return Object.entries(categoryCounts)
-            .map(([category, count], index) => ({
-                category,
-                count,
-                percentage: (count / equipment.length) * 100,
-                color: getCategoryColor(category, index)
-            }))
-            .sort((a, b) => b.count - a.count);
-    }, [equipment]);
-
-    return (
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-indigo-100">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-bold text-gray-800 flex items-center">
-                    <PieChart className="h-5 w-5 mr-2 text-blue-600" />
-                    Equipment by Category
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    {categoryData.map((item, index) => (
-                        <div key={item.category} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <div
-                                    className="w-3 h-3 rounded-full"
-                                    style={{ backgroundColor: item.color }}
-                                />
-                                <span className="text-sm font-medium text-gray-700">{item.category}</span>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm font-bold text-gray-800">{item.count}</div>
-                                <div className="text-xs text-gray-500">{item.percentage.toFixed(1)}%</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-const StatusDistributionChart = ({ equipment }) => {
-    const statusData = useMemo(() => {
-        const statusCounts = equipment.reduce((acc, item) => {
-            const status = item.status || "Unknown";
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, {});
-
-        return Object.entries(statusCounts)
-            .map(([status, count]) => ({
-                status,
-                count,
-                percentage: (count / equipment.length) * 100,
-                color: getStatusBadgeColor(status).split(' ')[0]
-            }))
-            .sort((a, b) => b.count - a.count);
-    }, [equipment]);
-
-    return (
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-green-50 to-emerald-100">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-bold text-gray-800 flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-green-600" />
-                    Status Distribution
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-3">
-                    {statusData.map((item, index) => (
-                        <div key={item.status} className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                                <span className="font-medium text-gray-700">{item.status}</span>
-                                <span className="text-gray-600">{item.count} ({item.percentage.toFixed(1)}%)</span>
-                            </div>
-                            <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-500 ease-out ${item.color}`}
-                                    style={{
-                                        width: `${item.percentage}%`
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-// --- Comprehensive Equipment Tooltip/Summary ---
-const EquipmentTooltipContent = ({ equipment, isVisible, onMouseEnter, onMouseLeave }) => {
+// --- Expanded Equipment Details ---
+const ExpandedEquipmentDetails = ({ equipment }) => {
     const age = calculateAge(equipment.commission_date);
     const maintenanceStatus = getMaintenanceStatus(equipment.last_maintenance, equipment.maintenance_interval);
 
-    if (!isVisible) return null;
-
     return (
-        <div 
-            className="absolute z-50 top-0 left-[102%] w-[480px] p-5 bg-white border border-indigo-300 rounded-xl shadow-2xl pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100 origin-left max-h-[80vh] overflow-y-auto"
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
-        >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <h4 className="font-extrabold text-lg text-indigo-700 flex items-center">
-                    <ToolCase className="h-5 w-5 mr-2 text-indigo-500" />
-                    Equipment Profile: {equipment.equipment_id}
-                </h4>
-                <Badge variant="secondary" className={`${getStatusBadgeColor(equipment.status)} font-bold`}>
-                    {equipment.status || "Unknown"}
-                </Badge>
-            </div>
-            <Separator className="mb-4" />
-            
-            {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="text-center p-2 bg-blue-50 rounded-lg">
-                    <div className="text-sm font-semibold text-blue-700">{age}</div>
-                    <div className="text-xs text-blue-600">Age</div>
-                </div>
-                <div className="text-center p-2 bg-amber-50 rounded-lg">
-                    <div className="text-sm font-semibold text-amber-700">{equipment.maintenance_interval || "N/A"} months</div>
-                    <div className="text-xs text-amber-600">Maintenance Interval</div>
-                </div>
-                <div className="text-center p-2 bg-purple-50 rounded-lg">
-                    <div className="text-sm font-semibold text-purple-700">
-                        <Badge variant="secondary" className={getMaintenanceStatusColor(maintenanceStatus)}>
-                            {maintenanceStatus}
-                        </Badge>
-                    </div>
-                    <div className="text-xs text-purple-600">Maintenance Status</div>
-                </div>
-            </div>
-
-            {/* Basic Information */}
-            <div className="mb-4">
-                <h5 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
-                    <FileText className="h-4 w-4 mr-1 text-indigo-500" />
-                    Basic Information
-                </h5>
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-800">
-                    <div><span className="font-medium">Name:</span> {equipment.name || "N/A"}</div>
-                    <div><span className="font-medium">Model:</span> {equipment.model || "N/A"}</div>
-                    <div><span className="font-medium">Serial No:</span> {equipment.serial_number || "N/A"}</div>
-                    <div><span className="font-medium">Category:</span> {equipment.category || "N/A"}</div>
-                    <div className="col-span-2"><span className="font-medium">Description:</span> {equipment.description || "N/A"}</div>
-                </div>
-            </div>
-
-            {/* Commission & Location */}
-            <div className="mb-4">
-                <h5 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
-                    <Building className="h-4 w-4 mr-1 text-blue-500" />
-                    Commission & Location
-                </h5>
-                <div className="space-y-1 text-sm text-gray-800">
-                    <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-blue-500 shrink-0" />
-                        <span className="font-medium">Commissioned:</span> 
-                        <span className="truncate">{equipment.commission_date || "N/A"}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-blue-500 shrink-0" />
-                        <span className="font-medium">Location:</span> 
-                        <span className="truncate">{equipment.location || "N/A"}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Briefcase className="h-4 w-4 text-blue-500 shrink-0" />
-                        <span className="font-medium">Department:</span> 
-                        <span className="truncate">{equipment.department || "N/A"}</span>
+        <div className="animate-expand">
+            <Separator className="my-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50/50 rounded-lg">
+                {/* Basic Information */}
+                <div>
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
+                        <FileText className="h-3.5 w-3.5 text-indigo-500" />
+                        Basic Information
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Equipment ID:</span> {equipment.equipment_id}</p>
+                        <p><span className="font-medium">Serial Number:</span> {equipment.serial_number || "N/A"}</p>
+                        <p><span className="font-medium">Model:</span> {equipment.model || "N/A"}</p>
+                        <p><span className="font-medium">Category:</span> {equipment.category || "N/A"}</p>
                     </div>
                 </div>
-            </div>
 
-            {/* Supplier Information */}
-            <div className="mb-4">
-                <h5 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
-                    <Truck className="h-4 w-4 mr-1 text-green-500" />
-                    Supplier Information
-                </h5>
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-800">
-                    <div><span className="font-medium">Supplier:</span> {equipment.supplier || "N/A"}</div>
-                    <div><span className="font-medium">Contact:</span> {equipment.supplier_contact || "N/A"}</div>
-                    <div className="col-span-2">
-                        <span className="font-medium">Phone:</span> 
-                        <span 
-                            className={`ml-1 ${equipment.supplier_phone ? 'text-green-600 cursor-pointer hover:underline' : 'text-gray-500'}`}
-                            onClick={() => equipment.supplier_phone && handlePhoneClick(equipment.supplier_phone)}
-                        >
-                            {equipment.supplier_phone || "N/A"}
-                        </span>
-                    </div>
-                    <div className="col-span-2"><span className="font-medium">Warranty:</span> {equipment.warranty_info || "N/A"}</div>
-                </div>
-            </div>
-
-            {/* Technical Specifications */}
-            {equipment.specifications && (
-                <div className="mb-4">
-                    <h5 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
-                        <Cpu className="h-4 w-4 mr-1 text-amber-500" />
-                        Technical Specifications
-                    </h5>
-                    <div className="text-sm text-gray-800">
-                        {equipment.specifications}
+                {/* Location & Department */}
+                <div>
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-green-500" />
+                        Location & Department
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Location:</span> {equipment.location || "N/A"}</p>
+                        <p><span className="font-medium">Department:</span> {equipment.department || "N/A"}</p>
+                        <p><span className="font-medium">Commission Date:</span> {equipment.commission_date || "N/A"}</p>
+                        <p><span className="font-medium">Age:</span> {age}</p>
                     </div>
                 </div>
-            )}
 
-            {/* Maintenance History */}
-            <div className="mb-4">
-                <h5 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
-                    <Wrench className="h-4 w-4 mr-1 text-purple-500" />
-                    Maintenance History
-                </h5>
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-800">
-                    <div><span className="font-medium">Last Maintenance:</span> {equipment.last_maintenance || "N/A"}</div>
-                    <div><span className="font-medium">Next Due:</span> {equipment.next_maintenance || "N/A"}</div>
-                    <div className="col-span-2">
-                        <span className="font-medium">Maintenance Notes:</span> {equipment.maintenance_notes || "N/A"}
+                {/* Supplier Information */}
+                <div>
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
+                        <Truck className="h-3.5 w-3.5 text-blue-500" />
+                        Supplier Information
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Supplier:</span> {equipment.supplier || "N/A"}</p>
+                        <p><span className="font-medium">Contact:</span> {equipment.supplier_contact || "N/A"}</p>
+                        <p><span className="font-medium">Phone:</span> 
+                            <span 
+                                className={`ml-1 ${equipment.supplier_phone ? 'text-blue-600 cursor-pointer hover:underline' : ''}`}
+                                onClick={() => equipment.supplier_phone && handlePhoneClick(equipment.supplier_phone)}
+                            >
+                                {equipment.supplier_phone || "N/A"}
+                            </span>
+                        </p>
+                        <p><span className="font-medium">Warranty:</span> {equipment.warranty_info || "N/A"}</p>
                     </div>
                 </div>
-            </div>
 
-            {/* Cost & Value */}
-            <div className="mb-4">
-                <h5 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
-                    <Target className="h-4 w-4 mr-1 text-red-500" />
-                    Cost & Value
-                </h5>
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-800">
-                    <div><span className="font-medium">Purchase Cost:</span> {equipment.purchase_cost ? `$${equipment.purchase_cost}` : "N/A"}</div>
-                    <div><span className="font-medium">Current Value:</span> {equipment.current_value ? `$${equipment.current_value}` : "N/A"}</div>
-                    <div className="col-span-2"><span className="font-medium">Depreciation Rate:</span> {equipment.depreciation_rate ? `${equipment.depreciation_rate}%` : "N/A"}</div>
+                {/* Maintenance Information */}
+                <div>
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
+                        <Wrench className="h-3.5 w-3.5 text-amber-500" />
+                        Maintenance Information
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Interval:</span> {equipment.maintenance_interval ? `${equipment.maintenance_interval} months` : "N/A"}</p>
+                        <p><span className="font-medium">Last Maintenance:</span> {equipment.last_maintenance || "N/A"}</p>
+                        <p><span className="font-medium">Next Due:</span> {equipment.next_maintenance || "N/A"}</p>
+                        <p><span className="font-medium">Status:</span> 
+                            <Badge className={`ml-1 ${getMaintenanceStatusColor(maintenanceStatus)}`}>
+                                {maintenanceStatus}
+                            </Badge>
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <div className="text-center mt-4 p-2 bg-indigo-50 rounded-lg">
-                <p className="text-xs text-indigo-600 font-medium">
-                    <FileText className="h-3 w-3 inline mr-1" />
-                    All equipment data displayed above
-                </p>
+                {/* Cost Information */}
+                {(equipment.purchase_cost || equipment.current_value) && (
+                    <div>
+                        <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
+                            <Target className="h-3.5 w-3.5 text-red-500" />
+                            Cost Information
+                        </h4>
+                        <div className="space-y-1 text-sm">
+                            {equipment.purchase_cost && <p><span className="font-medium">Purchase Cost:</span> ${equipment.purchase_cost}</p>}
+                            {equipment.current_value && <p><span className="font-medium">Current Value:</span> ${equipment.current_value}</p>}
+                            {equipment.depreciation_rate && <p><span className="font-medium">Depreciation Rate:</span> {equipment.depreciation_rate}%</p>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Description & Specifications */}
+                {(equipment.description || equipment.specifications) && (
+                    <div className="md:col-span-2">
+                        {equipment.description && (
+                            <div className="mb-2">
+                                <h4 className="font-semibold text-sm text-gray-700 mb-1">Description</h4>
+                                <p className="text-sm text-gray-600">{equipment.description}</p>
+                            </div>
+                        )}
+                        {equipment.specifications && (
+                            <div>
+                                <h4 className="font-semibold text-sm text-gray-700 mb-1">Specifications</h4>
+                                <p className="text-sm text-gray-600">{equipment.specifications}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Maintenance Notes */}
+                {equipment.maintenance_notes && (
+                    <div className="md:col-span-2">
+                        <h4 className="font-semibold text-sm text-gray-700 mb-1">Maintenance Notes</h4>
+                        <p className="text-sm text-gray-600">{equipment.maintenance_notes}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-// --- Enhanced Equipment Card with Tabs ---
-const EquipmentCard = ({ equipment, onEdit, onDelete }) => {
-    const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-    const [activeTab, setActiveTab] = useState("overview");
-    const cardRef = useRef(null);
-
-    const handleMouseEnter = () => {
-        setIsTooltipVisible(true);
-    };
-
-    const handleMouseLeave = (e) => {
-        setIsTooltipVisible(false);
-    };
-
-    const handleTooltipMouseEnter = () => {
-        setIsTooltipVisible(true);
-    };
-
-    const handleTooltipMouseLeave = () => {
-        setIsTooltipVisible(false);
-    };
-
+// --- Equipment Card (Grid View with Expand) ---
+const EquipmentCard = ({ equipment, onEdit, onDelete, isExpanded, onToggleExpand }) => {
     const age = calculateAge(equipment.commission_date);
     const maintenanceStatus = getMaintenanceStatus(equipment.last_maintenance, equipment.maintenance_interval);
+    const StatusIcon = getStatusIcon(equipment.status);
 
     return (
-        <Card 
-            ref={cardRef}
-            className="shadow-lg hover:shadow-xl transition-shadow duration-300 relative group w-full"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-        >
-            {/* Comprehensive Summary Tooltip */}
-            <EquipmentTooltipContent 
-                equipment={equipment}
-                isVisible={isTooltipVisible}
-                onMouseEnter={handleTooltipMouseEnter}
-                onMouseLeave={handleTooltipMouseLeave}
-            />
-
-            <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                    <div className="flex-1 min-w-0">
-                        <CardTitle className="text-xl font-semibold text-indigo-700 truncate">
-                            {equipment.name}
-                        </CardTitle>
-                        <CardDescription className="text-sm font-medium text-gray-500 truncate">
-                            {equipment.model} • {equipment.category}
-                        </CardDescription>
+        <Card className="bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className={`p-1.5 rounded-lg ${getStatusBadgeColor(equipment.status).split(' ')[0]} shrink-0`}>
+                            <StatusIcon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-800 truncate">{equipment.name}</h4>
+                            <p className="text-xs text-gray-500 truncate">{equipment.equipment_id}</p>
+                        </div>
                     </div>
-                    <span className={`text-xs font-semibold py-0.5 px-2 rounded-full border ${getStatusBadgeColor(equipment.status)} shrink-0 ml-2`}>
-                        {equipment.status || "Unknown"}
-                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={onToggleExpand}
+                                        className="h-7 w-7 p-0"
+                                    >
+                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{isExpanded ? "Collapse details" : "Expand to view full details"}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                 </div>
                 
-                {/* Quick Stats */}
-                <div className="flex gap-2 mt-2">
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                        ID: {equipment.equipment_id}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700">
-                        {age}
-                    </Badge>
-                    <Badge variant="outline" className={`text-xs ${getMaintenanceStatusColor(maintenanceStatus)}`}>
-                        {maintenanceStatus}
-                    </Badge>
+                <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                    <div className="flex items-center gap-1">
+                        <Briefcase className="h-3 w-3 text-gray-400" />
+                        <span className="text-gray-600 truncate">{equipment.category || "N/A"}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-gray-400" />
+                        <span className="text-gray-600">{age}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-gray-400" />
+                        <span className="text-gray-600 truncate">{equipment.location || "N/A"}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${getStatusBadgeColor(equipment.status)}`}>
+                            {equipment.status || "Unknown"}
+                        </span>
+                    </div>
                 </div>
-            </CardHeader>
 
-            <CardContent className="p-0">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 h-10 p-1 bg-gray-50">
-                        <TabsTrigger value="overview" className="text-xs flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            Overview
-                        </TabsTrigger>
-                        <TabsTrigger value="technical" className="text-xs flex items-center gap-1">
-                            <Cpu className="h-3 w-3" />
-                            Technical
-                        </TabsTrigger>
-                        <TabsTrigger value="maintenance" className="text-xs flex items-center gap-1">
-                            <Wrench className="h-3 w-3" />
-                            Maintenance
-                        </TabsTrigger>
-                        <TabsTrigger value="supplier" className="text-xs flex items-center gap-1">
-                            <Truck className="h-3 w-3" />
-                            Supplier
-                        </TabsTrigger>
-                    </TabsList>
+                {isExpanded && <ExpandedEquipmentDetails equipment={equipment} />}
 
-                    {/* Overview Tab */}
-                    <TabsContent value="overview" className="p-4 space-y-3">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="flex items-center space-x-1">
-                                <Briefcase className="h-3 w-3 text-blue-500" />
-                                <span className="font-medium">Dept:</span>
-                                <span className="truncate">{equipment.department || "N/A"}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <MapPin className="h-3 w-3 text-green-500" />
-                                <span className="font-medium">Location:</span>
-                                <span className="truncate">{equipment.location || "N/A"}</span>
-                            </div>
-                            <div className="col-span-2 flex items-center space-x-1">
-                                <Calendar className="h-3 w-3 text-purple-500" />
-                                <span className="font-medium">Commissioned:</span>
-                                <span>{equipment.commission_date || "N/A"}</span>
-                            </div>
-                        </div>
-                        
-                        {equipment.description && (
-                            <div className="text-sm">
-                                <div className="font-medium text-gray-700 mb-1">Description:</div>
-                                <div className="text-gray-600 line-clamp-2">{equipment.description}</div>
-                            </div>
-                        )}
-                    </TabsContent>
-
-                    {/* Technical Tab */}
-                    <TabsContent value="technical" className="p-4 space-y-3">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                                <span className="font-medium">Serial No:</span>
-                                <div className="text-gray-600 truncate">{equipment.serial_number || "N/A"}</div>
-                            </div>
-                            <div>
-                                <span className="font-medium">Category:</span>
-                                <div className="text-gray-600">{equipment.category || "N/A"}</div>
-                            </div>
-                            {equipment.specifications && (
-                                <div className="col-span-2">
-                                    <span className="font-medium">Specifications:</span>
-                                    <div className="text-gray-600 text-xs line-clamp-2">{equipment.specifications}</div>
-                                </div>
-                            )}
-                        </div>
-                    </TabsContent>
-
-                    {/* Maintenance Tab */}
-                    <TabsContent value="maintenance" className="p-4 space-y-3">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                                <span className="font-medium">Interval:</span>
-                                <div className="text-gray-600">{equipment.maintenance_interval ? `${equipment.maintenance_interval} months` : "N/A"}</div>
-                            </div>
-                            <div>
-                                <span className="font-medium">Last Service:</span>
-                                <div className="text-gray-600">{equipment.last_maintenance || "N/A"}</div>
-                            </div>
-                            <div className="col-span-2">
-                                <span className="font-medium">Next Due:</span>
-                                <div className="text-gray-600">{equipment.next_maintenance || "N/A"}</div>
-                            </div>
-                            {equipment.maintenance_notes && (
-                                <div className="col-span-2">
-                                    <span className="font-medium">Notes:</span>
-                                    <div className="text-gray-600 text-xs line-clamp-2">{equipment.maintenance_notes}</div>
-                                </div>
-                            )}
-                        </div>
-                    </TabsContent>
-
-                    {/* Supplier Tab */}
-                    <TabsContent value="supplier" className="p-4 space-y-3">
-                        <div className="grid grid-cols-1 gap-2 text-sm">
-                            <div>
-                                <span className="font-medium">Supplier:</span>
-                                <div className="text-gray-600">{equipment.supplier || "N/A"}</div>
-                            </div>
-                            <div>
-                                <span className="font-medium">Contact:</span>
-                                <div className="text-gray-600">{equipment.supplier_contact || "N/A"}</div>
-                            </div>
-                            <div>
-                                <span className="font-medium">Phone:</span>
-                                <div 
-                                    className={`${equipment.supplier_phone ? 'text-blue-600 cursor-pointer hover:underline' : 'text-gray-600'}`}
-                                    onClick={() => equipment.supplier_phone && handlePhoneClick(equipment.supplier_phone)}
+                <div className="flex justify-end gap-2 mt-3 pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onEdit(equipment)}
+                                    className="h-7 text-xs"
                                 >
-                                    {equipment.supplier_phone || "N/A"}
-                                </div>
-                            </div>
-                            <div>
-                                <span className="font-medium">Warranty:</span>
-                                <div className="text-gray-600 text-xs">{equipment.warranty_info || "N/A"}</div>
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end space-x-2 p-4 border-t bg-gray-50">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEdit(equipment)}
-                        className="flex items-center space-x-1"
-                    >
-                        <Edit className="h-3 w-3" />
-                        <span>Edit</span>
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onDelete(equipment.id)}
-                        className="flex items-center space-x-1"
-                    >
-                        <Trash2 className="h-3 w-3" />
-                        <span>Delete</span>
-                    </Button>
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Edit
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Edit equipment details</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => onDelete(equipment.id)}
+                                    className="h-7 text-xs"
+                                >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Delete this equipment</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </CardContent>
         </Card>
+    );
+};
+
+// --- Equipment List Row with Expand ---
+const EquipmentListRow = ({ equipment, onEdit, onDelete, isExpanded, onToggleExpand }) => {
+    const age = calculateAge(equipment.commission_date);
+    const maintenanceStatus = getMaintenanceStatus(equipment.last_maintenance, equipment.maintenance_interval);
+    const StatusIcon = getStatusIcon(equipment.status);
+
+    return (
+        <>
+            <TableRow className="hover:bg-gray-50/50 transition-colors">
+                <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg ${getStatusBadgeColor(equipment.status).split(' ')[0]}`}>
+                            <StatusIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <div>
+                            <div className="font-semibold text-gray-800">{equipment.name}</div>
+                            <div className="text-xs text-gray-500">{equipment.equipment_id}</div>
+                        </div>
+                    </div>
+                </TableCell>
+                <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                        {equipment.category || "N/A"}
+                    </Badge>
+                </TableCell>
+                <TableCell>{equipment.model || "N/A"}</TableCell>
+                <TableCell>
+                    <span className={`text-xs font-semibold py-0.5 px-2 rounded-full border ${getStatusBadgeColor(equipment.status)}`}>
+                        {equipment.status || "Unknown"}
+                    </span>
+                </TableCell>
+                <TableCell>
+                    <Badge variant="outline" className={`text-xs ${getMaintenanceStatusColor(maintenanceStatus)}`}>
+                        {maintenanceStatus}
+                    </Badge>
+                </TableCell>
+                <TableCell className="text-sm">{age}</TableCell>
+                <TableCell className="text-sm">{equipment.location || "N/A"}</TableCell>
+                <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={onToggleExpand}
+                                        className="h-7 w-7 p-0"
+                                    >
+                                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{isExpanded ? "Collapse details" : "Expand details"}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onEdit(equipment)}
+                                        className="h-7 w-7 p-0"
+                                    >
+                                        <Edit className="h-3.5 w-3.5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Edit equipment</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onDelete(equipment.id)}
+                                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Delete equipment</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                </TableCell>
+            </TableRow>
+            {isExpanded && (
+                <TableRow className="bg-gray-50/30">
+                    <TableCell colSpan={8} className="p-0">
+                        <ExpandedEquipmentDetails equipment={equipment} />
+                    </TableCell>
+                </TableRow>
+            )}
+        </>
+    );
+};
+
+// --- Pagination Component ---
+const Pagination = ({ currentPage, totalPages, onPageChange, itemsPerPage, totalItems, onItemsPerPageChange }) => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+    }
+
+    return (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
+            <div className="text-sm text-gray-600">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} equipment
+            </div>
+            
+            <div className="flex items-center gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onPageChange(1)}
+                                disabled={currentPage === 1}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>First page</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onPageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Previous page</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                {startPage > 1 && (
+                    <>
+                        <Button variant="outline" size="sm" onClick={() => onPageChange(1)} className="h-8 min-w-[2rem]">
+                            1
+                        </Button>
+                        {startPage > 2 && <span className="text-gray-500">...</span>}
+                    </>
+                )}
+
+                {pageNumbers.map(num => (
+                    <Button
+                        key={num}
+                        variant={currentPage === num ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onPageChange(num)}
+                        className="h-8 min-w-[2rem]"
+                    >
+                        {num}
+                    </Button>
+                ))}
+
+                {endPage < totalPages && (
+                    <>
+                        {endPage < totalPages - 1 && <span className="text-gray-500">...</span>}
+                        <Button variant="outline" size="sm" onClick={() => onPageChange(totalPages)} className="h-8 min-w-[2rem]">
+                            {totalPages}
+                        </Button>
+                    </>
+                )}
+
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onPageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Next page</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onPageChange(totalPages)}
+                                disabled={currentPage === totalPages}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronsRight className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Last page</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <Select value={itemsPerPage.toString()} onValueChange={(val) => onItemsPerPageChange(parseInt(val))}>
+                    <SelectTrigger className="w-[100px] h-8 text-sm">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="12">12 per page</SelectItem>
+                        <SelectItem value="24">24 per page</SelectItem>
+                        <SelectItem value="48">48 per page</SelectItem>
+                        <SelectItem value="96">96 per page</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
     );
 };
 
@@ -666,7 +925,52 @@ const EquipmentManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
+    const [locationFilter, setLocationFilter] = useState("all");
+    const [departmentFilter, setDepartmentFilter] = useState("all");
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [viewMode, setViewMode] = useState("grid");
+    const [expandedItems, setExpandedItems] = useState(new Set());
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState(null);
+    const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
+    const [showMetrics, setShowMetrics] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(12);
+    const [showFilters, setShowFilters] = useState(true);
+
+    // Get unique values for filters
+    const uniqueLocations = useMemo(() => {
+        const locations = equipment.map(item => item.location).filter(Boolean);
+        return [...new Set(locations)];
+    }, [equipment]);
+
+    const uniqueDepartments = useMemo(() => {
+        const departments = equipment.map(item => item.department).filter(Boolean);
+        return [...new Set(departments)];
+    }, [equipment]);
+
+    const uniqueCategories = useMemo(() => {
+        const categories = equipment.map(item => item.category).filter(Boolean);
+        return [...new Set(categories)];
+    }, [equipment]);
+
+    // Check auth on mount
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('user');
+        if (token && userData) {
+            setIsLoggedIn(true);
+            setUser(JSON.parse(userData));
+        }
+    }, []);
+
+    // Rotating nature wallpaper every 2 minutes
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
+        }, 120000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Fetch equipment data
     const fetchEquipment = useCallback(async () => {
@@ -692,7 +996,6 @@ const EquipmentManagement = () => {
     useEffect(() => {
         let result = equipment;
 
-        // Apply search filter
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             result = result.filter(item =>
@@ -701,22 +1004,30 @@ const EquipmentManagement = () => {
                 item.model?.toLowerCase().includes(term) ||
                 item.category?.toLowerCase().includes(term) ||
                 item.location?.toLowerCase().includes(term) ||
-                item.department?.toLowerCase().includes(term)
+                item.department?.toLowerCase().includes(term) ||
+                item.serial_number?.toLowerCase().includes(term)
             );
         }
 
-        // Apply status filter
         if (statusFilter !== "all") {
             result = result.filter(item => item.status === statusFilter);
         }
 
-        // Apply category filter
         if (categoryFilter !== "all") {
             result = result.filter(item => item.category === categoryFilter);
         }
 
+        if (locationFilter !== "all") {
+            result = result.filter(item => item.location === locationFilter);
+        }
+
+        if (departmentFilter !== "all") {
+            result = result.filter(item => item.department === departmentFilter);
+        }
+
         setFilteredEquipment(result);
-    }, [equipment, searchTerm, statusFilter, categoryFilter]);
+        setCurrentPage(1);
+    }, [equipment, searchTerm, statusFilter, categoryFilter, locationFilter, departmentFilter]);
 
     const handleCreate = () => {
         setEditingEquipment(null);
@@ -741,17 +1052,36 @@ const EquipmentManagement = () => {
         }
     };
 
-    // Fixed handleFormSubmit function with proper ID handling
+    const handleStatusClick = (status) => {
+        setStatusFilter(status);
+    };
+
+    const toggleExpand = (id) => {
+        setExpandedItems(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const clearAllFilters = () => {
+        setSearchTerm("");
+        setStatusFilter("all");
+        setCategoryFilter("all");
+        setLocationFilter("all");
+        setDepartmentFilter("all");
+    };
+
     const handleFormSubmit = async (formData) => {
         try {
             const isEditing = !!editingEquipment;
             const url = isEditing ? `${API_BASE_URL}/${editingEquipment.id}` : API_BASE_URL;
             const method = isEditing ? "PUT" : "POST";
 
-            console.log("Submitting to:", url, "with method:", method);
-            console.log("Form data:", formData);
-
-            // For PUT requests, include the ID in the request body
             const requestBody = isEditing 
                 ? { id: editingEquipment.id, ...formData }
                 : formData;
@@ -770,50 +1100,35 @@ const EquipmentManagement = () => {
                 try {
                     const errorData = await response.json();
                     
-                    // Handle array of validation errors (like the one shown in the console)
                     if (Array.isArray(errorData)) {
                         const errorMessages = errorData.map(error => 
-                            `${error.loc.join('.')}: ${error.msg}`
+                            `${error.loc?.join('.')}: ${error.msg}`
                         );
                         errorMessage = errorMessages.join(', ');
-                    } 
-                    // Handle string error
-                    else if (typeof errorData === 'string') {
+                    } else if (typeof errorData === 'string') {
                         errorMessage = errorData;
-                    } 
-                    // Handle object with detail property
-                    else if (errorData.detail) {
+                    } else if (errorData.detail) {
                         errorMessage = typeof errorData.detail === 'string' 
                             ? errorData.detail 
                             : JSON.stringify(errorData.detail);
-                    } 
-                    // Handle object with message property
-                    else if (errorData.message) {
+                    } else if (errorData.message) {
                         errorMessage = typeof errorData.message === 'string'
                             ? errorData.message
                             : JSON.stringify(errorData.message);
-                    } 
-                    // Fallback for any other object
-                    else {
+                    } else {
                         errorMessage = JSON.stringify(errorData);
                     }
                 } catch (parseError) {
-                    // If JSON parsing fails, use the status text
                     errorMessage = response.statusText || `HTTP ${response.status}`;
                 }
                 
                 throw new Error(errorMessage);
             }
 
-            const result = await response.json();
-            console.log("Save successful:", result);
-
             setIsFormOpen(false);
             setEditingEquipment(null);
             fetchEquipment();
         } catch (err) {
-            console.error("Save error:", err);
-            // Ensure the error message is a string
             const errorMessage = typeof err.message === 'string' 
                 ? err.message 
                 : 'An unexpected error occurred while saving equipment';
@@ -821,203 +1136,458 @@ const EquipmentManagement = () => {
         }
     };
 
-    const getUniqueCategories = () => {
-        const categories = equipment.map(item => item.category).filter(Boolean);
-        return [...new Set(categories)];
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setIsLoggedIn(false);
+        setUser(null);
+        window.location.reload();
     };
 
-    const getStatusCounts = () => {
-        return equipment.reduce((acc, item) => {
-            const status = item.status || "Unknown";
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, {});
-    };
+    // Pagination
+    const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
+    const paginatedEquipment = filteredEquipment.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || locationFilter !== "all" || departmentFilter !== "all" || searchTerm !== "";
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-                    <p className="text-lg font-semibold text-gray-700">Loading Equipment Data...</p>
+            <>
+                <style jsx global>{animationStyles}</style>
+                <div className="min-h-screen">
+                    <div className="fixed inset-0 z-0">
+                        {natureWallpapers.map((wallpaper, index) => (
+                            <div
+                                key={index}
+                                className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
+                                style={{
+                                    backgroundImage: `url('${wallpaper.url}')`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    opacity: index === currentWallpaperIndex ? 1 : 0,
+                                    filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
+                                    transition: 'opacity 2000ms ease-in-out',
+                                }}
+                            />
+                        ))}
+                        <div className="absolute inset-0 bg-black/30" />
+                    </div>
+                    <div className="relative z-10">
+                        <Header isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
+                        <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                            <div className="text-center">
+                                <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
+                                <p className="text-lg font-semibold text-white drop-shadow-md">Loading Equipment Data...</p>
+                            </div>
+                        </div>
+                        <Footer />
+                    </div>
                 </div>
-            </div>
+            </>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">Equipment Management</h1>
-                    <p className="text-lg text-gray-600">Manage and monitor all organizational equipment assets</p>
-                </div>
-
-                {error && (
-                    <Alert variant="destructive" className="mb-6">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-
-                {/* Analytics Dashboard */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <EquipmentMetrics equipment={equipment} />
-                    <EquipmentCategoryChart equipment={equipment} />
-                    <StatusDistributionChart equipment={equipment} />
-                </div>
-
-                {/* Controls Section */}
-                <Card className="mb-6 shadow-lg border-0">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                            <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
-                                {/* Search */}
-                                <div className="relative flex-1 min-w-[200px]">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                    <Input
-                                        placeholder="Search equipment..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 bg-white"
-                                    />
-                                </div>
-
-                                {/* Filters */}
-                                <div className="flex gap-2 flex-wrap">
-                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                        <SelectTrigger className="w-[140px] bg-white">
-                                            <SelectValue placeholder="Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Status</SelectItem>
-                                            <SelectItem value="operational">Operational</SelectItem>
-                                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                                            <SelectItem value="out_of_service">Out of Service</SelectItem>
-                                            <SelectItem value="reserved">Reserved</SelectItem>
-                                            <SelectItem value="retired">Retired</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-
-                                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                                        <SelectTrigger className="w-[140px] bg-white">
-                                            <SelectValue placeholder="Category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Categories</SelectItem>
-                                            {getUniqueCategories().map(category => (
-                                                <SelectItem key={category} value={category}>
-                                                    {category}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Equipment
-                            </Button>
-                        </div>
-
-                        {/* Quick Stats */}
-                        <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t">
-                            {Object.entries(getStatusCounts()).map(([status, count]) => (
-                                <div key={status} className="flex items-center space-x-2">
-                                    <div className={`w-3 h-3 rounded-full ${getStatusBadgeColor(status).split(' ')[0]}`} />
-                                    <span className="text-sm font-medium text-gray-700">{status}:</span>
-                                    <span className="text-sm text-gray-600">{count}</span>
-                                </div>
-                            ))}
-                            <div className="flex items-center space-x-2">
-                                <div className="w-3 h-3 rounded-full bg-gray-400" />
-                                <span className="text-sm font-medium text-gray-700">Total:</span>
-                                <span className="text-sm text-gray-600">{equipment.length}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Equipment Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredEquipment.map((equip) => (
-                        <EquipmentCard
-                            key={equip.id}
-                            equipment={equip}
-                            onEdit={handleEdit}
-                            onDelete={setDeleteConfirm}
-                        />
-                    ))}
-                </div>
-
-                {filteredEquipment.length === 0 && (
-                    <Card className="text-center py-12">
-                        <CardContent>
-                            <ToolCase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-700 mb-2">No equipment found</h3>
-                            <p className="text-gray-500 mb-4">
-                                {equipment.length === 0 
-                                    ? "Get started by adding your first equipment asset."
-                                    : "Try adjusting your search or filters to find what you're looking for."}
-                            </p>
-                            {equipment.length === 0 && (
-                                <Button onClick={handleCreate}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Equipment
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Equipment Form Dialog */}
-                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>
-                                {editingEquipment ? "Edit Equipment" : "Add New Equipment"}
-                            </DialogTitle>
-                            <DialogDescription>
-                                {editingEquipment 
-                                    ? "Update the equipment details below." 
-                                    : "Add a new equipment asset to the system."}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <EquipmentForm
-                            equipment={editingEquipment}
-                            onSubmit={handleFormSubmit}
-                            onCancel={() => {
-                                setIsFormOpen(false);
-                                setEditingEquipment(null);
+        <>
+            <style jsx global>{animationStyles}</style>
+            <div className="min-h-screen">
+                {/* Rotating Nature Wallpaper Background */}
+                <div className="fixed inset-0 z-0">
+                    {natureWallpapers.map((wallpaper, index) => (
+                        <div
+                            key={index}
+                            className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
+                            style={{
+                                backgroundImage: `url('${wallpaper.url}')`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                opacity: index === currentWallpaperIndex ? 1 : 0,
+                                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
+                                transition: 'opacity 2000ms ease-in-out',
                             }}
                         />
-                    </DialogContent>
-                </Dialog>
+                    ))}
+                    <div className="absolute inset-0 bg-black/30" />
+                    <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
+                        {natureWallpapers[currentWallpaperIndex]?.location}
+                    </div>
+                </div>
 
-                {/* Delete Confirmation Dialog */}
-                <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Confirm Deletion</DialogTitle>
-                            <DialogDescription>
-                                Are you sure you want to delete this equipment? This action cannot be undone.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end space-x-2">
-                            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-                                Cancel
-                            </Button>
-                            <Button variant="destructive" onClick={() => handleDelete(deleteConfirm)}>
-                                Delete
-                            </Button>
+                <div className="relative z-10">
+                    <Header isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
+
+                    <main className="container mx-auto px-4 py-6 space-y-6">
+                        {/* Header with Guide */}
+                        <div className="text-center space-y-2 animate-fade-in">
+                            <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">Equipment Management</h1>
+                            <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
+                                Manage and monitor all organizational equipment assets
+                            </p>
+                            <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
+                                <HelpCircle className="h-4 w-4" />
+                                <span>Click on any <ChevronDown className="h-3 w-3 inline" /> to expand details • Use filters to narrow results • Click metrics to filter by status</span>
+                            </div>
                         </div>
-                    </DialogContent>
-                </Dialog>
+
+                        {error && (
+                            <Alert variant="destructive" className="bg-white/90 backdrop-blur-sm">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Error</AlertTitle>
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        {/* Metrics Row with Toggle */}
+                        <div className="space-y-2">
+                            <div className="flex justify-end">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setShowMetrics(!showMetrics)}
+                                                className="text-white hover:text-white hover:bg-white/20"
+                                            >
+                                                {showMetrics ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
+                                                {showMetrics ? "Hide Metrics" : "Show Metrics"}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{showMetrics ? "Collapse metrics panel" : "Expand metrics panel"}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                            {showMetrics && (
+                                <MetricsRow equipment={equipment} onStatusClick={handleStatusClick} />
+                            )}
+                        </div>
+
+                        {/* Controls Bar */}
+                        <div className="flex flex-col gap-4 animate-slide-up delay-150">
+                            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+                                    <div className="relative flex-1 sm:w-64">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                        <Input
+                                            placeholder="Search by name, ID, model..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="pl-10 bg-white/80 backdrop-blur-sm"
+                                        />
+                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setShowFilters(!showFilters)}
+                                                    className="bg-white/80 backdrop-blur-sm"
+                                                >
+                                                    <Filter className="h-4 w-4 mr-1" />
+                                                    Filters
+                                                    {hasActiveFilters && <Badge className="ml-1 bg-blue-500 text-white">!</Badge>}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Toggle advanced filters</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {hasActiveFilters && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={clearAllFilters}
+                                                        className="bg-white/80 backdrop-blur-sm"
+                                                    >
+                                                        <FilterX className="h-4 w-4 mr-1" />
+                                                        Clear
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Clear all filters</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                </div>
+                                
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                    <div className="flex rounded-md border bg-white/80 backdrop-blur-sm">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                                                        size="sm"
+                                                        className="rounded-r-none"
+                                                        onClick={() => setViewMode('grid')}
+                                                    >
+                                                        <LayoutGrid className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Grid view - Compact cards with expandable details</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant={viewMode === 'list' ? 'default' : 'ghost'}
+                                                        size="sm"
+                                                        className="rounded-l-none"
+                                                        onClick={() => setViewMode('list')}
+                                                    >
+                                                        <List className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>List view - Table format with expandable rows</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button onClick={handleCreate} className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                                                    <Plus className="h-4 w-4" />
+                                                    Add Equipment
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Add new equipment to the system</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </div>
+
+                            {/* Advanced Filters Panel */}
+                            {showFilters && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-white/80 backdrop-blur-sm rounded-lg border animate-slide-down">
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-700 mb-1 block">Status</label>
+                                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                            <SelectTrigger className="bg-white/80">
+                                                <SelectValue placeholder="All Status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Status</SelectItem>
+                                                <SelectItem value="operational">Operational</SelectItem>
+                                                <SelectItem value="maintenance">Maintenance</SelectItem>
+                                                <SelectItem value="out_of_service">Out of Service</SelectItem>
+                                                <SelectItem value="reserved">Reserved</SelectItem>
+                                                <SelectItem value="retired">Retired</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-700 mb-1 block">Category</label>
+                                        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                            <SelectTrigger className="bg-white/80">
+                                                <SelectValue placeholder="All Categories" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Categories</SelectItem>
+                                                {uniqueCategories.map(category => (
+                                                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-700 mb-1 block">Location</label>
+                                        <Select value={locationFilter} onValueChange={setLocationFilter}>
+                                            <SelectTrigger className="bg-white/80">
+                                                <SelectValue placeholder="All Locations" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Locations</SelectItem>
+                                                {uniqueLocations.map(location => (
+                                                    <SelectItem key={location} value={location}>{location}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-700 mb-1 block">Department</label>
+                                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                                            <SelectTrigger className="bg-white/80">
+                                                <SelectValue placeholder="All Departments" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Departments</SelectItem>
+                                                {uniqueDepartments.map(department => (
+                                                    <SelectItem key={department} value={department}>{department}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Results Count */}
+                        <div className="flex justify-between items-center">
+                            <p className="text-sm text-white/80">
+                                Found <span className="font-semibold">{filteredEquipment.length}</span> equipment items
+                                {hasActiveFilters && <span className="ml-1">(filtered)</span>}
+                            </p>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="sm" onClick={fetchEquipment} className="text-white hover:text-white hover:bg-white/20">
+                                            <RefreshCw className="h-4 w-4 mr-1" />
+                                            Refresh
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Refresh equipment data</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+
+                        {/* Equipment Display */}
+                        {filteredEquipment.length === 0 ? (
+                            <Card className="text-center py-12 bg-white/90 backdrop-blur-sm">
+                                <CardContent>
+                                    <ToolCase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No equipment found</h3>
+                                    <p className="text-gray-500 mb-4">
+                                        {equipment.length === 0 
+                                            ? "Get started by adding your first equipment asset."
+                                            : "Try adjusting your search or filters to find what you're looking for."}
+                                    </p>
+                                    {equipment.length === 0 && (
+                                        <Button onClick={handleCreate}>
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add Equipment
+                                        </Button>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ) : viewMode === 'list' ? (
+                            /* List View with Expandable Rows */
+                            <Card className="bg-white/90 backdrop-blur-sm overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Equipment</TableHead>
+                                                <TableHead>Category</TableHead>
+                                                <TableHead>Model</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Maintenance</TableHead>
+                                                <TableHead>Age</TableHead>
+                                                <TableHead>Location</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {paginatedEquipment.map((equip) => (
+                                                <EquipmentListRow
+                                                    key={equip.id}
+                                                    equipment={equip}
+                                                    onEdit={handleEdit}
+                                                    onDelete={setDeleteConfirm}
+                                                    isExpanded={expandedItems.has(equip.id)}
+                                                    onToggleExpand={() => toggleExpand(equip.id)}
+                                                />
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </Card>
+                        ) : (
+                            /* Grid View with Expandable Cards */
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {paginatedEquipment.map((equip) => (
+                                    <EquipmentCard
+                                        key={equip.id}
+                                        equipment={equip}
+                                        onEdit={handleEdit}
+                                        onDelete={setDeleteConfirm}
+                                        isExpanded={expandedItems.has(equip.id)}
+                                        onToggleExpand={() => toggleExpand(equip.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {filteredEquipment.length > 0 && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                                itemsPerPage={itemsPerPage}
+                                totalItems={filteredEquipment.length}
+                                onItemsPerPageChange={setItemsPerPage}
+                            />
+                        )}
+
+                        {/* Equipment Form Dialog */}
+                        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-white/30">
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        {editingEquipment ? "Edit Equipment" : "Add New Equipment"}
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        {editingEquipment 
+                                            ? "Update the equipment details below." 
+                                            : "Add a new equipment asset to the system."}
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <EquipmentForm
+                                    equipment={editingEquipment}
+                                    onSubmit={handleFormSubmit}
+                                    onCancel={() => {
+                                        setIsFormOpen(false);
+                                        setEditingEquipment(null);
+                                    }}
+                                />
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Delete Confirmation Dialog */}
+                        <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+                            <DialogContent className="bg-white/95 backdrop-blur-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Confirm Deletion</DialogTitle>
+                                    <DialogDescription>
+                                        Are you sure you want to delete this equipment? This action cannot be undone.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex justify-end space-x-2">
+                                    <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+                                        Cancel
+                                    </Button>
+                                    <Button variant="destructive" onClick={() => handleDelete(deleteConfirm)}>
+                                        Delete
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </main>
+
+                    <Footer />
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 

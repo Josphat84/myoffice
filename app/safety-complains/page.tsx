@@ -1,9 +1,12 @@
-// app/overtime/page.js
+//Safety complains page
+//frontend/app/safety-complains/page.tsx
+
+// app/safety-complaints/page.tsx
 'use client';
 
 import React, { useState, useMemo, useEffect } from "react";
 import {
-  Calendar,
+  AlertTriangle,
   Plus,
   Search,
   RefreshCw,
@@ -90,7 +93,7 @@ import {
   Medal,
   Crown,
   Shield as ShieldIcon,
-  AlertTriangle,
+  AlertTriangle as AlertTriangleIcon,
   Check,
   DollarSign,
   Eye as EyeIcon,
@@ -201,6 +204,9 @@ import {
   Youtube,
   ZoomIn,
   ZoomOut,
+  //Camera,
+  //Mic,
+  //Headphones,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -396,70 +402,100 @@ const animationStyles = `
 
 // API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const OVERTIME_API = `${API_BASE}/api/overtime`;
+const COMPLAINTS_API = `${API_BASE}/api/safety-complaints`;
 const EMPLOYEES_API = `${API_BASE}/api/employees`;
 
-// Overtime Types with enhanced styling
-const OVERTIME_TYPES = {
-  regular: {
-    name: 'Regular Overtime',
-    shortName: 'Regular',
-    icon: Clock,
-    variant: 'default',
-    gradient: 'from-blue-500 to-blue-600',
-    badge: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    color: 'blue',
-    description: 'Standard overtime after regular work hours'
+// Complaint Types
+const COMPLAINT_TYPES = {
+  hazard: {
+    name: 'Hazard',
+    shortName: 'Hazard',
+    icon: AlertTriangle,
+    gradient: 'from-orange-500 to-orange-600',
+    badge: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200',
+    color: 'orange',
+    description: 'Unsafe condition or potential hazard'
   },
-  weekend: {
-    name: 'Weekend Overtime',
-    shortName: 'Weekend',
-    icon: Calendar,
-    variant: 'secondary',
-    gradient: 'from-purple-500 to-purple-600',
-    badge: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-    color: 'purple',
-    description: 'Overtime work on Saturdays or Sundays'
-  },
-  emergency: {
-    name: 'Emergency Overtime',
-    shortName: 'Emergency',
+  unsafe_act: {
+    name: 'Unsafe Act',
+    shortName: 'Unsafe Act',
     icon: AlertCircle,
-    variant: 'destructive',
     gradient: 'from-red-500 to-red-600',
-    badge: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
+    badge: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200',
     color: 'red',
-    description: 'Urgent overtime for critical situations'
+    description: 'Unsafe behavior or action'
   },
-  project: {
-    name: 'Project Overtime',
-    shortName: 'Project',
-    icon: Briefcase,
-    variant: 'outline',
-    gradient: 'from-green-500 to-green-600',
-    badge: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800',
-    color: 'green',
-    description: 'Overtime for specific project deadlines'
+  near_miss: {
+    name: 'Near Miss',
+    shortName: 'Near Miss',
+    icon: Zap,
+    gradient: 'from-yellow-500 to-yellow-600',
+    badge: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200',
+    color: 'yellow',
+    description: 'Incident that could have caused harm'
   },
-  holiday: {
-    name: 'Holiday Overtime',
-    shortName: 'Holiday',
+  equipment: {
+    name: 'Equipment Issue',
+    shortName: 'Equipment',
+    icon: Settings,
+    gradient: 'from-blue-500 to-blue-600',
+    badge: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200',
+    color: 'blue',
+    description: 'Faulty or unsafe equipment'
+  },
+  environmental: {
+    name: 'Environmental',
+    shortName: 'Environmental',
     icon: Sun,
-    variant: 'outline',
-    gradient: 'from-amber-500 to-amber-600',
-    badge: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-    color: 'amber',
-    description: 'Work on public holidays'
+    gradient: 'from-green-500 to-green-600',
+    badge: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200',
+    color: 'green',
+    description: 'Environmental safety concern'
   },
-  night: {
-    name: 'Night Shift Overtime',
-    shortName: 'Night',
-    icon: Moon,
-    variant: 'outline',
-    gradient: 'from-indigo-500 to-indigo-600',
-    badge: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
-    color: 'indigo',
-    description: 'Overtime during night hours'
+  other: {
+    name: 'Other',
+    shortName: 'Other',
+    icon: HelpCircle,
+    gradient: 'from-gray-500 to-gray-600',
+    badge: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200',
+    color: 'gray',
+    description: 'Other safety concerns'
+  }
+};
+
+// Severity Levels
+const SEVERITY_LEVELS = {
+  low: {
+    name: 'Low',
+    icon: Info,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+    description: 'Minor concern, low risk'
+  },
+  medium: {
+    name: 'Medium',
+    icon: AlertTriangle,
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
+    badge: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    description: 'Moderate risk, requires attention'
+  },
+  high: {
+    name: 'High',
+    icon: AlertCircle,
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
+    badge: 'bg-orange-100 text-orange-800 border-orange-200',
+    description: 'High risk, immediate action needed'
+  },
+  critical: {
+    name: 'Critical',
+    icon: AlertTriangleIcon,
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    badge: 'bg-red-100 text-red-800 border-red-200',
+    description: 'Critical risk, stop work immediately'
   }
 };
 
@@ -467,42 +503,26 @@ const OVERTIME_TYPES = {
 const STATUS_CONFIG = {
   pending: { 
     label: 'Pending', 
-    variant: 'secondary', 
     icon: Clock, 
-    gradient: 'from-yellow-500 to-yellow-600',
-    badge: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
+    badge: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     color: 'yellow'
   },
-  approved: { 
-    label: 'Approved', 
-    variant: 'success', 
+  investigating: { 
+    label: 'Investigating', 
+    icon: Search, 
+    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+    color: 'blue'
+  },
+  resolved: { 
+    label: 'Resolved', 
     icon: CheckCircle2, 
-    gradient: 'from-green-500 to-green-600',
-    badge: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800',
+    badge: 'bg-green-100 text-green-800 border-green-200',
     color: 'green'
   },
-  rejected: { 
-    label: 'Rejected', 
-    variant: 'destructive', 
-    icon: XCircle, 
-    gradient: 'from-red-500 to-red-600',
-    badge: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
-    color: 'red'
-  },
-  paid: { 
-    label: 'Paid', 
-    variant: 'default', 
-    icon: TrendingUp, 
-    gradient: 'from-emerald-500 to-emerald-600',
-    badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-    color: 'emerald'
-  },
-  cancelled: { 
-    label: 'Cancelled', 
-    variant: 'outline', 
-    icon: X, 
-    gradient: 'from-gray-500 to-gray-600',
-    badge: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200 dark:border-gray-800',
+  closed: { 
+    label: 'Closed', 
+    icon: Check, 
+    badge: 'bg-gray-100 text-gray-800 border-gray-200',
     color: 'gray'
   }
 };
@@ -538,10 +558,10 @@ const getYearOptions = () => {
 const getUniqueEmployees = (data) => {
   const employeeMap = {};
   data.forEach((item) => {
-    if (item && item.employee_name && !employeeMap[item.employee_name]) {
-      employeeMap[item.employee_name] = {
-        name: item.employee_name,
-        id: item.employee_id
+    if (item && item.reported_by_name && !employeeMap[item.reported_by_name]) {
+      employeeMap[item.reported_by_name] = {
+        name: item.reported_by_name,
+        id: item.reported_by_id
       };
     }
   });
@@ -562,29 +582,17 @@ const formatDate = (dateString) => {
   }
 };
 
-const formatTime = (timeString) => {
-  if (!timeString) return '';
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
   try {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true,
     });
   } catch {
-    return timeString;
-  }
-};
-
-const calculateHours = (startTime, endTime, date) => {
-  if (!startTime || !endTime || !date) return 0;
-  try {
-    const start = new Date(`${date}T${startTime}`);
-    const end = new Date(`${date}T${endTime}`);
-    if (end < start) end.setDate(end.getDate() + 1);
-    const diffMs = end.getTime() - start.getTime();
-    return Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
-  } catch {
-    return 0;
+    return dateString;
   }
 };
 
@@ -596,105 +604,89 @@ const getInitials = (name) => {
   return (first + last).toUpperCase();
 };
 
-const preparePayload = (data) => {
-  const payload = { ...data };
-  if (payload.contact_number === '') payload.contact_number = ' ';
-  if (payload.emergency_contact === '') payload.emergency_contact = ' ';
-  return payload;
-};
-
 // API Functions
-const fetchOvertime = async (filters = {}) => {
+const fetchComplaints = async (filters = {}) => {
   const params = new URLSearchParams();
   if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-  if (filters.overtime_type && filters.overtime_type !== 'all') params.append('overtime_type', filters.overtime_type);
-  if (filters.employee_id && filters.employee_id !== 'all') params.append('employee_id', filters.employee_id);
+  if (filters.complaint_type && filters.complaint_type !== 'all') params.append('complaint_type', filters.complaint_type);
+  if (filters.severity && filters.severity !== 'all') params.append('severity', filters.severity);
+  if (filters.reported_by_id && filters.reported_by_id !== 'all') params.append('reported_by_id', filters.reported_by_id);
   if (filters.date_from) params.append('date_from', filters.date_from);
   if (filters.date_to) params.append('date_to', filters.date_to);
   if (filters.month) params.append('month', filters.month);
   if (filters.year) params.append('year', filters.year);
   
-  const url = params.toString() ? `${OVERTIME_API}?${params.toString()}` : OVERTIME_API;
+  const url = params.toString() ? `${COMPLAINTS_API}?${params.toString()}` : COMPLAINTS_API;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Failed to fetch overtime');
+  if (!res.ok) throw new Error('Failed to fetch complaints');
   return res.json();
 };
 
-const createOvertime = async (data) => {
-  const payload = preparePayload(data);
-  const res = await fetch(OVERTIME_API, {
+const createComplaint = async (data) => {
+  const res = await fetch(COMPLAINTS_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`Failed to create overtime: ${res.status} - ${errorText}`);
+    throw new Error(`Failed to create complaint: ${res.status} - ${errorText}`);
   }
   return res.json();
 };
 
-const updateOvertime = async (id, data) => {
-  const payload = preparePayload(data);
-  const res = await fetch(`${OVERTIME_API}/${id}`, {
+const updateComplaint = async (id, data) => {
+  const res = await fetch(`${COMPLAINTS_API}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`Failed to update overtime: ${res.status} - ${errorText}`);
+    throw new Error(`Failed to update complaint: ${res.status} - ${errorText}`);
   }
   return res.json();
 };
 
-const updateOvertimeStatus = async (id, status) => {
-  return updateOvertime(id, { status });
+const updateComplaintStatus = async (id, status) => {
+  return updateComplaint(id, { status });
 };
 
-const deleteOvertime = async (id) => {
-  const res = await fetch(`${OVERTIME_API}/${id}`, {
+const deleteComplaint = async (id) => {
+  const res = await fetch(`${COMPLAINTS_API}/${id}`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Failed to delete overtime');
+  if (!res.ok) throw new Error('Failed to delete complaint');
   return res.json();
 };
 
 // Export to Excel (CSV)
-const exportToExcel = (data, filename = `overtime-${new Date().toISOString().split('T')[0]}.csv`) => {
+const exportToExcel = (data, filename = `safety-complaints-${new Date().toISOString().split('T')[0]}.csv`) => {
   if (!data || data.length === 0) {
     toast.warning('No data to export');
     return;
   }
 
   const headers = [
-    'ID', 'Employee Name', 'Employee ID', 'Position', 'Overtime Type',
-    'Date', 'Start Time', 'End Time', 'Hours', 'Reason',
-    'Contact Number', 'Emergency Contact', 'Status', 'Applied Date',
-    'Notes', 'Created At',
+    'ID', 'Complaint Type', 'Severity', 'Title', 'Description',
+    'Location', 'Reported By', 'Reported Date', 'Status',
+    'Assigned To', 'Action Taken', 'Resolution Date'
   ];
 
-  const rows = data.map((item) => {
-    const hours = calculateHours(item.start_time, item.end_time, item.date);
-    return [
-      item.id,
-      item.employee_name,
-      item.employee_id,
-      item.position,
-      item.overtime_type,
-      item.date,
-      item.start_time,
-      item.end_time,
-      hours.toFixed(2),
-      item.reason,
-      item.contact_number?.trim() ? item.contact_number : '',
-      item.emergency_contact?.trim() ? item.emergency_contact : '',
-      item.status,
-      item.applied_date || '',
-      item.notes || '',
-      item.created_at || '',
-    ];
-  });
+  const rows = data.map((item) => [
+    item.id,
+    COMPLAINT_TYPES[item.complaint_type]?.name || item.complaint_type,
+    SEVERITY_LEVELS[item.severity]?.name || item.severity,
+    item.title,
+    item.description,
+    item.location,
+    item.reported_by_name,
+    formatDate(item.reported_date),
+    STATUS_CONFIG[item.status]?.label || item.status,
+    item.assigned_to || '',
+    item.action_taken || '',
+    item.resolution_date ? formatDate(item.resolution_date) : '',
+  ]);
 
   const csvContent = [
     headers.join(','),
@@ -727,51 +719,55 @@ const StatusBadge = ({ status }) => {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   const Icon = config.icon;
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant="outline" className={`${config.badge} border gap-1 px-2 py-1 whitespace-nowrap font-medium cursor-help`}>
-            <Icon className="h-3 w-3" />
-            {config.label}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Current status: {config.label}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Badge className={`${config.badge} border gap-1 px-2 py-1 whitespace-nowrap font-medium`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </Badge>
   );
 };
 
 // Type Badge Component
 const TypeBadge = ({ type }) => {
-  const config = OVERTIME_TYPES[type] || OVERTIME_TYPES.regular;
+  const config = COMPLAINT_TYPES[type] || COMPLAINT_TYPES.other;
   const Icon = config.icon;
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant="outline" className={`${config.badge} border gap-1 px-2 py-1 whitespace-nowrap font-medium cursor-help`}>
-            <Icon className="h-3 w-3" />
-            {config.shortName}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{config.description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Badge className={`${config.badge} border gap-1 px-2 py-1 whitespace-nowrap font-medium`}>
+      <Icon className="h-3 w-3" />
+      {config.shortName}
+    </Badge>
+  );
+};
+
+// Severity Badge Component
+const SeverityBadge = ({ severity }) => {
+  const config = SEVERITY_LEVELS[severity] || SEVERITY_LEVELS.low;
+  const Icon = config.icon;
+  return (
+    <Badge className={`${config.badge} border gap-1 px-2 py-1 whitespace-nowrap font-medium`}>
+      <Icon className="h-3 w-3" />
+      {config.name}
+    </Badge>
   );
 };
 
 // Stat Card Component
-const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from-primary/10 to-primary/5' }) => {
-  const CardWrapper = onClick ? (
+const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from-primary/10 to-primary/5', color = 'primary' }) => {
+  const colorMap = {
+    primary: 'from-primary/20 to-primary/5',
+    red: 'from-red-500/20 to-red-500/5',
+    yellow: 'from-yellow-500/20 to-yellow-500/5',
+    green: 'from-green-500/20 to-green-500/5',
+    blue: 'from-blue-500/20 to-blue-500/5',
+  };
+  
+  const bgGradient = colorMap[color] || colorMap.primary;
+
+  return (
     <Card
       className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden relative group ${onClick ? 'hover:border-primary' : ''} bg-white/90 backdrop-blur-sm`}
       onClick={onClick}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50 group-hover:opacity-70 transition-opacity`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-50 group-hover:opacity-70 transition-opacity`} />
       <CardContent className="p-6 relative z-10">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -790,50 +786,21 @@ const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from
             </p>
             <p className="text-3xl font-bold tracking-tight">{value}</p>
           </div>
-          <div className="rounded-full bg-primary/10 p-3 text-primary group-hover:scale-110 transition-transform duration-300">
-            <Icon className="h-5 w-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ) : (
-    <Card className="overflow-hidden relative group bg-white/90 backdrop-blur-sm">
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
-      <CardContent className="p-6 relative z-10">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-              {title}
-              {tooltip && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-3 w-3 text-muted-foreground/50" />
-                    </TooltipTrigger>
-                    <TooltipContent>{tooltip}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </p>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
-          </div>
-          <div className="rounded-full bg-primary/10 p-3 text-primary">
+          <div className={`rounded-full bg-${color}-500/10 p-3 text-${color}-500 group-hover:scale-110 transition-transform duration-300`}>
             <Icon className="h-5 w-5" />
           </div>
         </div>
       </CardContent>
     </Card>
   );
-
-  return CardWrapper;
 };
 
-// Overtime Card Component (Grid View)
-const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
+// Complaint Card Component (Grid View)
+const ComplaintCard = ({ complaint, onView, onEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
-  const typeConfig = OVERTIME_TYPES[overtime.overtime_type] || OVERTIME_TYPES.regular;
+  const typeConfig = COMPLAINT_TYPES[complaint.complaint_type] || COMPLAINT_TYPES.other;
+  const severityConfig = SEVERITY_LEVELS[complaint.severity] || SEVERITY_LEVELS.low;
   const Icon = typeConfig.icon;
-  const hours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
 
   const handleExpandClick = (e) => {
     e.stopPropagation();
@@ -841,32 +808,32 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   };
 
   return (
-    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden border-t-4 bg-white/90 backdrop-blur-sm" style={{ borderTopColor: `var(--${typeConfig.color}-500)` }}>
+    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden border-l-4 bg-white/90 backdrop-blur-sm" style={{ borderLeftColor: `var(--${typeConfig.color}-500)` }}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Avatar className="h-10 w-10 border-2 border-primary/20">
               <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
-                {getInitials(overtime.employee_name)}
+                {getInitials(complaint.reported_by_name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <CardTitle className="text-base font-semibold truncate flex items-center gap-1">
-                {overtime.employee_name}
+                {complaint.title}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Employee ID: {overtime.employee_id}</p>
+                      <p>Reported by: {complaint.reported_by_name}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </CardTitle>
               <CardDescription className="text-xs truncate flex items-center gap-1">
-                <Briefcase className="h-3 w-3 inline" />
-                {overtime.position || 'No position'}
+                <MapPin className="h-3 w-3 inline" />
+                {complaint.location || 'No location specified'}
               </CardDescription>
             </div>
           </div>
@@ -902,16 +869,16 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
                 </Tooltip>
               </TooltipProvider>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(overtime); }}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(complaint); }}>
                   <Eye className="h-4 w-4 mr-2" /> View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(overtime); }}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(complaint); }}>
                   <Edit className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onClick={(e) => { e.stopPropagation(); onDelete(overtime.id); }}
+                  onClick={(e) => { e.stopPropagation(); onDelete(complaint.id); }}
                 >
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </DropdownMenuItem>
@@ -921,18 +888,24 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
         </div>
       </CardHeader>
       <CardContent className="pb-2">
+        <div className="flex flex-wrap gap-2 mb-3">
+          <TypeBadge type={complaint.complaint_type} />
+          <SeverityBadge severity={complaint.severity} />
+          <StatusBadge status={complaint.status} />
+        </div>
+        
         <div className="grid grid-cols-2 gap-3 text-sm">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="space-y-1 cursor-help">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> Date
+                    <Calendar className="h-3 w-3" /> Reported
                   </p>
-                  <p className="font-medium">{formatDate(overtime.date)}</p>
+                  <p className="font-medium text-xs">{formatDate(complaint.reported_date)}</p>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Date of overtime work</TooltipContent>
+              <TooltipContent>Date when complaint was reported</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           
@@ -941,44 +914,14 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
               <TooltipTrigger asChild>
                 <div className="space-y-1 cursor-help">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Time
+                    <User className="h-3 w-3" /> Reported By
                   </p>
-                  <p className="font-medium text-xs">
-                    {formatTime(overtime.start_time)} – {formatTime(overtime.end_time)}
-                  </p>
+                  <p className="font-medium text-xs truncate">{complaint.reported_by_name}</p>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Start and end time of overtime</TooltipContent>
+              <TooltipContent>Person who reported the complaint</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="space-y-1 cursor-help">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Activity className="h-3 w-3" /> Hours
-                  </p>
-                  <p className="font-bold">{hours} h</p>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>Total overtime hours calculated</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Flag className="h-3 w-3" /> Type
-            </p>
-            <TypeBadge type={overtime.overtime_type} />
-          </div>
-          
-          <div className="space-y-1 col-span-2">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Target className="h-3 w-3" /> Status
-            </p>
-            <StatusBadge status={overtime.status} />
-          </div>
         </div>
 
         {expanded && (
@@ -988,48 +931,34 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
                 <TooltipTrigger asChild>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                      <MessageSquare className="h-3 w-3" /> Reason
+                      <MessageSquare className="h-3 w-3" /> Description
                     </p>
-                    <p className="text-sm bg-muted/30 p-3 rounded-lg break-words whitespace-pre-wrap">{overtime.reason || 'No reason provided'}</p>
+                    <p className="text-sm bg-muted/30 p-3 rounded-lg break-words whitespace-pre-wrap">
+                      {complaint.description || 'No description provided'}
+                    </p>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>Reason for overtime request</TooltipContent>
+                <TooltipContent>Detailed description of the complaint</TooltipContent>
               </Tooltip>
             </TooltipProvider>
             
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            {complaint.action_taken && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> Contact
+                      <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Action Taken
                       </p>
-                      <p className="font-medium break-words">
-                        {overtime.contact_number && overtime.contact_number.trim() ? overtime.contact_number : 'Not provided'}
+                      <p className="text-sm bg-muted/30 p-3 rounded-lg break-words whitespace-pre-wrap">
+                        {complaint.action_taken}
                       </p>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>Employee contact number</TooltipContent>
+                  <TooltipContent>Actions taken to address the complaint</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
-              {overtime.emergency_contact && overtime.emergency_contact.trim() && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <Heart className="h-3 w-3" /> Emergency
-                        </p>
-                        <p className="font-medium break-words">{overtime.emergency_contact}</p>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>Emergency contact number</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
+            )}
           </div>
         )}
       </CardContent>
@@ -1037,13 +966,13 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-full gap-2 group-hover:bg-primary/10" onClick={() => onView(overtime)}>
+              <Button variant="ghost" size="sm" className="w-full gap-2 group-hover:bg-primary/10" onClick={() => onView(complaint)}>
                 <Eye className="h-4 w-4 group-hover:animate-pulse" /> 
                 <span className="group-hover:underline">Click to view full details</span>
                 <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Click here to see complete overtime information</TooltipContent>
+            <TooltipContent side="bottom">Click here to see complete complaint information</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </CardFooter>
@@ -1051,20 +980,23 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   );
 };
 
-// Overtime Application Form
-const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => {
+// Complaint Form Component
+const ComplaintForm = ({ onClose, onSuccess, editData }) => {
   const [formData, setFormData] = useState(
     editData || {
-      employee_name: '',
-      employee_id: '',
-      position: '',
-      overtime_type: 'regular',
-      date: new Date().toISOString().split('T')[0],
-      start_time: '18:00',
-      end_time: '20:00',
-      reason: '',
-      contact_number: '',
-      emergency_contact: '',
+      title: '',
+      complaint_type: 'hazard',
+      severity: 'medium',
+      description: '',
+      location: '',
+      reported_by_name: '',
+      reported_by_id: '',
+      reported_by_department: '',
+      reported_by_position: '',
+      assigned_to: '',
+      action_taken: '',
+      status: 'pending',
+      reported_date: new Date().toISOString().split('T')[0],
     }
   );
   const [loading, setLoading] = useState(false);
@@ -1099,14 +1031,12 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
           }
           const designation = emp.designation || emp.position || emp.job_title || '';
           const phone = emp.phone || emp.contact_number || emp.mobile || '';
-          const supervisor = emp.supervisor || emp.manager_name || emp.manager || '';
           const department = emp.department || emp.dept || '';
           return {
             id: id,
             name: fullName,
             designation: designation,
             phone: phone,
-            supervisor: supervisor,
             department: department,
           };
         });
@@ -1135,21 +1065,20 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
     const numericId = employee.id.toString();
     setFormData({
       ...formData,
-      employee_id: numericId,
-      employee_name: employee.name || `Employee ${employee.id}`,
-      position: employee.designation || '',
-      contact_number: employee.phone || '',
-      emergency_contact: employee.supervisor || '',
+      reported_by_id: numericId,
+      reported_by_name: employee.name || `Employee ${employee.id}`,
+      reported_by_position: employee.designation || '',
+      reported_by_department: employee.department || '',
     });
     setEmployeeSelectOpen(false);
   };
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.employee_name?.trim()) errors.employee_name = 'Full name is required';
-    if (!formData.position?.trim()) errors.position = 'Position is required';
-    if (!formData.date) errors.date = 'Date is required';
-    if (!formData.reason?.trim()) errors.reason = 'Reason is required';
+    if (!formData.title?.trim()) errors.title = 'Title is required';
+    if (!formData.description?.trim()) errors.description = 'Description is required';
+    if (!formData.reported_by_name?.trim()) errors.reported_by_name = 'Reporter name is required';
+    if (!formData.location?.trim()) errors.location = 'Location is required';
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -1157,18 +1086,18 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+    
     setLoading(true);
     setError('');
     try {
+      let result;
       if (editData) {
-        await onUpdate(editData.id, formData);
-        toast.success('Overtime application updated');
+        result = await updateComplaint(editData.id, formData);
+        toast.success('Complaint updated successfully');
       } else {
-        await createOvertime(formData);
-        toast.success('Overtime application submitted');
+        result = await createComplaint(formData);
+        toast.success('Complaint reported successfully');
       }
       onSuccess();
       onClose();
@@ -1179,8 +1108,6 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
       setLoading(false);
     }
   };
-
-  const hours = calculateHours(formData.start_time, formData.end_time, formData.date);
 
   const filteredEmployees = useMemo(() => {
     if (!employeeSearch.trim()) return employees;
@@ -1195,13 +1122,13 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-white/30">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-white/30">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Clock className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-lg bg-red-500/10">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
-            {editData ? 'Edit' : 'New'} Overtime Request
+            {editData ? 'Edit Safety Complaint' : 'Report Safety Complaint'}
           </DialogTitle>
           <DialogDescription>
             Fill in the details below. All fields marked * are required.
@@ -1216,16 +1143,92 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             </Alert>
           )}
 
-          {/* Employee selection dropdown */}
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title">Complaint Title *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="Brief summary of the safety concern"
+              className="bg-white/80 backdrop-blur-sm"
+            />
+            {validationErrors.title && (
+              <p className="text-sm text-destructive">{validationErrors.title}</p>
+            )}
+          </div>
+
+          {/* Complaint Type and Severity */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Complaint Type *</Label>
+              <Select
+                value={formData.complaint_type}
+                onValueChange={(val) => handleChange('complaint_type', val)}
+              >
+                <SelectTrigger className="bg-white/80 backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(COMPLAINT_TYPES).map(([key, type]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        {React.createElement(type.icon, { className: "h-4 w-4" })}
+                        {type.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Severity Level *</Label>
+              <Select
+                value={formData.severity}
+                onValueChange={(val) => handleChange('severity', val)}
+              >
+                <SelectTrigger className="bg-white/80 backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SEVERITY_LEVELS).map(([key, level]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        {React.createElement(level.icon, { className: "h-4 w-4" })}
+                        {level.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <Label htmlFor="location">Location *</Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) => handleChange('location', e.target.value)}
+              placeholder="Where did this occur? (e.g., Production Line A, Warehouse, Workshop)"
+              className="bg-white/80 backdrop-blur-sm"
+            />
+            {validationErrors.location && (
+              <p className="text-sm text-destructive">{validationErrors.location}</p>
+            )}
+          </div>
+
+          {/* Reporter Selection */}
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-1">
-              Employee *
+              Reporter *
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                   </TooltipTrigger>
-                  <TooltipContent>Select an employee from the list</TooltipContent>
+                  <TooltipContent>Select the person reporting this complaint</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </Label>
@@ -1235,24 +1238,23 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                   variant="outline"
                   role="combobox"
                   className="w-full justify-between h-auto py-3 bg-white/80 backdrop-blur-sm"
-                  disabled={!!editData}
                 >
-                  {formData.employee_name ? (
+                  {formData.reported_by_name ? (
                     <div className="flex items-center gap-3 truncate">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {getInitials(formData.employee_name)}
+                          {getInitials(formData.reported_by_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-left truncate">
-                        <div className="truncate font-medium">{formData.employee_name}</div>
+                        <div className="truncate font-medium">{formData.reported_by_name}</div>
                         <div className="text-xs text-muted-foreground truncate">
-                          {formData.position} • {formData.employee_id}
+                          {formData.reported_by_position} • {formData.reported_by_department}
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Select employee...</span>
+                    <span className="text-muted-foreground">Select reporter...</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -1297,144 +1299,48 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             </Popover>
           </div>
 
-          {/* Auto-filled employee fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="employee_id" className="text-sm font-medium">Employee ID *</Label>
-              <Input
-                id="employee_id"
-                required
-                value={formData.employee_id}
-                onChange={(e) => handleChange('employee_id', e.target.value)}
-                placeholder="e.g., C1165"
-                disabled={!!editData}
-                className="h-10 bg-white/80 backdrop-blur-sm"
-              />
-              {validationErrors.employee_id && (
-                <p className="text-sm text-destructive">{validationErrors.employee_id}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="position" className="text-sm font-medium">Position</Label>
-              <Input
-                id="position"
-                value={formData.position}
-                readOnly
-                disabled
-                className="bg-muted/50 h-10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact_number" className="text-sm font-medium">Contact Number</Label>
-              <Input
-                id="contact_number"
-                value={formData.contact_number}
-                readOnly
-                disabled
-                className="bg-muted/50 h-10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="emergency_contact" className="text-sm font-medium">Emergency Contact</Label>
-              <Input
-                id="emergency_contact"
-                value={formData.emergency_contact}
-                readOnly
-                disabled
-                className="bg-muted/50 h-10"
-              />
-            </div>
-          </div>
-
-          {/* Other fields (editable) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1">
-                Overtime Type *
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>Select the type of overtime work</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </Label>
-              <Select
-                value={formData.overtime_type}
-                onValueChange={(val) => handleChange('overtime_type', val)}
-              >
-                <SelectTrigger className="h-10 bg-white/80 backdrop-blur-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(OVERTIME_TYPES).map(([key, type]) => (
-                    <SelectItem key={key} value={key}>
-                      <div className="flex items-center gap-2">
-                        {React.createElement(type.icon, { className: "h-4 w-4" })}
-                        {type.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Date *</Label>
-              <Input
-                type="date"
-                required
-                value={formData.date}
-                onChange={(e) => handleChange('date', e.target.value)}
-                className="h-10 bg-white/80 backdrop-blur-sm"
-              />
-              {validationErrors.date && (
-                <p className="text-sm text-destructive">{validationErrors.date}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Start Time *</Label>
-              <Input
-                type="time"
-                required
-                value={formData.start_time}
-                onChange={(e) => handleChange('start_time', e.target.value)}
-                className="h-10 bg-white/80 backdrop-blur-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">End Time *</Label>
-              <Input
-                type="time"
-                required
-                value={formData.end_time}
-                onChange={(e) => handleChange('end_time', e.target.value)}
-                className="h-10 bg-white/80 backdrop-blur-sm"
-              />
-            </div>
-          </div>
-
-          {hours > 0 && (
-            <div className="rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 p-4 text-center border">
-              <p className="text-sm text-muted-foreground mb-1">Total Hours</p>
-              <p className="text-3xl font-bold text-primary">{hours} h</p>
-            </div>
-          )}
-
+          {/* Description */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Reason for Overtime *</Label>
+            <Label htmlFor="description">Description *</Label>
             <Textarea
-              required
+              id="description"
               rows={4}
-              value={formData.reason}
-              onChange={(e) => handleChange('reason', e.target.value)}
-              placeholder="Please provide details about why overtime is required..."
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="Provide detailed information about the safety concern..."
               className="resize-none bg-white/80 backdrop-blur-sm"
             />
-            {validationErrors.reason && (
-              <p className="text-sm text-destructive">{validationErrors.reason}</p>
+            {validationErrors.description && (
+              <p className="text-sm text-destructive">{validationErrors.description}</p>
             )}
           </div>
+
+          {/* Assigned To (Optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="assigned_to">Assigned To (Optional)</Label>
+            <Input
+              id="assigned_to"
+              value={formData.assigned_to || ''}
+              onChange={(e) => handleChange('assigned_to', e.target.value)}
+              placeholder="Person responsible for investigating/resolving"
+              className="bg-white/80 backdrop-blur-sm"
+            />
+          </div>
+
+          {/* Action Taken (Only for edit) */}
+          {editData && (
+            <div className="space-y-2">
+              <Label htmlFor="action_taken">Action Taken</Label>
+              <Textarea
+                id="action_taken"
+                rows={3}
+                value={formData.action_taken || ''}
+                onChange={(e) => handleChange('action_taken', e.target.value)}
+                placeholder="Describe the actions taken to address this complaint..."
+                className="resize-none bg-white/80 backdrop-blur-sm"
+              />
+            </div>
+          )}
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -1442,7 +1348,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
             </Button>
             <Button type="submit" disabled={loading} className="min-w-[100px]">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editData ? 'Update' : 'Submit'}
+              {editData ? 'Update' : 'Submit Complaint'}
             </Button>
           </DialogFooter>
         </form>
@@ -1451,19 +1357,19 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
   );
 };
 
-// Overtime Details Modal
-const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onEdit }) => {
+// Complaint Details Modal
+const ComplaintDetailsModal = ({ complaint, onClose, onStatusUpdate, onDelete, onEdit }) => {
   const [updating, setUpdating] = useState(false);
-  const typeConfig = OVERTIME_TYPES[overtime.overtime_type] || OVERTIME_TYPES.regular;
-  const hours = calculateHours(overtime.start_time, overtime.end_time, overtime.date);
+  const typeConfig = COMPLAINT_TYPES[complaint.complaint_type] || COMPLAINT_TYPES.other;
+  const severityConfig = SEVERITY_LEVELS[complaint.severity] || SEVERITY_LEVELS.low;
   
-  const displayId = overtime.id ? (typeof overtime.id === 'string' ? overtime.id.slice(0, 8) : String(overtime.id).slice(0, 8)) : 'N/A';
+  const displayId = complaint.id ? (typeof complaint.id === 'string' ? complaint.id.slice(0, 8) : String(complaint.id).slice(0, 8)) : 'N/A';
 
   const handleStatusChange = async (newStatus) => {
     setUpdating(true);
     try {
-      await onStatusUpdate(overtime.id, newStatus);
-      toast.success(`Status updated to ${newStatus}`);
+      await onStatusUpdate(complaint.id, newStatus);
+      toast.success(`Status updated to ${STATUS_CONFIG[newStatus]?.label || newStatus}`);
       onClose();
     } catch (error) {
       toast.error(error.message);
@@ -1473,11 +1379,11 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
   };
 
   const handleDelete = async () => {
-    if (!confirm('Delete this overtime request?')) return;
+    if (!confirm('Delete this complaint? This action cannot be undone.')) return;
     setUpdating(true);
     try {
-      await onDelete(overtime.id);
-      toast.success('Request deleted');
+      await onDelete(complaint.id);
+      toast.success('Complaint deleted');
       onClose();
     } catch (error) {
       toast.error(error.message);
@@ -1491,58 +1397,41 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-white/30">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              {React.createElement(typeConfig.icon, { className: "h-5 w-5 text-primary" })}
+            <div className={`p-2 rounded-lg ${typeConfig.badge} border`}>
+              {React.createElement(typeConfig.icon, { className: `h-5 w-5 ${typeConfig.color === 'orange' ? 'text-orange-600' : ''}` })}
             </div>
-            Overtime Request #{displayId}
+            {complaint.title}
           </DialogTitle>
+          <DialogDescription>
+            Complaint #{displayId} • Reported on {formatDate(complaint.reported_date)}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Employee Card */}
+            {/* Reporter Card */}
             <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" /> Employee
+                  <User className="h-4 w-4 text-primary" /> Reporter
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-primary/10 text-primary">
-                      {getInitials(overtime.employee_name)}
+                      {getInitials(complaint.reported_by_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{overtime.employee_name}</p>
-                    <p className="text-xs text-muted-foreground">{overtime.position}</p>
+                    <p className="font-medium">{complaint.reported_by_name}</p>
+                    <p className="text-xs text-muted-foreground">{complaint.reported_by_position}</p>
                   </div>
                 </div>
                 <Separator />
-                <div className="grid grid-cols-2 gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          <p className="text-xs text-muted-foreground">ID</p>
-                          <p className="font-mono text-xs">{overtime.employee_id}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Employee identification number</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          <p className="text-xs text-muted-foreground">Contact</p>
-                          <p className="text-xs">{overtime.contact_number || 'Not provided'}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Primary contact number</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                <div>
+                  <p className="text-xs text-muted-foreground">Department</p>
+                  <p className="text-xs font-medium">{complaint.reported_by_department || 'Not specified'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -1551,93 +1440,82 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
             <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" /> Details
+                  <Info className="h-4 w-4 text-primary" /> Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Type</span>
-                  <TypeBadge type={overtime.overtime_type} />
+                  <TypeBadge type={complaint.complaint_type} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Severity</span>
+                  <SeverityBadge severity={complaint.severity} />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Status</span>
-                  <StatusBadge status={overtime.status} />
+                  <StatusBadge status={complaint.status} />
                 </div>
                 <Separator />
-                <div className="grid grid-cols-2 gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          <p className="text-xs text-muted-foreground">Date</p>
-                          <p className="font-medium">{formatDate(overtime.date)}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Date of overtime work</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          <p className="text-xs text-muted-foreground">Hours</p>
-                          <p className="font-medium">{hours} h</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Total hours worked</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          <p className="text-xs text-muted-foreground">Start</p>
-                          <p className="font-medium">{formatTime(overtime.start_time)}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Start time of overtime</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-help">
-                          <p className="text-xs text-muted-foreground">End</p>
-                          <p className="font-medium">{formatTime(overtime.end_time)}</p>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>End time of overtime</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                <div>
+                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="font-medium text-sm">{complaint.location}</p>
                 </div>
+                {complaint.assigned_to && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Assigned To</p>
+                    <p className="font-medium text-sm">{complaint.assigned_to}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Reason Card */}
+          {/* Description Card */}
           <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" /> Reason
+                <MessageSquare className="h-4 w-4 text-primary" /> Description
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-background rounded-lg p-4 border">
-                <p className="whitespace-pre-wrap text-sm">{overtime.reason}</p>
+                <p className="whitespace-pre-wrap text-sm">{complaint.description}</p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Action Taken Card */}
+          {complaint.action_taken && (
+            <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary" /> Action Taken
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-background rounded-lg p-4 border">
+                  <p className="whitespace-pre-wrap text-sm">{complaint.action_taken}</p>
+                </div>
+                {complaint.resolution_date && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Resolved on: {formatDate(complaint.resolution_date)}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 justify-end">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={() => { onEdit(overtime); onClose(); }} className="gap-2">
+                  <Button variant="outline" onClick={() => { onEdit(complaint); onClose(); }} className="gap-2">
                     <Edit className="h-4 w-4" /> Edit
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Edit this overtime request</TooltipContent>
+                <TooltipContent>Edit this complaint</TooltipContent>
               </Tooltip>
             </TooltipProvider>
             
@@ -1651,24 +1529,21 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
-                  <TooltipContent>Change the status of this request</TooltipContent>
+                  <TooltipContent>Change the status of this complaint</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleStatusChange('approved')}>
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" /> Approve
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleStatusChange('rejected')}>
-                  <XCircle className="h-4 w-4 mr-2 text-destructive" /> Reject
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleStatusChange('pending')}>
-                  <Clock className="h-4 w-4 mr-2 text-muted-foreground" /> Mark Pending
+                  <Clock className="h-4 w-4 mr-2 text-yellow-600" /> Mark Pending
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleStatusChange('paid')}>
-                  <TrendingUp className="h-4 w-4 mr-2 text-emerald-600" /> Mark Paid
+                <DropdownMenuItem onClick={() => handleStatusChange('investigating')}>
+                  <Search className="h-4 w-4 mr-2 text-blue-600" /> Start Investigation
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleStatusChange('cancelled')}>
-                  <X className="h-4 w-4 mr-2 text-gray-600" /> Cancel
+                <DropdownMenuItem onClick={() => handleStatusChange('resolved')}>
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" /> Mark Resolved
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('closed')}>
+                  <Check className="h-4 w-4 mr-2 text-gray-600" /> Close
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1681,7 +1556,7 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
                     Delete
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Delete this overtime request (cannot be undone)</TooltipContent>
+                <TooltipContent>Delete this complaint (cannot be undone)</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -1691,42 +1566,45 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
   );
 };
 
-// Employee Summary Component
+// Employee Summary Component (for showing complaints by employee)
 const EmployeeSummary = ({ data, show, onToggle, onEmployeeSelect }) => {
   const summary = useMemo(() => {
     const employeeMap = {};
     
     data.forEach((item) => {
-      const id = item.employee_id;
-      if (!employeeMap[id]) {
-        employeeMap[id] = {
-          employee_name: item.employee_name,
-          employee_id: id,
+      const name = item.reported_by_name;
+      if (!employeeMap[name]) {
+        employeeMap[name] = {
+          name: name,
+          id: item.reported_by_id,
           count: 0,
-          totalHours: 0,
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0,
         };
       }
-      const entry = employeeMap[id];
+      const entry = employeeMap[name];
       entry.count += 1;
-      const hours = calculateHours(item.start_time, item.end_time, item.date);
-      entry.totalHours += hours;
+      if (item.severity === 'critical') entry.critical++;
+      else if (item.severity === 'high') entry.high++;
+      else if (item.severity === 'medium') entry.medium++;
+      else entry.low++;
     });
 
-    return Object.values(employeeMap).sort((a, b) => b.totalHours - a.totalHours);
+    return Object.values(employeeMap).sort((a, b) => b.count - a.count);
   }, [data]);
 
   if (summary.length === 0) return null;
-
-  const totalHours = summary.reduce((sum, emp) => sum + emp.totalHours, 0);
 
   return (
     <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm">
       <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Employee Summary
+            <Users className="h-5 w-5 text-primary" /> Complaints by Employee
             <Badge variant="outline" className="ml-2 bg-background">
-              {summary.length} employees
+              {summary.length} reporters
             </Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -1739,7 +1617,7 @@ const EmployeeSummary = ({ data, show, onToggle, onEmployeeSelect }) => {
           </div>
         </div>
         <CardDescription>
-          Total hours per employee based on current filters
+          Number of complaints reported by each employee
         </CardDescription>
       </CardHeader>
       {show && (
@@ -1747,31 +1625,54 @@ const EmployeeSummary = ({ data, show, onToggle, onEmployeeSelect }) => {
           <ScrollArea className="h-[300px]">
             <div className="space-y-1 p-4">
               {summary.map((emp) => {
-                const percentage = totalHours > 0 ? (emp.totalHours / totalHours) * 100 : 0;
+                const total = emp.count;
+                const criticalPercent = total > 0 ? (emp.critical / total) * 100 : 0;
+                const highPercent = total > 0 ? (emp.high / total) * 100 : 0;
+                const mediumPercent = total > 0 ? (emp.medium / total) * 100 : 0;
+                const lowPercent = total > 0 ? (emp.low / total) * 100 : 0;
+                
                 return (
                   <div
-                    key={emp.employee_id}
+                    key={emp.name}
                     className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-all"
-                    onClick={() => onEmployeeSelect(emp.employee_id)}
+                    onClick={() => onEmployeeSelect(emp.name)}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {getInitials(emp.employee_name)}
+                          {getInitials(emp.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{emp.employee_name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.employee_id}</p>
+                        <p className="text-sm font-medium truncate">{emp.name}</p>
+                        <p className="text-xs text-muted-foreground">{emp.id || 'ID not available'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-sm font-bold">{Math.round(emp.totalHours * 100) / 100} h</p>
-                        <p className="text-xs text-muted-foreground">{emp.count} requests</p>
+                        <p className="text-sm font-bold">{total} complaints</p>
+                        <div className="flex gap-1 mt-1">
+                          {emp.critical > 0 && <span className="text-xs text-red-600">C:{emp.critical}</span>}
+                          {emp.high > 0 && <span className="text-xs text-orange-600">H:{emp.high}</span>}
+                          {emp.medium > 0 && <span className="text-xs text-yellow-600">M:{emp.medium}</span>}
+                          {emp.low > 0 && <span className="text-xs text-blue-600">L:{emp.low}</span>}
+                        </div>
                       </div>
-                      <div className="w-16">
-                        <Progress value={percentage} className="h-2" />
+                      <div className="w-24">
+                        <div className="flex h-2 rounded-full overflow-hidden">
+                          {criticalPercent > 0 && (
+                            <div className="bg-red-500 h-full" style={{ width: `${criticalPercent}%` }} />
+                          )}
+                          {highPercent > 0 && (
+                            <div className="bg-orange-500 h-full" style={{ width: `${highPercent}%` }} />
+                          )}
+                          {mediumPercent > 0 && (
+                            <div className="bg-yellow-500 h-full" style={{ width: `${mediumPercent}%` }} />
+                          )}
+                          {lowPercent > 0 && (
+                            <div className="bg-blue-500 h-full" style={{ width: `${lowPercent}%` }} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1790,29 +1691,26 @@ const TypeSummary = ({ data, onTypeSelect }) => {
   const summary = useMemo(() => {
     const result = {};
     data.forEach((item) => {
-      const type = item.overtime_type;
+      const type = item.complaint_type;
       if (!result[type]) {
         result[type] = {
           count: 0,
-          hours: 0,
         };
       }
-      const hours = calculateHours(item.start_time, item.end_time, item.date);
       result[type].count += 1;
-      result[type].hours += hours;
     });
     return result;
   }, [data]);
 
   if (Object.keys(summary).length === 0) return null;
 
-  const totalHours = Object.values(summary).reduce((sum, t) => sum + t.hours, 0);
+  const total = data.length;
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-      {Object.entries(OVERTIME_TYPES).map(([key, config]) => {
-        const stats = summary[key] || { count: 0, hours: 0 };
-        const percentage = totalHours > 0 ? (stats.hours / totalHours) * 100 : 0;
+      {Object.entries(COMPLAINT_TYPES).map(([key, config]) => {
+        const stats = summary[key] || { count: 0 };
+        const percentage = total > 0 ? (stats.count / total) * 100 : 0;
         const Icon = config.icon;
         
         return (
@@ -1833,12 +1731,8 @@ const TypeSummary = ({ data, onTypeSelect }) => {
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Requests</span>
+                        <span className="text-muted-foreground">Reports</span>
                         <span className="font-bold">{stats.count}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Hours</span>
-                        <span className="font-bold">{Math.round(stats.hours * 100) / 100}h</span>
                       </div>
                       <Progress value={percentage} className="h-1.5" />
                       <p className="text-xs text-muted-foreground text-right">
@@ -1859,6 +1753,73 @@ const TypeSummary = ({ data, onTypeSelect }) => {
   );
 };
 
+// Severity Summary Component
+const SeveritySummary = ({ data, onSeveritySelect }) => {
+  const summary = useMemo(() => {
+    const result = {};
+    data.forEach((item) => {
+      const severity = item.severity;
+      if (!result[severity]) {
+        result[severity] = {
+          count: 0,
+        };
+      }
+      result[severity].count += 1;
+    });
+    return result;
+  }, [data]);
+
+  if (Object.keys(summary).length === 0) return null;
+
+  const total = data.length;
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {Object.entries(SEVERITY_LEVELS).map(([key, config]) => {
+        const stats = summary[key] || { count: 0 };
+        const percentage = total > 0 ? (stats.count / total) * 100 : 0;
+        const Icon = config.icon;
+        
+        return (
+          <TooltipProvider key={key}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card 
+                  className="border-0 shadow-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1 bg-white/90 backdrop-blur-sm"
+                  onClick={() => onSeveritySelect(key)}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${key === 'critical' ? 'from-red-500/20 to-red-500/5' : key === 'high' ? 'from-orange-500/20 to-orange-500/5' : key === 'medium' ? 'from-yellow-500/20 to-yellow-500/5' : 'from-blue-500/20 to-blue-500/5'} opacity-50`} />
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`p-2 rounded-lg ${config.bgColor} text-${config.color}-600`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-semibold">{config.name}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Reports</span>
+                        <span className="font-bold">{stats.count}</span>
+                      </div>
+                      <Progress value={percentage} className="h-1.5" />
+                      <p className="text-xs text-muted-foreground text-right">
+                        {Math.round(percentage)}% of total
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to filter by {config.name} severity</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })}
+    </div>
+  );
+};
+
 // Advanced Filter Component
 const AdvancedFilters = ({
   searchTerm,
@@ -1867,12 +1828,10 @@ const AdvancedFilters = ({
   onDateFromChange,
   dateTo,
   onDateToChange,
-  minHours,
-  onMinHoursChange,
-  maxHours,
-  onMaxHoursChange,
   selectedTypes,
   onTypeToggle,
+  selectedSeverities,
+  onSeverityToggle,
   selectedStatuses,
   onStatusToggle,
   onClearFilters,
@@ -1889,13 +1848,13 @@ const AdvancedFilters = ({
     <div className="space-y-4">
       {/* Quick Filter Buttons */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-medium text-muted-foreground">Quick Filters:</span>
+        <span className="text-xs font-medium text-muted-foreground">Month:</span>
         <Badge 
           variant={selectedMonth === '' ? 'default' : 'outline'}
           className="cursor-pointer"
           onClick={() => onMonthChange('')}
         >
-          All Months
+          All
         </Badge>
         {MONTHS.map(month => (
           <Badge
@@ -1910,13 +1869,13 @@ const AdvancedFilters = ({
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-medium text-muted-foreground">Employee Quick Filters:</span>
+        <span className="text-xs font-medium text-muted-foreground">Reporter:</span>
         <Badge 
           variant={selectedEmployee === '' ? 'default' : 'outline'}
           className="cursor-pointer"
           onClick={() => onEmployeeChange('')}
         >
-          All Employees
+          All
         </Badge>
         {availableEmployees.slice(0, 8).map(emp => (
           <Badge
@@ -1956,14 +1915,14 @@ const AdvancedFilters = ({
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search by name, ID, position, or reason..."
+          placeholder="Search by title, description, location..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9 h-10 bg-white/80 backdrop-blur-sm"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Date Range */}
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
@@ -1973,7 +1932,7 @@ const AdvancedFilters = ({
                 <TooltipTrigger asChild>
                   <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent>Filter overtime from this date onwards</TooltipContent>
+                <TooltipContent>Filter complaints from this date onwards</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
@@ -1992,7 +1951,7 @@ const AdvancedFilters = ({
                 <TooltipTrigger asChild>
                   <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent>Filter overtime up to this date</TooltipContent>
+                <TooltipContent>Filter complaints up to this date</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
@@ -2003,67 +1962,23 @@ const AdvancedFilters = ({
             className="h-10 bg-white/80 backdrop-blur-sm"
           />
         </div>
-
-        {/* Hours Range */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            Min Hours
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>Minimum overtime hours</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </Label>
-          <Input
-            type="number"
-            step="0.5"
-            value={minHours}
-            onChange={(e) => onMinHoursChange(e.target.value)}
-            placeholder="e.g., 2"
-            className="h-10 bg-white/80 backdrop-blur-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            Max Hours
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>Maximum overtime hours</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </Label>
-          <Input
-            type="number"
-            step="0.5"
-            value={maxHours}
-            onChange={(e) => onMaxHoursChange(e.target.value)}
-            placeholder="e.g., 8"
-            className="h-10 bg-white/80 backdrop-blur-sm"
-          />
-        </div>
       </div>
 
       {/* Type Filters */}
       <div className="space-y-2">
         <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          Overtime Types
+          Complaint Types
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
               </TooltipTrigger>
-              <TooltipContent>Select one or more overtime types to filter</TooltipContent>
+              <TooltipContent>Select one or more complaint types to filter</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </Label>
         <div className="flex flex-wrap gap-2">
-          {Object.entries(OVERTIME_TYPES).map(([key, type]) => {
+          {Object.entries(COMPLAINT_TYPES).map(([key, type]) => {
             const Icon = type.icon;
             const isSelected = selectedTypes.includes(key);
             return (
@@ -2077,6 +1992,41 @@ const AdvancedFilters = ({
               >
                 <Icon className="h-3 w-3" />
                 {type.shortName}
+                {isSelected && <X className="h-3 w-3 ml-1" />}
+              </Badge>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Severity Filters */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          Severity Levels
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Select one or more severity levels to filter</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(SEVERITY_LEVELS).map(([key, severity]) => {
+            const Icon = severity.icon;
+            const isSelected = selectedSeverities.includes(key);
+            return (
+              <Badge
+                key={key}
+                variant={isSelected ? "default" : "outline"}
+                className={`cursor-pointer gap-1 px-3 py-1.5 transition-all hover:scale-105 ${
+                  isSelected ? severity.badge : ''
+                }`}
+                onClick={() => onSeverityToggle(key)}
+              >
+                <Icon className="h-3 w-3" />
+                {severity.name}
                 {isSelected && <X className="h-3 w-3 ml-1" />}
               </Badge>
             );
@@ -2209,9 +2159,9 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 // ============= Main Page =============
-export default function OvertimeManagementPage() {
-  const [overtime, setOvertime] = useState([]);
-  const [selectedOvertime, setSelectedOvertime] = useState(null);
+export default function SafetyComplaintsPage() {
+  const [complaints, setComplaints] = useState([]);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -2222,10 +2172,11 @@ export default function OvertimeManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   
-  // Basic Filters
+  // Filters
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [employeeFilter, setEmployeeFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [reporterFilter, setReporterFilter] = useState('all');
   
   // Advanced Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -2233,17 +2184,17 @@ export default function OvertimeManagementPage() {
   const [dateTo, setDateTo] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
-  const [minHours, setMinHours] = useState('');
-  const [maxHours, setMaxHours] = useState('');
   const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedSeverities, setSelectedSeverities] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
-  const [selectedEmployeeName, setSelectedEmployeeName] = useState('');
+  const [selectedReporterName, setSelectedReporterName] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
   const [showTypeSummary, setShowTypeSummary] = useState(true);
+  const [showSeveritySummary, setShowSeveritySummary] = useState(true);
   
   // Sorting
   const [sortBy, setSortBy] = useState('date');
@@ -2275,18 +2226,19 @@ export default function OvertimeManagementPage() {
     try {
       const apiFilters = {
         status: statusFilter === 'all' ? null : statusFilter,
-        overtime_type: typeFilter === 'all' ? null : typeFilter,
-        employee_id: employeeFilter === 'all' ? null : employeeFilter,
+        complaint_type: typeFilter === 'all' ? null : typeFilter,
+        severity: severityFilter === 'all' ? null : severityFilter,
+        reported_by_id: reporterFilter === 'all' ? null : reporterFilter,
         date_from: dateFrom || null,
         date_to: dateTo || null,
         month: monthFilter || null,
         year: yearFilter || null,
       };
-      const data = await fetchOvertime(apiFilters);
-      setOvertime(data);
-      toast.success(`Loaded ${data.length} overtime requests`);
+      const data = await fetchComplaints(apiFilters);
+      setComplaints(data);
+      toast.success(`Loaded ${data.length} safety complaints`);
     } catch (error) {
-      toast.error('Failed to load overtime data');
+      toast.error('Failed to load complaints');
     } finally {
       setLoading(false);
     }
@@ -2294,30 +2246,30 @@ export default function OvertimeManagementPage() {
 
   useEffect(() => {
     fetchAllData();
-  }, [statusFilter, typeFilter, employeeFilter, dateFrom, dateTo, monthFilter, yearFilter]);
+  }, [statusFilter, typeFilter, severityFilter, reporterFilter, dateFrom, dateTo, monthFilter, yearFilter]);
 
   const handleCreate = async (data) => {
-    const newItem = await createOvertime(data);
-    setOvertime((prev) => [newItem, ...prev]);
+    const newItem = await createComplaint(data);
+    setComplaints((prev) => [newItem, ...prev]);
   };
 
   const handleUpdate = async (id, data) => {
-    const updated = await updateOvertime(id, data);
-    setOvertime((prev) =>
+    const updated = await updateComplaint(id, data);
+    setComplaints((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updated } : item))
     );
   };
 
   const handleStatusUpdate = async (id, status) => {
-    await updateOvertimeStatus(id, status);
-    setOvertime((prev) =>
+    await updateComplaintStatus(id, status);
+    setComplaints((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status } : item))
     );
   };
 
   const handleDelete = async (id) => {
-    await deleteOvertime(id);
-    setOvertime((prev) => prev.filter((item) => item.id !== id));
+    await deleteComplaint(id);
+    setComplaints((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleLogout = () => {
@@ -2344,17 +2296,17 @@ export default function OvertimeManagementPage() {
   const clearFilters = () => {
     setStatusFilter('all');
     setTypeFilter('all');
-    setEmployeeFilter('all');
+    setSeverityFilter('all');
+    setReporterFilter('all');
     setDateFrom('');
     setDateTo('');
     setMonthFilter('');
     setYearFilter('');
-    setMinHours('');
-    setMaxHours('');
     setSearchTerm('');
     setSelectedTypes([]);
+    setSelectedSeverities([]);
     setSelectedStatuses([]);
-    setSelectedEmployeeName('');
+    setSelectedReporterName('');
     setCurrentPage(1);
     toast.success('All filters cleared');
   };
@@ -2362,6 +2314,12 @@ export default function OvertimeManagementPage() {
   const handleTypeSelect = (type) => {
     setTypeFilter(type);
     setSelectedTypes([type]);
+    setShowAdvancedFilters(true);
+  };
+
+  const handleSeveritySelect = (severity) => {
+    setSeverityFilter(severity);
+    setSelectedSeverities([severity]);
     setShowAdvancedFilters(true);
   };
 
@@ -2380,6 +2338,24 @@ export default function OvertimeManagementPage() {
       }
       
       return newTypes;
+    });
+  };
+
+  const handleSeverityToggle = (severity) => {
+    setSelectedSeverities(prev => {
+      const newSeverities = prev.includes(severity)
+        ? prev.filter(s => s !== severity)
+        : [...prev, severity];
+      
+      if (newSeverities.length === 1) {
+        setSeverityFilter(newSeverities[0]);
+      } else if (newSeverities.length === 0) {
+        setSeverityFilter('all');
+      } else {
+        setSeverityFilter('all');
+      }
+      
+      return newSeverities;
     });
   };
 
@@ -2411,103 +2387,99 @@ export default function OvertimeManagementPage() {
     setCurrentPage(1);
   };
 
-  const handleEmployeeQuickFilter = (employeeName) => {
-    setSelectedEmployeeName(employeeName);
+  const handleReporterQuickFilter = (reporterName) => {
+    setSelectedReporterName(reporterName);
     setCurrentPage(1);
   };
 
   // Apply all filters to the data
-  const processedOvertime = useMemo(() => {
-    let filtered = overtime;
+  const processedComplaints = useMemo(() => {
+    let filtered = complaints;
 
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (ot) =>
-          ot.employee_name?.toLowerCase().includes(term) ||
-          ot.employee_id?.toLowerCase().includes(term) ||
-          ot.position?.toLowerCase().includes(term) ||
-          ot.reason?.toLowerCase().includes(term)
+        (c) =>
+          c.title?.toLowerCase().includes(term) ||
+          c.description?.toLowerCase().includes(term) ||
+          c.location?.toLowerCase().includes(term) ||
+          c.reported_by_name?.toLowerCase().includes(term)
       );
     }
 
-    // Apply employee name filter (quick filter)
-    if (selectedEmployeeName) {
-      filtered = filtered.filter(ot => ot.employee_name === selectedEmployeeName);
+    // Apply reporter name filter
+    if (selectedReporterName) {
+      filtered = filtered.filter(c => c.reported_by_name === selectedReporterName);
     }
 
     // Apply date range filter
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
       fromDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((ot) => {
-        const otDate = new Date(ot.date);
-        otDate.setHours(0, 0, 0, 0);
-        return otDate >= fromDate;
+      filtered = filtered.filter((c) => {
+        const cDate = new Date(c.reported_date);
+        cDate.setHours(0, 0, 0, 0);
+        return cDate >= fromDate;
       });
     }
 
     if (dateTo) {
       const toDate = new Date(dateTo);
       toDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((ot) => {
-        const otDate = new Date(ot.date);
-        otDate.setHours(0, 0, 0, 0);
-        return otDate <= toDate;
+      filtered = filtered.filter((c) => {
+        const cDate = new Date(c.reported_date);
+        cDate.setHours(0, 0, 0, 0);
+        return cDate <= toDate;
       });
     }
 
     // Apply month filter
     if (monthFilter) {
-      filtered = filtered.filter((ot) => {
-        const otDate = new Date(ot.date);
-        const otMonth = (otDate.getMonth() + 1).toString().padStart(2, '0');
-        return otMonth === monthFilter;
+      filtered = filtered.filter((c) => {
+        const cDate = new Date(c.reported_date);
+        const cMonth = (cDate.getMonth() + 1).toString().padStart(2, '0');
+        return cMonth === monthFilter;
       });
     }
 
     // Apply year filter
     if (yearFilter) {
-      filtered = filtered.filter((ot) => {
-        const otDate = new Date(ot.date);
-        return otDate.getFullYear().toString() === yearFilter;
-      });
-    }
-
-    // Apply hours range filter
-    if (minHours || maxHours) {
-      filtered = filtered.filter((ot) => {
-        const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-        if (minHours && hours < parseFloat(minHours)) return false;
-        if (maxHours && hours > parseFloat(maxHours)) return false;
-        return true;
+      filtered = filtered.filter((c) => {
+        const cDate = new Date(c.reported_date);
+        return cDate.getFullYear().toString() === yearFilter;
       });
     }
 
     // Apply multiple type filter
     if (selectedTypes.length > 0) {
-      filtered = filtered.filter(ot => selectedTypes.includes(ot.overtime_type));
+      filtered = filtered.filter(c => selectedTypes.includes(c.complaint_type));
+    }
+
+    // Apply multiple severity filter
+    if (selectedSeverities.length > 0) {
+      filtered = filtered.filter(c => selectedSeverities.includes(c.severity));
     }
 
     // Apply multiple status filter
     if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(ot => selectedStatuses.includes(ot.status));
+      filtered = filtered.filter(c => selectedStatuses.includes(c.status));
     }
 
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       let compare = 0;
       if (sortBy === 'date') {
-        compare = new Date(a.date) - new Date(b.date);
-      } else if (sortBy === 'name') {
-        compare = (a.employee_name || '').localeCompare(b.employee_name || '');
-      } else if (sortBy === 'hours') {
-        const hoursA = calculateHours(a.start_time, a.end_time, a.date);
-        const hoursB = calculateHours(b.start_time, b.end_time, b.date);
-        compare = hoursA - hoursB;
+        compare = new Date(a.reported_date) - new Date(b.reported_date);
+      } else if (sortBy === 'title') {
+        compare = (a.title || '').localeCompare(b.title || '');
+      } else if (sortBy === 'reporter') {
+        compare = (a.reported_by_name || '').localeCompare(b.reported_by_name || '');
       } else if (sortBy === 'type') {
-        compare = (a.overtime_type || '').localeCompare(b.overtime_type || '');
+        compare = (a.complaint_type || '').localeCompare(b.complaint_type || '');
+      } else if (sortBy === 'severity') {
+        const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+        compare = (severityOrder[a.severity] || 0) - (severityOrder[b.severity] || 0);
       } else if (sortBy === 'status') {
         compare = (a.status || '').localeCompare(b.status || '');
       }
@@ -2515,47 +2487,42 @@ export default function OvertimeManagementPage() {
     });
 
     return sorted;
-  }, [overtime, searchTerm, dateFrom, dateTo, sortBy, sortOrder, minHours, maxHours, selectedTypes, selectedStatuses, monthFilter, yearFilter, selectedEmployeeName]);
+  }, [complaints, searchTerm, dateFrom, dateTo, sortBy, sortOrder, selectedTypes, selectedSeverities, selectedStatuses, monthFilter, yearFilter, selectedReporterName]);
 
-  // Get unique employees for quick filters
-  const availableEmployees = useMemo(() => {
-    return getUniqueEmployees(overtime);
-  }, [overtime]);
+  // Get unique reporters for quick filters
+  const availableReporters = useMemo(() => {
+    return getUniqueEmployees(complaints);
+  }, [complaints]);
 
   // Paginate the data
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return processedOvertime.slice(startIndex, endIndex);
-  }, [processedOvertime, currentPage]);
+    return processedComplaints.slice(startIndex, endIndex);
+  }, [processedComplaints, currentPage]);
 
-  const totalPages = Math.ceil(processedOvertime.length / itemsPerPage);
+  const totalPages = Math.ceil(processedComplaints.length / itemsPerPage);
 
   const stats = useMemo(() => {
-    const total = processedOvertime.length;
-    const pending = processedOvertime.filter((ot) => ot.status === 'pending').length;
-    const approved = processedOvertime.filter((ot) => ot.status === 'approved').length;
-    const rejected = processedOvertime.filter((ot) => ot.status === 'rejected').length;
-    
-    let totalHours = 0;
-    
-    processedOvertime.forEach((ot) => {
-      const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-      totalHours += hours;
-    });
+    const total = processedComplaints.length;
+    const pending = processedComplaints.filter((c) => c.status === 'pending').length;
+    const investigating = processedComplaints.filter((c) => c.status === 'investigating').length;
+    const resolved = processedComplaints.filter((c) => c.status === 'resolved').length;
+    const critical = processedComplaints.filter((c) => c.severity === 'critical').length;
+    const high = processedComplaints.filter((c) => c.severity === 'high').length;
     
     return { 
       total, 
       pending, 
-      approved, 
-      rejected,
-      totalHours: Math.round(totalHours * 100) / 100,
-      averageHours: total > 0 ? Math.round((totalHours / total) * 100) / 100 : 0,
+      investigating,
+      resolved,
+      critical,
+      high,
     };
-  }, [processedOvertime]);
+  }, [processedComplaints]);
 
-  const handleEmployeeSelect = (employeeId) => {
-    setEmployeeFilter(employeeId);
+  const handleReporterSelect = (reporterId) => {
+    setReporterFilter(reporterId);
   };
 
   const activeFilterCount = useMemo(() => {
@@ -2565,16 +2532,16 @@ export default function OvertimeManagementPage() {
     if (dateTo) count++;
     if (monthFilter) count++;
     if (yearFilter) count++;
-    if (minHours) count++;
-    if (maxHours) count++;
     if (selectedTypes.length > 0) count++;
+    if (selectedSeverities.length > 0) count++;
     if (selectedStatuses.length > 0) count++;
     if (statusFilter !== 'all') count++;
     if (typeFilter !== 'all') count++;
-    if (employeeFilter !== 'all') count++;
-    if (selectedEmployeeName) count++;
+    if (severityFilter !== 'all') count++;
+    if (reporterFilter !== 'all') count++;
+    if (selectedReporterName) count++;
     return count;
-  }, [searchTerm, dateFrom, dateTo, monthFilter, yearFilter, minHours, maxHours, selectedTypes, selectedStatuses, statusFilter, typeFilter, employeeFilter, selectedEmployeeName]);
+  }, [searchTerm, dateFrom, dateTo, monthFilter, yearFilter, selectedTypes, selectedSeverities, selectedStatuses, statusFilter, typeFilter, severityFilter, reporterFilter, selectedReporterName]);
 
   return (
     <>
@@ -2612,79 +2579,117 @@ export default function OvertimeManagementPage() {
           <main className="container mx-auto px-4 py-8 space-y-8">
             {/* Header */}
             <div className="text-center space-y-2 animate-fade-in">
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent drop-shadow-lg">
-                Overtime Management
+              <div className="flex justify-center mb-4">
+                <div className="p-3 rounded-full bg-red-500/10 animate-bounce-light">
+                  <AlertTriangle className="h-8 w-8 text-red-500" />
+                </div>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent drop-shadow-lg">
+                Safety Complaints Management
               </h1>
               <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                Track, review, and manage all overtime requests. Use the filters below to analyze specific periods or employees.
+                Report, track, and resolve safety concerns. Every report helps create a safer workplace.
               </p>
             </div>
 
             {/* Stats Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up delay-100">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 animate-slide-up delay-100">
               <StatCard 
-                title="Total Requests" 
+                title="Total Reports" 
                 value={stats.total} 
                 icon={FileText} 
-                gradient="from-blue-500/20 to-blue-500/5"
-                tooltip="Total number of overtime requests based on current filters"
-              />
-              <StatCard 
-                title="Total Hours" 
-                value={`${stats.totalHours} h`} 
-                icon={Clock} 
-                gradient="from-green-500/20 to-green-500/5"
-                tooltip="Sum of all overtime hours from filtered requests"
+                color="blue"
+                tooltip="Total number of safety complaints"
               />
               <StatCard 
                 title="Pending" 
                 value={stats.pending} 
                 icon={Clock} 
-                gradient="from-yellow-500/20 to-yellow-500/5"
+                color="yellow"
                 onClick={() => {
                   setStatusFilter('pending');
                   handleStatusToggle('pending');
                 }}
-                tooltip="Click to filter by pending requests"
+                tooltip="Click to filter pending complaints"
               />
               <StatCard 
-                title="Approved" 
-                value={stats.approved} 
-                icon={CheckCircle2} 
-                gradient="from-green-500/20 to-green-500/5"
+                title="Investigating" 
+                value={stats.investigating} 
+                icon={Search} 
+                color="blue"
                 onClick={() => {
-                  setStatusFilter('approved');
-                  handleStatusToggle('approved');
+                  setStatusFilter('investigating');
+                  handleStatusToggle('investigating');
                 }}
-                tooltip="Click to filter by approved requests"
+                tooltip="Click to filter complaints under investigation"
+              />
+              <StatCard 
+                title="Resolved" 
+                value={stats.resolved} 
+                icon={CheckCircle2} 
+                color="green"
+                onClick={() => {
+                  setStatusFilter('resolved');
+                  handleStatusToggle('resolved');
+                }}
+                tooltip="Click to filter resolved complaints"
+              />
+              <StatCard 
+                title="Critical" 
+                value={stats.critical} 
+                icon={AlertTriangle} 
+                color="red"
+                onClick={() => {
+                  setSeverityFilter('critical');
+                  handleSeverityToggle('critical');
+                }}
+                tooltip="Click to filter critical severity complaints"
+              />
+              <StatCard 
+                title="High Risk" 
+                value={stats.high} 
+                icon={AlertCircle} 
+                color="orange"
+                onClick={() => {
+                  setSeverityFilter('high');
+                  handleSeverityToggle('high');
+                }}
+                tooltip="Click to filter high severity complaints"
               />
             </div>
 
-            {/* New Overtime Button */}
+            {/* New Complaint Button */}
             <div className="flex justify-end animate-slide-up delay-200">
               <Button 
                 onClick={() => setShowForm(true)} 
-                className="gap-2 bg-primary hover:bg-primary/90 shadow-lg"
+                className="gap-2 bg-red-600 hover:bg-red-700 shadow-lg"
                 size="lg"
               >
-                <Plus className="h-5 w-5" /> New Overtime Request
+                <Plus className="h-5 w-5" /> Report Safety Complaint
               </Button>
             </div>
 
             {/* Type Summary - Clickable */}
-            {showTypeSummary && processedOvertime.length > 0 && (
+            {showTypeSummary && processedComplaints.length > 0 && (
               <div className="animate-slide-up delay-300">
-                <TypeSummary data={processedOvertime} onTypeSelect={handleTypeSelect} />
+                <TypeSummary data={processedComplaints} onTypeSelect={handleTypeSelect} />
+              </div>
+            )}
+
+            {/* Severity Summary - Clickable */}
+            {showSeveritySummary && processedComplaints.length > 0 && (
+              <div className="animate-slide-up delay-400">
+                <SeveritySummary data={processedComplaints} onSeveritySelect={handleSeveritySelect} />
               </div>
             )}
 
             {/* Filter Section */}
-            <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm animate-slide-up delay-400">
-              <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
+            <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm animate-slide-up delay-500">
+              <CardHeader className="pb-3 bg-gradient-to-r from-red-500/10 to-transparent">
                 <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Filter className="h-5 w-5 text-primary" />
+                      <Filter className="h-5 w-5 text-red-500" />
                       <h2 className="text-lg font-semibold">Filters</h2>
                       {activeFilterCount > 0 && (
                         <Badge variant="secondary" className="ml-2">
@@ -2692,7 +2697,7 @@ export default function OvertimeManagementPage() {
                         </Badge>
                       )}
                       <Badge variant="outline" className="ml-2 bg-background">
-                        {processedOvertime.length} of {overtime.length} records
+                        {processedComplaints.length} of {complaints.length} records
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
@@ -2717,12 +2722,10 @@ export default function OvertimeManagementPage() {
                         onDateFromChange={setDateFrom}
                         dateTo={dateTo}
                         onDateToChange={setDateTo}
-                        minHours={minHours}
-                        onMinHoursChange={setMinHours}
-                        maxHours={maxHours}
-                        onMaxHoursChange={setMaxHours}
                         selectedTypes={selectedTypes}
                         onTypeToggle={handleTypeToggle}
+                        selectedSeverities={selectedSeverities}
+                        onSeverityToggle={handleSeverityToggle}
                         selectedStatuses={selectedStatuses}
                         onStatusToggle={handleStatusToggle}
                         onClearFilters={clearFilters}
@@ -2731,9 +2734,9 @@ export default function OvertimeManagementPage() {
                         onMonthChange={handleMonthChange}
                         selectedYear={yearFilter}
                         onYearChange={handleYearChange}
-                        selectedEmployee={selectedEmployeeName}
-                        onEmployeeChange={handleEmployeeQuickFilter}
-                        availableEmployees={availableEmployees}
+                        selectedEmployee={selectedReporterName}
+                        onEmployeeChange={handleReporterQuickFilter}
+                        availableEmployees={availableReporters}
                       />
                     </div>
                   </CollapsibleContent>
@@ -2773,7 +2776,7 @@ export default function OvertimeManagementPage() {
                   </Tooltip>
                 </div>
                 <span className="text-sm text-white/80">
-                  Showing {paginatedData.length} of {processedOvertime.length} requests
+                  Showing {paginatedData.length} of {processedComplaints.length} complaints
                 </span>
               </div>
 
@@ -2789,10 +2792,12 @@ export default function OvertimeManagementPage() {
                   <SelectContent>
                     <SelectItem value="date-desc">Date (Newest first)</SelectItem>
                     <SelectItem value="date-asc">Date (Oldest first)</SelectItem>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="hours-desc">Hours (High to low)</SelectItem>
-                    <SelectItem value="hours-asc">Hours (Low to high)</SelectItem>
+                    <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                    <SelectItem value="title-desc">Title (Z-A)</SelectItem>
+                    <SelectItem value="reporter-asc">Reporter (A-Z)</SelectItem>
+                    <SelectItem value="reporter-desc">Reporter (Z-A)</SelectItem>
+                    <SelectItem value="severity-desc">Severity (High to low)</SelectItem>
+                    <SelectItem value="severity-asc">Severity (Low to high)</SelectItem>
                     <SelectItem value="type-asc">Type (A-Z)</SelectItem>
                     <SelectItem value="type-desc">Type (Z-A)</SelectItem>
                     <SelectItem value="status-asc">Status (A-Z)</SelectItem>
@@ -2803,13 +2808,13 @@ export default function OvertimeManagementPage() {
             </div>
 
             {/* Employee Summary (Collapsible) */}
-            {processedOvertime.length > 0 && showSummary && (
-              <div className="animate-slide-up delay-500">
+            {processedComplaints.length > 0 && showSummary && (
+              <div className="animate-slide-up delay-600">
                 <EmployeeSummary
-                  data={processedOvertime}
+                  data={processedComplaints}
                   show={showSummary}
                   onToggle={setShowSummary}
-                  onEmployeeSelect={handleEmployeeSelect}
+                  onEmployeeSelect={handleReporterQuickFilter}
                 />
               </div>
             )}
@@ -2828,16 +2833,16 @@ export default function OvertimeManagementPage() {
               <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
                 <CardContent className="py-12">
                   <div className="text-center">
-                    <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No overtime requests found</h3>
+                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No safety complaints found</h3>
                     <p className="text-sm text-muted-foreground mb-6">
-                      {overtime.length === 0
-                        ? 'Get started by creating your first request.'
+                      {complaints.length === 0
+                        ? 'Get started by reporting your first safety concern.'
                         : 'No records match your current filters. Try adjusting them.'}
                     </p>
-                    {overtime.length === 0 ? (
-                      <Button onClick={() => setShowForm(true)} className="gap-2">
-                        <Plus className="h-4 w-4" /> New Request
+                    {complaints.length === 0 ? (
+                      <Button onClick={() => setShowForm(true)} className="gap-2 bg-red-600 hover:bg-red-700">
+                        <Plus className="h-4 w-4" /> Report Complaint
                       </Button>
                     ) : (
                       <Button variant="outline" onClick={clearFilters} className="gap-2">
@@ -2850,12 +2855,12 @@ export default function OvertimeManagementPage() {
             ) : viewMode === 'grid' ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedData.map((ot) => (
-                    <OvertimeCard
-                      key={ot.id}
-                      overtime={ot}
-                      onView={setSelectedOvertime}
-                      onEdit={(ot) => { setEditData(ot); setShowForm(true); }}
+                  {paginatedData.map((complaint) => (
+                    <ComplaintCard
+                      key={complaint.id}
+                      complaint={complaint}
+                      onView={setSelectedComplaint}
+                      onEdit={(c) => { setEditData(c); setShowForm(true); }}
                       onDelete={handleDelete}
                     />
                   ))}
@@ -2874,24 +2879,24 @@ export default function OvertimeManagementPage() {
                       <TableHeader className="bg-muted/50">
                         <TableRow>
                           <TableHead className="w-10"></TableHead>
-                          <TableHead>Employee</TableHead>
+                          <TableHead>Title</TableHead>
                           <TableHead>Type</TableHead>
+                          <TableHead>Severity</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Reporter</TableHead>
                           <TableHead>Date</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead className="text-right">Hours</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paginatedData.map((ot) => {
-                          const hours = calculateHours(ot.start_time, ot.end_time, ot.date);
-                          const isExpanded = expandedRows.has(ot.id);
+                        {paginatedData.map((complaint) => {
+                          const isExpanded = expandedRows.has(complaint.id);
                           return (
-                            <React.Fragment key={ot.id}>
+                            <React.Fragment key={complaint.id}>
                               <TableRow
                                 className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => setSelectedOvertime(ot)}
+                                onClick={() => setSelectedComplaint(complaint)}
                               >
                                 <TableCell onClick={(e) => e.stopPropagation()}>
                                   <TooltipProvider>
@@ -2901,40 +2906,31 @@ export default function OvertimeManagementPage() {
                                           variant="ghost"
                                           size="sm"
                                           className="h-7 w-7 p-0"
-                                          onClick={(e) => toggleRowExpanded(ot.id, e)}
+                                          onClick={(e) => toggleRowExpanded(complaint.id, e)}
                                         >
                                           {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        {isExpanded ? 'Hide details' : 'Click to expand and view reason'}
+                                        {isExpanded ? 'Hide details' : 'Click to expand and view description'}
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                        {getInitials(ot.employee_name)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <div className="font-medium">{ot.employee_name}</div>
-                                      <div className="text-xs text-muted-foreground">{ot.employee_id}</div>
-                                    </div>
-                                  </div>
+                                  <div className="font-medium max-w-[200px] truncate">{complaint.title}</div>
                                 </TableCell>
                                 <TableCell>
-                                  <TypeBadge type={ot.overtime_type} />
+                                  <TypeBadge type={complaint.complaint_type} />
                                 </TableCell>
-                                <TableCell className="whitespace-nowrap">{formatDate(ot.date)}</TableCell>
-                                <TableCell className="whitespace-nowrap text-xs">
-                                  {formatTime(ot.start_time)} – {formatTime(ot.end_time)}
-                                </TableCell>
-                                <TableCell className="text-right font-bold">{hours} h</TableCell>
                                 <TableCell>
-                                  <StatusBadge status={ot.status} />
+                                  <SeverityBadge severity={complaint.severity} />
+                                </TableCell>
+                                <TableCell className="text-sm max-w-[150px] truncate">{complaint.location}</TableCell>
+                                <TableCell className="text-sm">{complaint.reported_by_name}</TableCell>
+                                <TableCell className="whitespace-nowrap text-sm">{formatDate(complaint.reported_date)}</TableCell>
+                                <TableCell>
+                                  <StatusBadge status={complaint.status} />
                                 </TableCell>
                                 <TableCell className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                   <TooltipProvider>
@@ -2944,7 +2940,7 @@ export default function OvertimeManagementPage() {
                                           variant="ghost"
                                           size="sm"
                                           className="h-8 w-8 p-0"
-                                          onClick={() => setSelectedOvertime(ot)}
+                                          onClick={() => setSelectedComplaint(complaint)}
                                         >
                                           <Eye className="h-4 w-4" />
                                         </Button>
@@ -2959,7 +2955,7 @@ export default function OvertimeManagementPage() {
                                           variant="ghost"
                                           size="sm"
                                           className="h-8 w-8 p-0"
-                                          onClick={() => { setEditData(ot); setShowForm(true); }}
+                                          onClick={() => { setEditData(complaint); setShowForm(true); }}
                                         >
                                           <Edit className="h-4 w-4" />
                                         </Button>
@@ -2971,22 +2967,26 @@ export default function OvertimeManagementPage() {
                               </TableRow>
                               {isExpanded && (
                                 <TableRow className="bg-muted/20">
-                                  <TableCell colSpan={8} className="p-4">
-                                    <div className="space-y-3 max-w-3xl">
+                                  <TableCell colSpan={9} className="p-4">
+                                    <div className="space-y-3">
                                       <div>
                                         <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                                          <MessageSquare className="h-3 w-3" /> Reason
+                                          <MessageSquare className="h-3 w-3" /> Description
                                         </p>
                                         <p className="text-sm bg-background p-3 rounded-lg border">
-                                          {ot.reason || 'No reason provided'}
+                                          {complaint.description || 'No description provided'}
                                         </p>
                                       </div>
-                                      <div className="flex gap-4 text-xs text-muted-foreground">
-                                        <span>Contact: {ot.contact_number || 'Not provided'}</span>
-                                        {ot.emergency_contact && (
-                                          <span>Emergency: {ot.emergency_contact}</span>
-                                        )}
-                                      </div>
+                                      {complaint.action_taken && (
+                                        <div>
+                                          <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                                            <Check className="h-3 w-3" /> Action Taken
+                                          </p>
+                                          <p className="text-sm bg-background p-3 rounded-lg border">
+                                            {complaint.action_taken}
+                                          </p>
+                                        </div>
+                                      )}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -3013,7 +3013,7 @@ export default function OvertimeManagementPage() {
 
       {/* Modals */}
       {showForm && (
-        <OvertimeApplicationForm
+        <ComplaintForm
           onClose={() => {
             setShowForm(false);
             setEditData(null);
@@ -3024,17 +3024,16 @@ export default function OvertimeManagementPage() {
             setEditData(null);
           }}
           editData={editData}
-          onUpdate={handleUpdate}
         />
       )}
 
-      {selectedOvertime && (
-        <OvertimeDetailsModal
-          overtime={selectedOvertime}
-          onClose={() => setSelectedOvertime(null)}
+      {selectedComplaint && (
+        <ComplaintDetailsModal
+          complaint={selectedComplaint}
+          onClose={() => setSelectedComplaint(null)}
           onStatusUpdate={handleStatusUpdate}
           onDelete={handleDelete}
-          onEdit={(ot) => { setEditData(ot); setShowForm(true); }}
+          onEdit={(c) => { setEditData(c); setShowForm(true); setSelectedComplaint(null); }}
         />
       )}
     </>

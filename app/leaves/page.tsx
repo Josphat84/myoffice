@@ -1,4 +1,8 @@
+// app/leaves/page.tsx
 'use client';
+
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -82,6 +86,118 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+
+// ============= STUNNING NATURE WALLPAPER COLLECTION =============
+const natureWallpapers = [
+  {
+    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Iceland Ice Cave",
+    location: "Iceland - Crystal Ice Cave"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Enchanted Forest",
+    location: "Pacific Northwest"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Misty Morning",
+    location: "Great Smoky Mountains"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Sunbeams Through Forest",
+    location: "Olympic National Park"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Alpine Lake",
+    location: "Canadian Rockies"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Waterfall Valley",
+    location: "Yosemite National Park"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Desert Dunes",
+    location: "Namibia"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Mountain Lake Reflection",
+    location: "Lake Moraine, Canada"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Majestic Waterfall",
+    location: "Iguazu Falls"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Desert Rock Formation",
+    location: "Monument Valley"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Rolling Hills",
+    location: "Tuscany, Italy"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&q=90&w=2070",
+    credit: "Unsplash - Mountain Wildflowers",
+    location: "Colorado Rockies"
+  }
+];
+
+// ============= ANIMATION STYLES =============
+const animationStyles = `
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bounce-light {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-bounce-light {
+    animation: bounce-light 2s ease-in-out infinite;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+`;
 
 // ============= Employee search result type =============
 interface EmployeeSearchResult {
@@ -425,16 +541,27 @@ const StatCard = ({ title, value, icon: Icon, color, onClick, subtitle }: {
   onClick?: () => void;
   subtitle?: string;
 }) => {
+  const colorMap: Record<string, string> = {
+    slate: 'from-slate-600 to-slate-700',
+    amber: 'from-amber-600 to-amber-700',
+    emerald: 'from-emerald-600 to-emerald-700',
+    purple: 'from-purple-600 to-purple-700',
+    blue: 'from-blue-600 to-blue-700',
+    red: 'from-red-600 to-red-700',
+    green: 'from-green-600 to-green-700',
+  };
+  const gradient = color && colorMap[color] ? colorMap[color] : 'from-slate-600 to-slate-700';
+
   return (
     <Card 
-      className={`cursor-pointer transition-all hover:shadow-lg ${onClick ? 'hover:scale-[1.02]' : ''}`}
+      className={`cursor-pointer transition-all hover:shadow-lg ${onClick ? 'hover:scale-[1.02]' : ''} bg-white/90 backdrop-blur-sm`}
       onClick={onClick}
     >
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl bg-gradient-to-br from-${color || 'slate'}-600 to-${color || 'slate'}-700 text-white shadow-lg`}>
+              <div className={`p-2 rounded-xl bg-gradient-to-br ${gradient} text-white shadow-lg`}>
                 <Icon className="h-5 w-5" />
               </div>
               <span className="text-sm font-medium text-muted-foreground">{title}</span>
@@ -477,7 +604,7 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   };
 
   return (
-    <Card className="group relative hover:shadow-lg transition-all cursor-pointer" onClick={() => onView(leave)}>
+    <Card className="group relative hover:shadow-lg transition-all cursor-pointer bg-white/90 backdrop-blur-sm" onClick={() => onView(leave)}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -557,7 +684,7 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   );
 };
 
-// ============= UPDATED Leave Application Form =============
+// ============= Leave Application Form =============
 const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
   onClose: () => void;
   onSuccess: (message: string, leave?: Leave) => void;
@@ -600,6 +727,18 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Check auth on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   // Fetch employees on mount
   useEffect(() => {
@@ -618,10 +757,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
         
         // Normalize field names – combine first_name and last_name
         const normalized = employeeList.map((emp: any) => {
-          // Try to get id – handle both id and employee_id
           const id = emp.id || emp.employee_id || 0;
-          
-          // Build full name from first_name + last_name if available
           let fullName = '';
           if (emp.first_name && emp.last_name) {
             fullName = `${emp.first_name} ${emp.last_name}`;
@@ -719,7 +855,6 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
   };
 
   const handleEmployeeSelect = (employee: EmployeeSearchResult) => {
-    // Set employee_id to just the numeric ID (as string) – user will add prefix manually
     const numericId = employee.id.toString();
     setFormData({
       ...formData,
@@ -773,7 +908,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-white/30">
         <DialogHeader>
           <DialogTitle>{editData ? 'Edit Leave Application' : 'New Leave Request'}</DialogTitle>
           <DialogDescription>
@@ -796,7 +931,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-between"
+                  className="w-full justify-between bg-white/80 backdrop-blur-sm"
                   disabled={!!editData}
                 >
                   {formData.employee_name ? (
@@ -818,7 +953,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white/95 backdrop-blur-sm" align="start">
                 <Command>
                   <CommandInput 
                     placeholder="Search employees..." 
@@ -857,7 +992,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
             </Popover>
           </div>
 
-          {/* Auto-filled employee fields (with employee_id now editable) */}
+          {/* Auto-filled employee fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="employee_id">Employee ID * (add prefix manually)</Label>
@@ -868,6 +1003,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 onChange={(e) => handleChange('employee_id', e.target.value)}
                 placeholder="e.g., C1165"
                 disabled={!!editData}
+                className="bg-white/80 backdrop-blur-sm"
               />
             </div>
             <div className="space-y-2">
@@ -877,7 +1013,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.position || ''}
                 readOnly
                 disabled
-                className="bg-muted"
+                className="bg-muted/50"
               />
             </div>
             <div className="space-y-2">
@@ -887,7 +1023,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.department || ''}
                 readOnly
                 disabled
-                className="bg-muted"
+                className="bg-muted/50"
               />
             </div>
             <div className="space-y-2">
@@ -897,7 +1033,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.contact_number || ''}
                 readOnly
                 disabled
-                className="bg-muted"
+                className="bg-muted/50"
               />
             </div>
             <div className="space-y-2">
@@ -907,12 +1043,12 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.manager_name || ''}
                 readOnly
                 disabled
-                className="bg-muted"
+                className="bg-muted/50"
               />
             </div>
           </div>
 
-          {/* Leave Type (editable) */}
+          {/* Leave Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="leave_type">Leave Type *</Label>
@@ -920,7 +1056,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.leave_type || 'annual'}
                 onValueChange={(val) => handleChange('leave_type', val)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/80 backdrop-blur-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -937,7 +1073,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
             </div>
           </div>
 
-          {/* Dates (editable) */}
+          {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">Start Date *</Label>
@@ -947,6 +1083,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 required
                 value={formData.start_date || ''}
                 onChange={(e) => handleChange('start_date', e.target.value)}
+                className="bg-white/80 backdrop-blur-sm"
               />
               {validationErrors.start_date && (
                 <p className="text-sm text-destructive">{validationErrors.start_date}</p>
@@ -961,6 +1098,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.end_date || ''}
                 onChange={(e) => handleChange('end_date', e.target.value)}
                 min={formData.start_date}
+                className="bg-white/80 backdrop-blur-sm"
               />
               {validationErrors.end_date && (
                 <p className="text-sm text-destructive">{validationErrors.end_date}</p>
@@ -969,13 +1107,13 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
           </div>
 
           {calculatedDays > 0 && (
-            <div className="rounded-lg bg-muted p-4 text-center">
+            <div className="rounded-lg bg-muted/50 p-4 text-center">
               <p className="text-sm text-muted-foreground">Total Leave Days</p>
               <p className="text-2xl font-bold">{calculatedDays} days</p>
             </div>
           )}
 
-          {/* Reason with autocomplete (editable) */}
+          {/* Reason with autocomplete */}
           <div className="space-y-2 relative">
             <Label htmlFor="reason">Reason for Leave *</Label>
             <Textarea
@@ -986,12 +1124,13 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
               onChange={(e) => handleReasonChange(e.target.value)}
               onKeyDown={handleReasonKeyDown}
               placeholder="Type a reason or choose from suggestions..."
+              className="bg-white/80 backdrop-blur-sm"
             />
             {validationErrors.reason && (
               <p className="text-sm text-destructive">{validationErrors.reason}</p>
             )}
             {suggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
                 {suggestions.map((s, index) => (
                   <div
                     key={s}
@@ -1013,7 +1152,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
             </p>
           </div>
 
-          {/* Emergency contact and handover (editable) */}
+          {/* Emergency contact and handover */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="emergency_contact">Emergency Contact</Label>
@@ -1022,6 +1161,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.emergency_contact || ''}
                 onChange={(e) => handleChange('emergency_contact', e.target.value)}
                 placeholder="Name and phone number"
+                className="bg-white/80 backdrop-blur-sm"
               />
             </div>
             <div className="space-y-2">
@@ -1031,6 +1171,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.handover_to || ''}
                 onChange={(e) => handleChange('handover_to', e.target.value)}
                 placeholder="Colleague's name"
+                className="bg-white/80 backdrop-blur-sm"
               />
             </div>
           </div>
@@ -1048,7 +1189,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
   );
 };
 
-// Leave Details Modal (unchanged)
+// Leave Details Modal
 const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }: {
   leave: Leave;
   onClose: () => void;
@@ -1088,7 +1229,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-white/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className={`p-2 rounded-lg ${selectedLeaveType.bgColor} border ${selectedLeaveType.borderColor}`}>
@@ -1107,7 +1248,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
+            <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <User className="h-4 w-4" /> Employee
@@ -1123,7 +1264,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4" /> Details
@@ -1158,7 +1299,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
             </Card>
           </div>
 
-          <Card>
+          <Card className="bg-white/80 backdrop-blur-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <FileText className="h-4 w-4" /> Reason
@@ -1170,7 +1311,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
           </Card>
 
           {(leave.manager_approval || leave.hr_approval) && (
-            <Card>
+            <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Approval Status</CardTitle>
               </CardHeader>
@@ -1196,7 +1337,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
           )}
 
           {leave.supporting_docs && leave.supporting_docs.length > 0 && (
-            <Card>
+            <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Supporting Documents</CardTitle>
               </CardHeader>
@@ -1264,6 +1405,9 @@ export default function LeaveManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState({ leaves: true });
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     pending: 0,
@@ -1274,6 +1418,24 @@ export default function LeaveManagementPage() {
     total_days_requested: 0,
     average_days: 0
   });
+
+  // Check auth on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  // Rotating nature wallpaper every 2 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
+    }, 120000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchAllData = async () => {
     try {
@@ -1341,6 +1503,14 @@ export default function LeaveManagementPage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUser(null);
+    window.location.reload();
+  };
+
   const filteredLeaves = useMemo(() => {
     let filtered = leaves;
 
@@ -1387,255 +1557,272 @@ export default function LeaveManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Toaster position="top-right" richColors />
+    <>
+      <style jsx global>{animationStyles}</style>
+      <div className="min-h-screen">
+        {/* Rotating Nature Wallpaper Background */}
+        <div className="fixed inset-0 z-0">
+          {natureWallpapers.map((wallpaper, index) => (
+            <div
+              key={index}
+              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
+              style={{
+                backgroundImage: `url('${wallpaper.url}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: index === currentWallpaperIndex ? 1 : 0,
+                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
+                transition: 'opacity 2000ms ease-in-out',
+              }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-black/30" />
+          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
+            {natureWallpapers[currentWallpaperIndex].location}
+          </div>
+        </div>
 
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="rounded bg-primary p-1.5">
-                <Database className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-bold">MyOffice HR</span>
-            </Link>
-            <Separator orientation="vertical" className="h-6" />
-            <nav className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/">Home</Link>
+        <div className="relative z-10">
+          <Header 
+            isLoggedIn={isLoggedIn} 
+            user={user} 
+            onLogout={handleLogout} 
+          />
+
+          <main className="container mx-auto px-4 py-8 space-y-8">
+            <div className="text-center space-y-2 animate-fade-in">
+              <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">Leave Management</h1>
+              <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
+                Manage employee leave requests, track status, and approve time off.
+              </p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up delay-100">
+              <StatCard title="Total Requests" value={stats.total} icon={FileText} color="slate" />
+              <StatCard title="Pending" value={stats.pending} icon={Clock} color="amber" onClick={() => setFilter('pending')} />
+              <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} color="emerald" onClick={() => setFilter('approved')} />
+              <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
+            </div>
+
+            {/* NEW LEAVE BUTTON - Added here */}
+            <div className="flex justify-end animate-slide-up delay-150">
+              <Button 
+                onClick={() => setShowForm(true)} 
+                className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                size="lg"
+              >
+                <Plus className="h-5 w-5" /> New Leave Request
               </Button>
-              <span className="text-sm text-muted-foreground">/</span>
-              <span className="text-sm font-medium">Leaves</span>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={fetchAllData} disabled={loading.leaves}>
-              {loading.leaves ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            </Button>
-            <Button onClick={() => setShowForm(true)} size="sm">
-              <Plus className="h-4 w-4 mr-2" /> New Leave
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Leave Management</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Manage employee leave requests, track status, and approve time off.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Requests" value={stats.total} icon={FileText} color="slate" />
-          <StatCard title="Pending" value={stats.pending} icon={Clock} color="amber" onClick={() => setFilter('pending')} />
-          <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} color="emerald" onClick={() => setFilter('approved')} />
-          <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col lg:flex-row justify-between gap-4">
-              <div>
-                <CardTitle className="text-lg">Leave Requests</CardTitle>
-                <CardDescription>
-                  {filteredLeaves.length} of {leaves.length} requests
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="relative w-full lg:w-64">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date-desc">Date (Newest)</SelectItem>
-                    <SelectItem value="date-asc">Date (Oldest)</SelectItem>
-                    <SelectItem value="days-desc">Days (High-Low)</SelectItem>
-                    <SelectItem value="days-asc">Days (Low-High)</SelectItem>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <div className="flex rounded-md border">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="rounded-r-none"
-                    onClick={() => setViewMode('grid')}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'table' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="rounded-l-none"
-                    onClick={() => setViewMode('table')}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
             </div>
 
-            <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <Label className="text-xs">Status</Label>
-                  <Select value={filter} onValueChange={setFilter}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Filters Card */}
+            <Card className="bg-white/90 backdrop-blur-sm border-white/30 shadow-xl animate-slide-up delay-200">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col lg:flex-row justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-lg">Leave Requests</CardTitle>
+                    <CardDescription>
+                      {filteredLeaves.length} of {leaves.length} requests
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="relative w-full lg:w-64">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 bg-white/80 backdrop-blur-sm"
+                      />
+                    </div>
 
-                <div>
-                  <Label className="text-xs">Leave Type</Label>
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      {Object.entries(LEAVE_TYPES).map(([key, type]) => (
-                        <SelectItem key={key} value={key}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-[180px] bg-white/80 backdrop-blur-sm">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date-desc">Date (Newest)</SelectItem>
+                        <SelectItem value="date-asc">Date (Oldest)</SelectItem>
+                        <SelectItem value="days-desc">Days (High-Low)</SelectItem>
+                        <SelectItem value="days-asc">Days (Low-High)</SelectItem>
+                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                <div>
-                  <Label className="text-xs">From Date</Label>
-                  <Input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs">To Date</Label>
-                  <Input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end mt-3">
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-                  <FilterX className="h-3 w-3" /> Clear Filters
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading.leaves ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredLeaves.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No leave requests found</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  {leaves.length === 0 ? 'Create your first request.' : 'Try adjusting your filters.'}
-                </p>
-                {leaves.length === 0 && (
-                  <Button onClick={() => setShowForm(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> New Leave
-                  </Button>
-                )}
-              </div>
-            ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredLeaves.map((leave) => (
-                  <LeaveCard
-                    key={leave.id}
-                    leave={leave}
-                    onView={setSelectedLeave}
-                    onEdit={(l) => { setEditData(l); setShowForm(true); }}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Dates</TableHead>
-                      <TableHead>Days</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Applied</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLeaves.map((leave) => (
-                      <TableRow
-                        key={leave.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedLeave(leave)}
+                    <div className="flex rounded-md border">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        className="rounded-r-none"
+                        onClick={() => setViewMode('grid')}
                       >
-                        <TableCell>
-                          <div className="font-medium">{leave.employee_name}</div>
-                          <div className="text-xs text-muted-foreground">{leave.employee_id}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="gap-1">
-                            {React.createElement(LEAVE_TYPES[leave.leave_type]?.icon || FileText, { className: "h-3 w-3" })}
-                            {LEAVE_TYPES[leave.leave_type]?.shortName || leave.leave_type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          {formatDate(leave.start_date)} – {formatDate(leave.end_date)}
-                        </TableCell>
-                        <TableCell>{formatDays(leave.total_days)}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={leave.status} />
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {formatDateTime(leave.applied_date)}
-                        </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedLeave(leave)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => { setEditData(leave); setShowForm(true); }}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === 'table' ? 'default' : 'ghost'}
+                        size="sm"
+                        className="rounded-l-none"
+                        onClick={() => setViewMode('table')}
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label className="text-xs">Status</Label>
+                      <Select value={filter} onValueChange={setFilter}>
+                        <SelectTrigger className="mt-1 bg-white/80 backdrop-blur-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Leave Type</Label>
+                      <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <SelectTrigger className="mt-1 bg-white/80 backdrop-blur-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          {Object.entries(LEAVE_TYPES).map(([key, type]) => (
+                            <SelectItem key={key} value={key}>{type.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">From Date</Label>
+                      <Input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="mt-1 bg-white/80 backdrop-blur-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">To Date</Label>
+                      <Input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="mt-1 bg-white/80 backdrop-blur-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end mt-3">
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
+                      <FilterX className="h-3 w-3" /> Clear Filters
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading.leaves ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredLeaves.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No leave requests found</h3>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      {leaves.length === 0 ? 'Create your first request.' : 'Try adjusting your filters.'}
+                    </p>
+                    {leaves.length === 0 && (
+                      <Button onClick={() => setShowForm(true)} className="gap-2">
+                        <Plus className="h-4 w-4 mr-2" /> New Leave
+                      </Button>
+                    )}
+                  </div>
+                ) : viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredLeaves.map((leave) => (
+                      <LeaveCard
+                        key={leave.id}
+                        leave={leave}
+                        onView={setSelectedLeave}
+                        onEdit={(l) => { setEditData(l); setShowForm(true); }}
+                        onDelete={handleDelete}
+                      />
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Employee</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Dates</TableHead>
+                          <TableHead>Days</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Applied</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredLeaves.map((leave) => (
+                          <TableRow
+                            key={leave.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => setSelectedLeave(leave)}
+                          >
+                            <TableCell>
+                              <div className="font-medium">{leave.employee_name}</div>
+                              <div className="text-xs text-muted-foreground">{leave.employee_id}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="gap-1">
+                                {React.createElement(LEAVE_TYPES[leave.leave_type]?.icon || FileText, { className: "h-3 w-3" })}
+                                {LEAVE_TYPES[leave.leave_type]?.shortName || leave.leave_type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm">
+                              {formatDate(leave.start_date)} – {formatDate(leave.end_date)}
+                            </TableCell>
+                            <TableCell>{formatDays(leave.total_days)}</TableCell>
+                            <TableCell>
+                              <StatusBadge status={leave.status} />
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {formatDateTime(leave.applied_date)}
+                            </TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="sm" onClick={() => setSelectedLeave(leave)}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => { setEditData(leave); setShowForm(true); }}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </main>
+
+          <Footer />
+        </div>
+      </div>
 
       {showForm && (
         <LeaveApplicationForm
@@ -1654,6 +1841,6 @@ export default function LeaveManagementPage() {
           onStatusUpdate={handleStatusUpdate}
         />
       )}
-    </div>
+    </>
   );
 }
