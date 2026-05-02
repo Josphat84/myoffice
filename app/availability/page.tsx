@@ -20,8 +20,10 @@ import {
   Activity,
   Percent,
   Calculator,
-  CalendarClock
+  CalendarClock,
+  ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -408,45 +410,42 @@ export default function AvailabilitiesPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Gauge className="h-8 w-8 text-indigo-600" />
-            Equipment Availabilities
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Track equipment availability by subtracting breakdown hours from operational hours
-            <br />
-            <span className="text-sm text-indigo-600 font-medium">
-              Availability = (Operational Hours - Breakdown Hours) / Operational Hours × 100
-            </span>
-          </p>
-          {error && (
-            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
-              <p className="text-sm text-amber-700 flex items-center">
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Availability</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Equipment Availabilities</h1>
+            <p className="text-[#6B7B8E] mt-1">Track availability = (Operational Hours − Breakdown Hours) / Operational Hours × 100</p>
+            {error && (
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-sm text-amber-700 flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Note: Showing mock data. {error}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 self-start flex-wrap">
+            <Button variant="outline" onClick={fetchAvailabilities}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button disabled={equipment.length === 0} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/breakdowns">
                 <AlertTriangle className="h-4 w-4 mr-2" />
-                Note: Showing mock data. {error}
-              </p>
-            </div>
-          )}
-        </div>
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <Button variant="outline" onClick={fetchAvailabilities}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button disabled={equipment.length === 0}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/breakdowns">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              View Breakdowns
-            </Link>
-          </Button>
+                Breakdowns
+              </Link>
+            </Button>
         </div>
       </div>
 
@@ -907,6 +906,7 @@ export default function AvailabilitiesPage() {
           </Button>
         </div>
       </div>
-    </div>
+      </main>
+    </PageShell>
   );
 }

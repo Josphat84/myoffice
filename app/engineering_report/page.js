@@ -253,6 +253,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageShell } from '@/components/PageShell';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -2107,53 +2108,30 @@ export default function EngineeringDashboard() {
   if (!isClient) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white rounded-2xl border-2 border-slate-200 shadow-lg">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
-              <HardHat className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-                Engineering Operations Dashboard
-              </h1>
-              <div className="flex items-center gap-3 mt-1">
-                <Badge 
-                  variant={databaseStatus === 'healthy' ? 'default' : 'destructive'}
-                  className="text-xs font-medium px-2.5 py-1 shadow-sm"
-                >
-                  <Database className="w-3 h-3 mr-1.5" />
-                  {databaseStatus}
-                </Badge>
-                <div className="text-sm text-slate-600 flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {format(analyticsFilters.dateRange.from, 'MMM d')} - {format(analyticsFilters.dateRange.to, 'MMM d')}
-                </div>
-              </div>
-            </div>
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span><ChevronRight className="h-3 w-3" /><span className="text-[#2A4D69] font-medium">Engineering Report</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Engineering Operations</h1>
+            <p className="text-[#6B7B8E] mt-1">Monitor equipment performance, callouts, and operational trends.</p>
           </div>
-          
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={loadReports}
               disabled={isLoading}
-              className="border-slate-300 hover:bg-slate-50 shadow-sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            
             <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
               <DialogTrigger asChild>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md"
-                >
+                <Button size="sm" className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
                   <Download className="w-4 h-4 mr-2" />
                   Export
                 </Button>
@@ -3745,7 +3723,7 @@ export default function EngineeringDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </main>
+    </PageShell>
   );
 }

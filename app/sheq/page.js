@@ -16,8 +16,9 @@ import {
   Star, Table, UserPlus, Hash, BriefcaseIcon, Expand, ChevronLeft,
   Database, Wrench, Activity, Gauge, TrendingDown, Thermometer,
   BarChart4, CircleAlert, Percent, Square, Archive, SquareDashed,
-  File, Info, AlertCircle as AlertCircleIcon
+  File, Info, AlertCircle as AlertCircleIcon, ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
 
 // shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -1612,34 +1613,21 @@ export default function EnhancedSHEQManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans antialiased">
+    <PageShell>
       <Toaster position="top-right" richColors />
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur">
-        <div className="px-4 md:px-6 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
-                <Shield className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  SHEQ Management
-                </h1>
-                <p className="text-sm text-muted-foreground">Safety, Health, Environment & Quality</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-primary/10 text-primary">JD</AvatarFallback>
-              </Avatar>
-            </div>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">SHEQ</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">SHEQ Management</h1>
+            <p className="text-[#6B7B8E] mt-1">Safety, Health, Environment & Quality — track indicators and compliance metrics.</p>
           </div>
         </div>
-      </header>
-
-      <main className="px-4 md:px-6 py-6 max-w-7xl mx-auto space-y-8">
         {!backendOnline && (
           <Alert variant="destructive">
             <AlertTriangle className="h-5 w-5" />
@@ -1971,7 +1959,6 @@ export default function EnhancedSHEQManagement() {
             </div>
           </CardFooter>
         </Card>
-      </main>
 
       {/* Modals */}
       <EnhancedSHEQForm
@@ -1991,6 +1978,7 @@ export default function EnhancedSHEQManagement() {
         onEdit={(ind) => { setEditData(ind); setShowForm(true); }}
         onExport={handleExport}
       />
-    </div>
+      </main>
+    </PageShell>
   );
 }

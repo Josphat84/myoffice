@@ -18,6 +18,7 @@ import {
   ChevronRight, ChevronLeft, Database,
   Maximize2, Minimize2
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 
 import {
   Card,
@@ -2140,24 +2141,24 @@ export default function RequisitionsManagement() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <ShoppingCart className="h-8 w-8 text-primary" />
-            Requisitions Management
-          </h1>
-          <p className="text-muted-foreground mt-1 flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            Connected to API at {API_BASE_URL}
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+            <span>Home</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-[#2A4D69] font-medium">Requisitions</span>
+          </nav>
+          <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Requisitions Management</h1>
+          <p className="text-[#6B7B8E] mt-1">Manage purchase requisitions, approvals, and procurement workflows.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start">
           <Button variant="outline" className="gap-2" onClick={fetchRequisitions} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => { setEditingRequisition(null); setIsModalOpen(true); }} className="gap-2">
+          <Button onClick={() => { setEditingRequisition(null); setIsModalOpen(true); }} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
             <Plus className="h-4 w-4" />
             New Requisition
           </Button>
@@ -2495,6 +2496,7 @@ export default function RequisitionsManagement() {
           handleEditRequisition(requisition);
         }}
       />
-    </div>
+      </main>
+    </PageShell>
   );
 }

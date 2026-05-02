@@ -76,6 +76,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
+import { PageShell } from '@/components/PageShell';
 
 // Custom Badge component
 const Badge = ({ 
@@ -1110,145 +1111,16 @@ export default function RentalPage() {
   ];
 
   return (
-    <>
+    <PageShell>
       <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-indigo-50/30">
-        {/* Header/Navigation */}
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-blue-100/50 shadow-sm">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-2 group">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded-xl shadow-lg">
-                    <Home className="h-6 w-6" />
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    RentSpace
-                  </h1>
-                  <p className="text-xs text-gray-500">Find Your Perfect Stay</p>
-                </div>
-              </Link>
-
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex items-center gap-1">
-                <Link 
-                  href="/" 
-                  className="flex items-center gap-1 text-sm text-gray-700 hover:text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all duration-300 font-medium"
-                >
-                  <Home className="h-4 w-4" /> Home
-                </Link>
-                
-                <DropdownMenu 
-                  title="Properties" 
-                  items={[
-                    { name: 'Apartments', icon: <Building className="h-4 w-4" />, href: '/properties/apartments' },
-                    { name: 'Houses', icon: <Home className="h-4 w-4" />, href: '/properties/houses' },
-                    { name: 'Rooms', icon: <Bed className="h-4 w-4" />, href: '/properties/rooms' },
-                    { name: 'Studios', icon: <DoorOpen className="h-4 w-4" />, href: '/properties/studios' },
-                  ]}
-                />
-                
-                <DropdownMenu 
-                  title="Services" 
-                  items={[
-                    { name: 'Long Term Stays', icon: <CalendarRange className="h-4 w-4" />, href: '/services/long-term' },
-                    { name: 'Corporate Housing', icon: <Briefcase className="h-4 w-4" />, href: '/services/corporate' },
-                    { name: 'Student Housing', icon: <BookOpen className="h-4 w-4" />, href: '/services/student' },
-                    { name: 'Pet Friendly', icon: <Dog className="h-4 w-4" />, href: '/services/pet-friendly' },
-                  ]}
-                />
-                
-                <Link 
-                  href="/how-it-works" 
-                  className="flex items-center gap-1 text-sm text-gray-700 hover:text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all duration-300 font-medium"
-                >
-                  <HelpCircle className="h-4 w-4" /> How it Works
-                </Link>
-                
-                <Link 
-                  href="/host" 
-                  className="flex items-center gap-1 text-sm text-gray-700 hover:text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all duration-300 font-medium"
-                >
-                  <Key className="h-4 w-4" /> Become a Host
-                </Link>
-              </nav>
-
-              {/* User Actions */}
-              <div className="flex items-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="hidden sm:flex items-center gap-2 text-gray-600 hover:text-blue-600"
-                >
-                  <Heart className="h-4 w-4" />
-                  <span className="text-sm">Saved</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="hidden sm:flex items-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
-                >
-                  <User className="h-4 w-4" />
-                  <span className="text-sm">Log in</span>
-                </Button>
-                
-                <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-blue-200">
-                  Sign up
-                </Button>
-
-                {/* Mobile Menu Button */}
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-                >
-                  {mobileMenuOpen ? (
-                    <X className="h-5 w-5 text-gray-600" />
-                  ) : (
-                    <MenuIcon className="h-5 w-5 text-gray-600" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-              <div className="md:hidden mt-4 pb-4 animate-slide-up">
-                <div className="space-y-2">
-                  <Link href="/" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                    <Home className="h-4 w-4 inline mr-2" /> Home
-                  </Link>
-                  <Link href="/properties" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                    <Building className="h-4 w-4 inline mr-2" /> Properties
-                  </Link>
-                  <Link href="/services" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                    <HelpCircle className="h-4 w-4 inline mr-2" /> Services
-                  </Link>
-                  <Link href="/how-it-works" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                    <HelpCircle className="h-4 w-4 inline mr-2" /> How it Works
-                  </Link>
-                  <Link href="/host" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                    <Key className="h-4 w-4 inline mr-2" /> Become a Host
-                  </Link>
-                  <div className="pt-2 border-t">
-                    <Link href="/saved" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                      <Heart className="h-4 w-4 inline mr-2" /> Saved Properties
-                    </Link>
-                    <Link href="/login" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg">
-                      <User className="h-4 w-4 inline mr-2" /> Log in
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* Hero Section */}
+      {/* Page Header */}
+      <div className="container mx-auto px-4 py-6">
+        <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+          <span>Home</span><ChevronRight className="h-3 w-3" /><span className="text-[#2A4D69] font-medium">Room Rental</span>
+        </nav>
+        <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">RentSpace</h1>
+        <p className="text-[#6B7B8E] mt-1">Find, manage, and book room rentals with ease.</p>
+      </div>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-8 animate-fade-in-up">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -1561,72 +1433,6 @@ export default function RentalPage() {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="bg-white border-t border-gray-200">
-          <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded-lg">
-                    <Home className="h-6 w-6" />
-                  </div>
-                  <span className="text-xl font-bold text-gray-900">RentSpace</span>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  Your trusted platform for finding and booking rental properties worldwide.
-                </p>
-                <div className="flex gap-3">
-                  <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-600">
-                    <Facebook className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-600">
-                    <Twitter className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-600">
-                    <Instagram className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-4">For Renters</h3>
-                <ul className="space-y-2">
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">How it Works</Link></li>
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">Safety Tips</Link></li>
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">FAQ</Link></li>
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">Contact Support</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-4">For Hosts</h3>
-                <ul className="space-y-2">
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">List Your Property</Link></li>
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">Host Resources</Link></li>
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">Safety Standards</Link></li>
-                  <li><Link href="#" className="text-gray-600 hover:text-blue-600">Community</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-4">Stay Updated</h3>
-                <p className="text-gray-600 mb-4">Subscribe to our newsletter for the latest deals and tips.</p>
-                <div className="flex gap-2">
-                  <Input placeholder="Your email" className="border-gray-300" />
-                  <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-                    Subscribe
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-200 mt-8 pt-8 text-center text-gray-600">
-              <p>© 2024 RentSpace. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
+    </PageShell>
   );
 }

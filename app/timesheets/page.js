@@ -36,8 +36,9 @@ import {
   Zap,
   Moon,
   Mail as MailIcon,
-  Trash2
+  Trash2,
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -1068,21 +1069,24 @@ const TimesheetsSystem = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Maintenance Timesheets</h1>
-            <p className="text-gray-500 mt-2">
-              {employees.length} employees • {timesheets.length} entries • Pay Period
-            </p>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Timesheets</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Maintenance Timesheets</h1>
+            <p className="text-[#6B7B8E] mt-1">{employees.length} employees • {timesheets.length} entries • Pay Period tracking</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start flex-wrap">
             <div className="flex items-center gap-2">
-              <Label className="text-sm whitespace-nowrap">Pay Period Start Day:</Label>
-              <Select 
-                value={payPeriodStartDay.toString()} 
+              <Label className="text-sm whitespace-nowrap text-[#6B7B8E]">Pay Period Start:</Label>
+              <Select
+                value={payPeriodStartDay.toString()}
                 onValueChange={(value) => setPayPeriodStartDay(parseInt(value))}
               >
                 <SelectTrigger className="w-24">
@@ -1091,7 +1095,7 @@ const TimesheetsSystem = () => {
                 <SelectContent>
                   {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
                     <SelectItem key={day} value={day.toString()}>
-                      {day}th of month
+                      {day}th
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1108,87 +1112,38 @@ const TimesheetsSystem = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Employees</p>
-                  <h3 className="text-2xl font-bold mt-2">{employees.length}</h3>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Regular Hours</p>
-                  <h3 className="text-2xl font-bold mt-2">
-                    {employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).regular, 0).toFixed(1)}
-                  </h3>
-                </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <Clock className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Overtime 1.5x</p>
-                  <h3 className="text-2xl font-bold mt-2">
-                    {employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).overtime1_5x, 0).toFixed(1)}
-                  </h3>
-                </div>
-                <div className="p-3 bg-orange-100 rounded-full">
-                  <Zap className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Overtime 2.0x</p>
-                  <h3 className="text-2xl font-bold mt-2">
-                    {employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).overtime2_0x, 0).toFixed(1)}
-                  </h3>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <Zap className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Current Period</p>
-                  <h3 className="text-2xl font-bold mt-2">
-                    {payPeriodStartDay}
-                  </h3>
-                </div>
-                <div className="p-3 bg-indigo-100 rounded-full">
-                  <Calendar className="w-6 h-6 text-indigo-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 bg-white border rounded-lg text-sm">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-blue-500" />
+            <span className="text-lg font-bold text-[#2A4D69]">{employees.length}</span>
+            <span className="text-[#6B7B8E]">Employees</span>
+          </div>
+          <span className="text-[#6B7B8E] hidden sm:block">·</span>
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-green-500" />
+            <span className="text-lg font-bold text-[#2A4D69]">{employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).regular, 0).toFixed(1)}</span>
+            <span className="text-[#6B7B8E]">Regular hrs</span>
+          </div>
+          <span className="text-[#6B7B8E] hidden sm:block">·</span>
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-orange-500" />
+            <span className="text-lg font-bold text-[#2A4D69]">{employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).overtime1_5x, 0).toFixed(1)}</span>
+            <span className="text-[#6B7B8E]">OT 1.5×</span>
+          </div>
+          <span className="text-[#6B7B8E] hidden sm:block">·</span>
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-purple-500" />
+            <span className="text-lg font-bold text-[#2A4D69]">{employees.reduce((sum, emp) => sum + calculateEmployeePayPeriodTotals(emp.id).overtime2_0x, 0).toFixed(1)}</span>
+            <span className="text-[#6B7B8E]">OT 2×</span>
+          </div>
+          <span className="text-[#6B7B8E] hidden sm:block">·</span>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-indigo-500" />
+            <span className="text-lg font-bold text-[#2A4D69]">{payPeriodStartDay}th</span>
+            <span className="text-[#6B7B8E]">Period start day</span>
+          </div>
         </div>
-      </div>
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -1530,7 +1485,8 @@ const TimesheetsSystem = () => {
           </AlertDescription>
         </Alert>
       )}
-    </div>
+      </main>
+    </PageShell>
   );
 };
 

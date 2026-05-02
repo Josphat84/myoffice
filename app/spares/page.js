@@ -1,8 +1,7 @@
 // app/spares/page.js
 'use client';
 
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageShell } from '@/components/PageShell';
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Package, Search, Plus, Edit, Trash2, Copy,
@@ -53,117 +52,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-// ============= STUNNING NATURE WALLPAPER COLLECTION =============
-const natureWallpapers = [
-  {
-    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Iceland Ice Cave",
-    location: "Iceland - Crystal Ice Cave"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Enchanted Forest",
-    location: "Pacific Northwest"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Misty Morning",
-    location: "Great Smoky Mountains"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Sunbeams Through Forest",
-    location: "Olympic National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Alpine Lake",
-    location: "Canadian Rockies"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Waterfall Valley",
-    location: "Yosemite National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Desert Dunes",
-    location: "Namibia"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Mountain Lake Reflection",
-    location: "Lake Moraine, Canada"
-  }
-];
+// Animation styles defined in globals.css
 
-// ============= ANIMATION STYLES =============
-const animationStyles = `
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slide-down {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes expand {
-    from {
-      opacity: 0;
-      transform: scaleY(0);
-      max-height: 0;
-    }
-    to {
-      opacity: 1;
-      transform: scaleY(1);
-      max-height: 500px;
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-slide-down {
-    animation: slide-down 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-expand {
-    animation: expand 0.3s ease-out forwards;
-  }
-
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
-`;
 
 // API Configuration
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -438,7 +329,7 @@ const CompactMetricsCard = ({ title, value, icon: Icon, color, subtitle, onClick
       <Tooltip>
         <TooltipTrigger asChild>
           <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 bg-white/90 backdrop-blur-sm ${onClick ? 'cursor-pointer' : ''}`}
+            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 bg-white ${onClick ? 'cursor-pointer' : ''}`}
             onClick={onClick}
           >
             <CardContent className="p-3">
@@ -529,7 +420,7 @@ const CompactSpareCard = ({ spare, onEdit, onDelete, onFavorite, isFavorite, onV
   const priority = getPriorityConfig(spare.priority);
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 bg-white/90 backdrop-blur-sm overflow-hidden">
+    <Card className="group hover:shadow-lg transition-all duration-200 bg-white overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -712,7 +603,7 @@ const EnhancedListView = ({ spares, onEdit, onDelete, onFavorite, onViewDetails,
   };
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm">
+    <Card className="bg-white">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
@@ -923,28 +814,8 @@ export default function SparesPage() {
   const [sortConfig, setSortConfig] = useState({ field: 'stock_code', direction: 'asc' });
   const [expandedItems, setExpandedItems] = useState(new Set());
   const [showFilters, setShowFilters] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
   const [showMetrics, setShowMetrics] = useState(true);
 
-  // Check auth on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  // Rotating nature wallpaper every 2 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
-    }, 120000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Load data
   useEffect(() => {
@@ -1165,55 +1036,26 @@ export default function SparesPage() {
 
   const hasActiveFilters = search || categoryFilter !== 'all' || priorityFilter !== 'all' || stockFilter !== 'all';
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null);
-    window.location.reload();
-  };
-
   return (
-    <>
-      <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen">
-        {/* Rotating Nature Wallpaper Background */}
-        <div className="fixed inset-0 z-0">
-          {natureWallpapers.map((wallpaper, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
-              style={{
-                backgroundImage: `url('${wallpaper.url}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: index === currentWallpaperIndex ? 1 : 0,
-                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
-                transition: 'opacity 2000ms ease-in-out',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
-            {natureWallpapers[currentWallpaperIndex]?.location}
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Ozech Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Spares</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Spare Parts Inventory</h1>
+            <p className="text-[#6B7B8E] mt-1">
+              Manage spare parts stock, track usage, set reorder points, and prevent equipment downtime.
+            </p>
           </div>
+          <Button onClick={() => setFormOpen(true)} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start">
+            <Plus className="h-5 w-5" /> Add Spare Part
+          </Button>
         </div>
-
-        <div className="relative z-10">
-          <Header isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
-
-          <main className="container mx-auto px-4 py-6 space-y-6">
-            {/* Header */}
-            <div className="text-center space-y-2 animate-fade-in">
-              <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">Spare Parts Inventory</h1>
-              <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                Manage and monitor all spare parts inventory across your organization
-              </p>
-              <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
-                <Info className="h-4 w-4" />
-                <span>Click on any <ChevronDown className="h-3 w-3 inline" /> to expand details • Use filters to narrow results</span>
-              </div>
-            </div>
 
             {/* Metrics Row with Toggle */}
             <div className="space-y-2">
@@ -1252,7 +1094,7 @@ export default function SparesPage() {
                       placeholder="Search stock code, description..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="pl-10 bg-white/80 backdrop-blur-sm"
+                      className="pl-10 bg-white"
                     />
                   </div>
                   <TooltipProvider>
@@ -1262,7 +1104,7 @@ export default function SparesPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => setShowFilters(!showFilters)}
-                          className="bg-white/80 backdrop-blur-sm"
+                          className="bg-white"
                         >
                           <Filter className="h-4 w-4 mr-1" />
                           Filters
@@ -1282,7 +1124,7 @@ export default function SparesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={clearFilters}
-                            className="bg-white/80 backdrop-blur-sm"
+                            className="bg-white"
                           >
                             <FilterX className="h-4 w-4 mr-1" />
                             Clear
@@ -1297,7 +1139,7 @@ export default function SparesPage() {
                 </div>
                 
                 <div className="flex gap-2 w-full sm:w-auto">
-                  <div className="flex rounded-md border bg-white/80 backdrop-blur-sm">
+                  <div className="flex rounded-md border bg-white">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -1341,7 +1183,7 @@ export default function SparesPage() {
                           size="icon"
                           onClick={loadData}
                           disabled={loading}
-                          className="bg-white/80 backdrop-blur-sm"
+                          className="bg-white"
                         >
                           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                         </Button>
@@ -1369,7 +1211,7 @@ export default function SparesPage() {
 
               {/* Advanced Filters Panel */}
               {showFilters && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-white/80 backdrop-blur-sm rounded-lg border animate-slide-down">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-white rounded-lg border animate-slide-down">
                   <div>
                     <label className="text-xs font-medium text-gray-700 mb-1 block">Category</label>
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -1439,7 +1281,7 @@ export default function SparesPage() {
               viewMode === 'grid' ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <Card key={i} className="h-[280px] bg-white/90 backdrop-blur-sm">
+                    <Card key={i} className="h-[280px] bg-white">
                       <CardHeader>
                         <Skeleton className="h-4 w-3/4" />
                         <Skeleton className="h-3 w-1/2" />
@@ -1456,7 +1298,7 @@ export default function SparesPage() {
                   ))}
                 </div>
               ) : (
-                <Card className="bg-white/90 backdrop-blur-sm">
+                <Card className="bg-white">
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader>
@@ -1480,7 +1322,7 @@ export default function SparesPage() {
                 </Card>
               )
             ) : filteredSpares.length === 0 ? (
-              <Card className="border-dashed bg-white/90 backdrop-blur-sm text-center py-12">
+              <Card className="border-dashed bg-white text-center py-12">
                 <CardContent className="flex flex-col items-center justify-center">
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-bold mb-2">No spare parts found</h3>
@@ -1531,11 +1373,7 @@ export default function SparesPage() {
                 onToggleExpand={toggleExpand}
               />
             )}
-          </main>
-
-          <Footer />
-        </div>
-      </div>
+      </main>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -1591,7 +1429,7 @@ export default function SparesPage() {
           onOpenChange={setDetailsOpen}
         />
       )}
-    </>
+    </PageShell>
   );
 }
 

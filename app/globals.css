@@ -6,8 +6,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,73 +44,103 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ============================================
+   OZECH BRAND DESIGN SYSTEM
+   Primary Blue:   #2A4D69 — Trust, Stability
+   Slate Gray:     #6B7B8E — Professionalism
+   Sky Blue:       #86BBD8 — Innovation, Clarity
+   Seafoam Green:  #78C0A6 — Growth, Balance
+   ============================================ */
+
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+
+  /* Backgrounds */
+  --background: oklch(0.978 0.006 234);
+  --foreground: oklch(0.18 0.02 234);
+
+  /* Cards */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.18 0.02 234);
+
+  /* Popovers */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.18 0.02 234);
+
+  /* Primary: Ozech Deep Ocean Blue #2A4D69 */
+  --primary: oklch(0.38 0.065 234);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+
+  /* Secondary: Ozech Slate Gray #6B7B8E */
+  --secondary: oklch(0.94 0.012 234);
+  --secondary-foreground: oklch(0.38 0.065 234);
+
+  /* Muted */
+  --muted: oklch(0.965 0.008 234);
+  --muted-foreground: oklch(0.55 0.025 234);
+
+  /* Accent: Ozech Sky Blue #86BBD8 */
+  --accent: oklch(0.93 0.020 222);
+  --accent-foreground: oklch(0.32 0.065 234);
+
+  /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Borders & Inputs */
+  --border: oklch(0.905 0.015 234);
+  --input: oklch(0.905 0.015 234);
+  --ring: oklch(0.38 0.065 234);
+
+  /* Charts — Ozech brand palette */
+  --chart-1: oklch(0.38 0.065 234);   /* Ozech Blue */
+  --chart-2: oklch(0.74 0.060 220);   /* Sky Blue */
+  --chart-3: oklch(0.72 0.075 163);   /* Seafoam Green */
+  --chart-4: oklch(0.828 0.189 84.429); /* Amber */
+  --chart-5: oklch(0.577 0.245 27.325); /* Red */
+
+  /* Sidebar */
+  --sidebar: oklch(0.25 0.035 234);
+  --sidebar-foreground: oklch(0.92 0.01 234);
+  --sidebar-primary: oklch(0.74 0.060 220);
+  --sidebar-primary-foreground: oklch(0.18 0.02 234);
+  --sidebar-accent: oklch(0.32 0.045 234);
+  --sidebar-accent-foreground: oklch(0.92 0.01 234);
+  --sidebar-border: oklch(0.32 0.045 234);
+  --sidebar-ring: oklch(0.74 0.060 220);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.15 0.02 234);
+  --foreground: oklch(0.95 0.005 234);
+  --card: oklch(0.20 0.025 234);
+  --card-foreground: oklch(0.95 0.005 234);
+  --popover: oklch(0.20 0.025 234);
+  --popover-foreground: oklch(0.95 0.005 234);
+  --primary: oklch(0.65 0.065 220);
+  --primary-foreground: oklch(0.15 0.02 234);
+  --secondary: oklch(0.26 0.025 234);
+  --secondary-foreground: oklch(0.92 0.01 234);
+  --muted: oklch(0.26 0.025 234);
+  --muted-foreground: oklch(0.65 0.025 234);
+  --accent: oklch(0.30 0.040 234);
+  --accent-foreground: oklch(0.92 0.01 234);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.65 0.065 220);
+  --chart-1: oklch(0.65 0.065 220);
+  --chart-2: oklch(0.74 0.060 220);
+  --chart-3: oklch(0.72 0.075 163);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.704 0.191 22.216);
+  --sidebar: oklch(0.18 0.025 234);
+  --sidebar-foreground: oklch(0.92 0.01 234);
+  --sidebar-primary: oklch(0.65 0.065 220);
+  --sidebar-primary-foreground: oklch(0.15 0.02 234);
+  --sidebar-accent: oklch(0.25 0.035 234);
+  --sidebar-accent-foreground: oklch(0.92 0.01 234);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.65 0.065 220);
 }
 
 @layer base {
@@ -118,5 +149,295 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading), var(--font-sans), sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ============================================
+   OZECH UTILITY CLASSES
+   ============================================ */
+
+/* Ozech brand gradient */
+.ozech-gradient {
+  background: linear-gradient(135deg, #2A4D69 0%, #1a3348 100%);
+}
+
+/* Ozech page background — clean, professional */
+.ozech-page-bg {
+  background: linear-gradient(160deg, #F0F5F9 0%, #E8EEF5 50%, #EDF2F7 100%);
+  min-height: 100vh;
+}
+
+/* Ozech module page content wrapper */
+.ozech-content {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(42, 77, 105, 0.08), 0 4px 16px rgba(42, 77, 105, 0.06);
+}
+
+/* Stat card highlight */
+.ozech-stat-card {
+  background: white;
+  border: 1px solid rgba(42, 77, 105, 0.1);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.ozech-stat-card:hover {
+  box-shadow: 0 4px 16px rgba(42, 77, 105, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Filter bar */
+.ozech-filter-bar {
+  background: white;
+  border: 1px solid rgba(42, 77, 105, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* Page header section */
+.ozech-page-header {
+  background: linear-gradient(135deg, #2A4D69 0%, #1e3a52 100%);
+  color: white;
+}
+
+/* Smooth page transitions */
+@keyframes ozech-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ozech-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-ozech-fade-up {
+  animation: ozech-fade-up 0.4s ease-out forwards;
+}
+
+.animate-ozech-fade-in {
+  animation: ozech-fade-in 0.3s ease-out forwards;
+}
+
+.delay-50  { animation-delay: 50ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-250 { animation-delay: 250ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ============================================
+   MODULE CARD FLY-IN (emerge from below)
+   ============================================ */
+
+@keyframes oz-card-fly-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.oz-card-fly-in {
+  animation: oz-card-fly-in 0.48s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+/* ============================================
+   HERO — static base + transform-animated glow
+   (compositor-only: no paint warnings)
+   ============================================ */
+
+.oz-hero {
+  position: relative;
+  background: linear-gradient(160deg, #243F5C 0%, #1e3a52 55%, #162d40 100%);
+  overflow: hidden;
+}
+
+/* Large ambient blob that drifts via transform — GPU composited, no repaint */
+.oz-hero-glow {
+  position: absolute;
+  inset: -60%;
+  background:
+    radial-gradient(ellipse 45% 55% at 78% 14%, rgba(134,187,216,0.30) 0%, transparent 55%),
+    radial-gradient(ellipse 38% 52% at 22% 84%, rgba(120,192,166,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 42% at 52% 50%, rgba(255,255,255,0.06) 0%, transparent 50%);
+  animation: oz-hero-glow 15s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes oz-hero-glow {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(9%, -6%); }
+}
+
+/* ============================================
+   FLOATING ELEMENT ANIMATION
+   ============================================ */
+
+@keyframes oz-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+.oz-float {
+  animation: oz-float 4s ease-in-out infinite;
+}
+
+/* ============================================
+   PAGE BACKGROUND ART — 5 atmospheric themes
+   All use multi-radial "light glow" technique
+   ============================================ */
+
+.oz-bg-dawn {
+  background:
+    radial-gradient(ellipse 120% 80% at 10% 10%, rgba(255,195,140,0.50) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 110% at 90% 90%, rgba(150,200,235,0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 70% at 55% 45%, rgba(255,240,210,0.35) 0%, transparent 50%),
+    linear-gradient(155deg, #F8EBDA 0%, #F3EDDF 40%, #EBF0F8 100%);
+}
+
+.oz-bg-forest {
+  background:
+    radial-gradient(ellipse 100% 70% at 85% 15%, rgba(165,220,190,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 100% at 10% 80%, rgba(160,200,235,0.50) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 70% at 50% 50%, rgba(190,230,205,0.40) 0%, transparent 50%),
+    linear-gradient(170deg, #E4F2EA 0%, #E8F4F0 40%, #E6F0F8 100%);
+}
+
+.oz-bg-golden {
+  background:
+    radial-gradient(ellipse 90% 80% at 80% 20%, rgba(255,215,140,0.50) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 70% at 15% 75%, rgba(240,200,160,0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 110% 50% at 50% 55%, rgba(255,235,190,0.35) 0%, transparent 45%),
+    linear-gradient(155deg, #FAF0DE 0%, #F7ECDA 40%, #F5EEDF 100%);
+}
+
+.oz-bg-twilight {
+  background:
+    radial-gradient(ellipse 100% 70% at 65% 12%, rgba(190,175,235,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 100% at 20% 82%, rgba(175,195,240,0.50) 0%, transparent 55%),
+    radial-gradient(ellipse 110% 60% at 50% 50%, rgba(200,185,240,0.40) 0%, transparent 50%),
+    linear-gradient(160deg, #EAE8FB 0%, #EAECF8 40%, #E7EAF8 100%);
+}
+
+.oz-bg-ocean {
+  background:
+    radial-gradient(ellipse 90% 80% at 18% 25%, rgba(155,210,235,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 110% 70% at 82% 78%, rgba(155,215,200,0.50) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 90% at 55% 12%, rgba(170,215,240,0.40) 0%, transparent 50%),
+    linear-gradient(165deg, #E0EDF8 0%, #E4F2EE 40%, #E2EEF8 100%);
+}
+
+/* Nature wallpaper base — URL supplied via CSS custom property from React */
+.oz-wallpaper {
+  background-image: var(--wallpaper, linear-gradient(160deg, #E8F0F7 0%, #F0F5F9 100%));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Background crossfade helpers — opacity-only transition (Composite, no Paint) */
+.oz-bg-entering {
+  opacity: 0;
+  transition: opacity 3000ms ease;
+}
+.oz-bg-visible {
+  opacity: 1;
+}
+
+/* Stagger animation delays for module cards */
+.oz-d1 { animation-delay:  60ms; }
+.oz-d2 { animation-delay: 120ms; }
+.oz-d3 { animation-delay: 180ms; }
+.oz-d4 { animation-delay: 240ms; }
+.oz-d5 { animation-delay: 300ms; }
+.oz-d6 { animation-delay: 360ms; }
+.oz-d7 { animation-delay: 420ms; }
+.oz-d8 { animation-delay: 480ms; }
+
+/* Focus ring — Ozech blue */
+.ozech-focus:focus-visible {
+  outline: 2px solid #2A4D69;
+  outline-offset: 2px;
+}
+
+/* Table improvements */
+.ozech-table th {
+  background: #EEF3F8;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6B7B8E;
+}
+
+.ozech-table tr:hover td {
+  background: #F5F8FB;
+}
+
+/* Badge variants for status */
+.status-active {
+  background: #E6F4EE;
+  color: #1D6B3C;
+  border: 1px solid #B8DEC9;
+}
+.status-inactive {
+  background: #F0F2F5;
+  color: #5A6672;
+  border: 1px solid #D0D5DC;
+}
+.status-pending {
+  background: #FFF8E6;
+  color: #92570A;
+  border: 1px solid #F5DBA0;
+}
+.status-approved {
+  background: #E6F4EE;
+  color: #1D6B3C;
+  border: 1px solid #B8DEC9;
+}
+.status-rejected {
+  background: #FEF0EE;
+  color: #9B2C1A;
+  border: 1px solid #F9C4BB;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.02 234);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.60 0.03 234);
+}
+
+/* Print styles */
+@media print {
+  .no-print { display: none !important; }
+  .ozech-page-bg { background: white !important; }
 }

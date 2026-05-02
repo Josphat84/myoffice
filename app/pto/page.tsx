@@ -10,8 +10,9 @@ import {
   Zap, Wrench, Building2, X, Radio, Activity, BookOpen,
   FileCheck, ClipboardCheck, AlertOctagon, Bell, Settings,
   LayoutGrid, Table as TableIcon, Maximize2, Minimize2,
-  ChevronsDown, ChevronsUp, Grip, MoreVertical, RefreshCw, Send
+  ChevronsDown, ChevronsUp, Grip, MoreVertical, RefreshCw, Send, ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 
 // =============== CONSTANTS ===============
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -1544,29 +1546,24 @@ export default function CompletePTOFormPage() {
   };
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="container mx-auto py-10 px-4 max-w-7xl">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <PageShell>
+      <TooltipProvider>
+        <main className="container mx-auto px-4 py-6 space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2 flex items-center gap-3">
-                <ClipboardList className="h-10 w-10 text-primary" />
-                Planned Task Observation
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                Complete PTO form with risk assessment and action tracking
-              </p>
+              <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+                <span>Home</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-[#2A4D69] font-medium">PTO</span>
+              </nav>
+              <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Planned Task Observation</h1>
+              <p className="text-[#6B7B8E] mt-1">Complete PTO forms with risk assessment and action tracking.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setViewMode('grid')}
-                    className={viewMode === 'grid' ? 'bg-accent' : ''}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'bg-accent' : ''}>
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -1574,12 +1571,7 @@ export default function CompletePTOFormPage() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setViewMode('table')}
-                    className={viewMode === 'table' ? 'bg-accent' : ''}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setViewMode('table')} className={viewMode === 'table' ? 'bg-accent' : ''}>
                     <TableIcon className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -1631,7 +1623,7 @@ export default function CompletePTOFormPage() {
                   status: "draft"
                 });
                 setIsFormModalOpen(true);
-              }}>
+              }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
                 <Plus className="h-4 w-4 mr-2" /> New PTO
               </Button>
             </div>
@@ -1731,56 +1723,77 @@ export default function CompletePTOFormPage() {
             </Card>
           )}
 
-          {/* Filter Bar */}
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by observer, worker, task..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+          {/* Search — always visible */}
+          <div className="relative bg-white rounded-lg border shadow-sm p-3 mb-3">
+            <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6B7B8E]" />
+            <Input
+              placeholder="Search by observer, worker, task..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-10 bg-white border-0 shadow-none focus-visible:ring-0"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-5 top-1/2 transform -translate-y-1/2 text-[#6B7B8E] hover:text-[#2A4D69]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-                {/* Expand/Collapse All (for table view) */}
-                {viewMode === 'table' && (
-                  <div className="flex gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={expandAll}>
-                          <ChevronsDown className="h-4 w-4 mr-2" />
-                          Expand All
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Expand all rows</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={collapseAll}>
-                          <ChevronsUp className="h-4 w-4 mr-2" />
-                          Collapse All
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Collapse all rows</TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
+          {/* Expand/Collapse All (for table view) — outside filters */}
+          {viewMode === 'table' && (
+            <div className="flex gap-2 mb-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={expandAll}>
+                    <ChevronsDown className="h-4 w-4 mr-2" />
+                    Expand All
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Expand all rows</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={collapseAll}>
+                    <ChevronsUp className="h-4 w-4 mr-2" />
+                    Collapse All
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Collapse all rows</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
 
-                {/* Section Filter */}
+          {/* Advanced Filters */}
+          <CollapsibleSection
+            title="Filters"
+            description="Filter observations by section, observer, status, and date range"
+            badge={
+              (() => {
+                const count = [
+                  selectedSection !== 'all',
+                  selectedObserver !== 'all',
+                  selectedStatus !== 'all',
+                  !!dateRange.from,
+                  !!dateRange.to,
+                ].filter(Boolean).length;
+                return count > 0
+                  ? <Badge className="ml-2 bg-[#2A4D69] text-white text-xs px-2 py-0.5">{count}</Badge>
+                  : null;
+              })()
+            }
+            defaultOpen={false}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+              {/* Section Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Section</Label>
                 <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger className="w-full lg:w-[150px]">
+                  <SelectTrigger className="bg-[#F0F5F9]">
                     <SelectValue placeholder="All Sections" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1790,10 +1803,13 @@ export default function CompletePTOFormPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
 
-                {/* Observer Filter */}
+              {/* Observer Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Observer</Label>
                 <Select value={selectedObserver} onValueChange={setSelectedObserver}>
-                  <SelectTrigger className="w-full lg:w-[180px]">
+                  <SelectTrigger className="bg-[#F0F5F9]">
                     <SelectValue placeholder="All Observers" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1803,10 +1819,13 @@ export default function CompletePTOFormPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
 
-                {/* Status Filter */}
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Status</Label>
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-full lg:w-[150px]">
+                  <SelectTrigger className="bg-[#F0F5F9]">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1817,60 +1836,68 @@ export default function CompletePTOFormPage() {
                     <SelectItem value="closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Date Range Filter */}
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[130px]">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {dateRange.from ? format(dateRange.from, 'LLL dd, y') : 'Start'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={dateRange.from || undefined}
-                        onSelect={(date) => setDateRange(prev => ({ ...prev, from: date || null }))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[130px]">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {dateRange.to ? format(dateRange.to, 'LLL dd, y') : 'End'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={dateRange.to || undefined}
-                        onSelect={(date) => setDateRange(prev => ({ ...prev, to: date || null }))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Clear Filters */}
-                {(searchTerm || selectedSection !== 'all' || selectedObserver !== 'all' || 
-                  selectedStatus !== 'all' || dateRange.from || dateRange.to) && (
-                  <Button variant="ghost" onClick={clearFilters}>
-                    <FilterX className="h-4 w-4 mr-2" />
-                    Clear
-                  </Button>
-                )}
               </div>
 
-              {/* Results Count */}
-              <div className="mt-4 text-sm text-muted-foreground">
+              {/* Date Range Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full bg-[#F0F5F9] justify-start">
+                      <Calendar className="h-4 w-4 mr-2 text-[#6B7B8E]" />
+                      <span className="text-[#6B7B8E]">{dateRange.from ? format(dateRange.from, 'LLL dd, y') : 'Start'}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateRange.from || undefined}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, from: date || null }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full bg-[#F0F5F9] justify-start">
+                      <Calendar className="h-4 w-4 mr-2 text-[#6B7B8E]" />
+                      <span className="text-[#6B7B8E]">{dateRange.to ? format(dateRange.to, 'LLL dd, y') : 'End'}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateRange.to || undefined}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, to: date || null }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-sm text-[#6B7B8E]">
                 Showing {filteredReports.length} of {reports.length} reports
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              {(selectedSection !== 'all' || selectedObserver !== 'all' ||
+                selectedStatus !== 'all' || dateRange.from || dateRange.to) && (
+                <Button variant="ghost" onClick={clearFilters} className="text-[#6B7B8E] hover:text-[#2A4D69]">
+                  <FilterX className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Results Count — always visible */}
+          <div className="mt-2 mb-6 text-sm text-[#6B7B8E]">
+            Showing {filteredReports.length} of {reports.length} reports
+          </div>
 
           {/* Loading State */}
           {loading && (
@@ -2579,8 +2606,8 @@ export default function CompletePTOFormPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
-    </TooltipProvider>
+        </main>
+      </TooltipProvider>
+    </PageShell>
   );
 }

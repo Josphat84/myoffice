@@ -1,7 +1,9 @@
 // frontend/app/maintenance/page.tsx
 
 'use client';
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ComponentType } from "react";
+import { PageShell } from "@/components/PageShell";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +28,6 @@ import {
   PlayCircle,
   PauseCircle,
   Users,
-  Wrench,
   Search,
   Grid,
   List,
@@ -198,29 +199,15 @@ interface WorkOrderStats {
   completionRate: number;
 }
 
-interface DashboardData {
-  totalWorkOrders: number;
-  completed: number;
-  inProgress: number;
-  pending: number;
-  onHold: number;
-  cancelled: number;
-  postponed: number;
-  notDone: number;
-  urgent: number;
-  high: number;
-  medium: number;
-  low: number;
-  efficiency: number;
-  trending: 'improving' | 'declining' | 'stable';
-  recommendations: string[];
-  avgCompletionTime: number;
-  overdueCount: number;
-  totalCost: number;
-  costSavings: number;
-  safetyScore: number;
-  teamPerformance: number;
-  completionRate: number;
+interface WorkOrderFilters {
+  status?: string;
+  artisanName?: string;
+  equipmentInfo?: string;
+  department?: string;
+  priority?: string;
+  progress?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 type ViewMode = 'grid' | 'list' | 'minimalist';
@@ -244,7 +231,7 @@ const getWorkOrders = async (): Promise<any[]> => {
   }
 };
 
-const createWorkOrder = async (workOrderData: any): Promise<{ success: boolean; data?: any; error?: string }> => {
+const createWorkOrder = async (workOrderData: Record<string, unknown>): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> => {
   try {
     const response = await fetch(`${API_BASE}/api/maintenance/work-orders`, {
       method: 'POST',
@@ -279,7 +266,7 @@ const createWorkOrder = async (workOrderData: any): Promise<{ success: boolean; 
   }
 };
 
-const updateWorkOrder = async (id: string, updates: any): Promise<{ success: boolean; data?: any; error?: string }> => {
+const updateWorkOrder = async (id: string, updates: Record<string, unknown>): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> => {
   try {
     const response = await fetch(`${API_BASE}/api/maintenance/work-orders/${id}`, {
       method: 'PATCH',
@@ -291,7 +278,7 @@ const updateWorkOrder = async (id: string, updates: any): Promise<{ success: boo
     const result = await response.json();
     
     const existingWorkOrders = JSON.parse(localStorage.getItem('workOrders') || '[]');
-    const updatedWorkOrders = existingWorkOrders.map((wo: any) => 
+    const updatedWorkOrders = existingWorkOrders.map((wo: WorkOrder) =>
       wo.id === id ? { ...wo, ...updates, updatedAt: new Date().toISOString() } : wo
     );
     localStorage.setItem('workOrders', JSON.stringify(updatedWorkOrders));
@@ -300,7 +287,7 @@ const updateWorkOrder = async (id: string, updates: any): Promise<{ success: boo
   } catch (error) {
     console.error('Error updating work order:', error);
     const existingWorkOrders = JSON.parse(localStorage.getItem('workOrders') || '[]');
-    const updatedWorkOrders = existingWorkOrders.map((wo: any) => 
+    const updatedWorkOrders = existingWorkOrders.map((wo: WorkOrder) =>
       wo.id === id ? { ...wo, ...updates, updatedAt: new Date().toISOString() } : wo
     );
     localStorage.setItem('workOrders', JSON.stringify(updatedWorkOrders));
@@ -317,14 +304,14 @@ const deleteWorkOrder = async (id: string): Promise<{ success: boolean; error?: 
     if (!response.ok) throw new Error(`Failed to delete work order: ${response.status}`);
     
     const existingWorkOrders = JSON.parse(localStorage.getItem('workOrders') || '[]');
-    const updatedWorkOrders = existingWorkOrders.filter((wo: any) => wo.id !== id);
+    const updatedWorkOrders = existingWorkOrders.filter((wo: WorkOrder) => wo.id !== id);
     localStorage.setItem('workOrders', JSON.stringify(updatedWorkOrders));
     
     return { success: true };
   } catch (error) {
     console.error('Error deleting work order:', error);
     const existingWorkOrders = JSON.parse(localStorage.getItem('workOrders') || '[]');
-    const updatedWorkOrders = existingWorkOrders.filter((wo: any) => wo.id !== id);
+    const updatedWorkOrders = existingWorkOrders.filter((wo: WorkOrder) => wo.id !== id);
     localStorage.setItem('workOrders', JSON.stringify(updatedWorkOrders));
     return { success: true, error: 'Deleted locally' };
   }
@@ -410,7 +397,7 @@ function WorkOrderDetailsModal({ workOrder, isOpen, onClose, onEdit, onUpdateSta
     }
   };
 
-  const statusOptions: { value: WorkOrderStatus; label: string; icon: any; description: string }[] = [
+  const statusOptions: { value: WorkOrderStatus; label: string; icon: ComponentType<{ className?: string }>; description: string }[] = [
     { value: 'pending', label: 'Pending', icon: Clock, description: 'Work has not started yet' },
     { value: 'in-progress', label: 'In Progress', icon: PlayCircle, description: 'Work is currently being done' },
     { value: 'completed', label: 'Completed', icon: CheckCircle2, description: 'Work has been completed' },
@@ -1288,7 +1275,7 @@ function WorkOrderPresets({ presets, onCreateFromPreset, onEditPreset, onDeleteP
           {presets.map((preset) => (
             <Card 
               key={preset.id} 
-              className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-gray-200/70 bg-white/90 backdrop-blur-sm"
+              className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-gray-200/70 bg-white"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -1501,10 +1488,10 @@ function WorkOrderPresets({ presets, onCreateFromPreset, onEditPreset, onDeleteP
                       <Label>Frequency</Label>
                       <Select
                         value={newPreset.recurrence.frequency}
-                        onValueChange={(value: any) =>
+                        onValueChange={(value: string) =>
                           setNewPreset({
                             ...newPreset,
-                            recurrence: { ...newPreset.recurrence!, frequency: value },
+                            recurrence: { ...newPreset.recurrence!, frequency: value as 'daily' | 'weekly' | 'monthly' | 'yearly' },
                           })
                         }
                       >
@@ -1650,7 +1637,7 @@ function WorkOrderCard({ workOrder, onEdit, onUpdate, onDelete, viewMode, onView
 
   if (viewMode === 'grid') {
     return (
-      <Card className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white/90 backdrop-blur-sm border border-gray-200/70">
+      <Card className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white border border-gray-200/70">
         <CardContent className="p-3">
           {/* Header */}
           <div className="flex items-start justify-between mb-2">
@@ -1864,8 +1851,8 @@ function WorkOrderCard({ workOrder, onEdit, onUpdate, onDelete, viewMode, onView
 interface EnhancedFilterProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  filters: any;
-  onFilterChange: (filters: any) => void;
+  filters: WorkOrderFilters;
+  onFilterChange: (filters: WorkOrderFilters) => void;
   onClearFilters: () => void;
   workOrders: WorkOrder[];
 }
@@ -1878,7 +1865,6 @@ function EnhancedFilter({
   onClearFilters,
   workOrders 
 }: EnhancedFilterProps) {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Extract unique values for filters
   const uniqueValues = useMemo(() => {
@@ -1890,7 +1876,7 @@ function EnhancedFilter({
     return { artisans, machines, depts, statuses };
   }, [workOrders]);
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: keyof WorkOrderFilters, value: string) => {
     const newFilters = { ...filters };
     if (value === "all" || !value) {
       delete newFilters[key];
@@ -1900,27 +1886,39 @@ function EnhancedFilter({
     onFilterChange(newFilters);
   };
 
-  return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          {/* Main Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search work orders..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+  const activeFilterCount = [filters.status, filters.artisanName, filters.equipmentInfo, filters.department, filters.priority, filters.progress, filters.dateFrom, filters.dateTo].filter(Boolean).length;
 
-          {/* Quick Filters Grid */}
+  return (
+    <div className="mb-6 space-y-3">
+      {/* Search — always visible */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7B8E] h-4 w-4" />
+        <Input
+          placeholder="Search work orders by title, artisan, equipment, department…"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10 bg-white"
+        />
+      </div>
+
+      {/* Filters — collapsed by default */}
+      <CollapsibleSection
+        title="Filters"
+        description="Narrow work orders by status, artisan, machine, priority or date"
+        badge={
+          activeFilterCount > 0 ? (
+            <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A4D69] text-[10px] font-bold text-white">
+              {activeFilterCount}
+            </span>
+          ) : null
+        }
+      >
+        <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-sm">Status</Label>
+              <Label className="text-xs font-medium text-[#6B7B8E]">Status</Label>
               <Select value={filters.status || "all"} onValueChange={(value) => handleFilterChange('status', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#F0F5F9]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1935,9 +1933,9 @@ function EnhancedFilter({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">Artisan</Label>
+              <Label className="text-xs font-medium text-[#6B7B8E]">Artisan</Label>
               <Select value={filters.artisanName || "all"} onValueChange={(value) => handleFilterChange('artisanName', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#F0F5F9]">
                   <SelectValue placeholder="All Artisans" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1950,9 +1948,9 @@ function EnhancedFilter({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">Machine</Label>
+              <Label className="text-xs font-medium text-[#6B7B8E]">Machine</Label>
               <Select value={filters.equipmentInfo || "all"} onValueChange={(value) => handleFilterChange('equipmentInfo', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#F0F5F9]">
                   <SelectValue placeholder="All Machines" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1965,9 +1963,9 @@ function EnhancedFilter({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm">Department</Label>
+              <Label className="text-xs font-medium text-[#6B7B8E]">Department</Label>
               <Select value={filters.department || "all"} onValueChange={(value) => handleFilterChange('department', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#F0F5F9]">
                   <SelectValue placeholder="All Departments" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1980,92 +1978,68 @@ function EnhancedFilter({
             </div>
           </div>
 
-          {/* Advanced Filters & Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="h-8"
-              >
-                <Filter className="h-3.5 w-3.5 mr-1.5" />
-                {showAdvancedFilters ? 'Hide' : 'Show'} Advanced
-              </Button>
-              
-              {(filters.status || filters.artisanName || filters.equipmentInfo || filters.department || filters.dateFrom || filters.dateTo) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClearFilters}
-                  className="h-8 text-red-600"
-                >
-                  <X className="h-3.5 w-3.5 mr-1.5" />
-                  Clear Filters
-                </Button>
-              )}
+          {/* More filters row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-[#6B7B8E]">Priority</Label>
+              <Select value={filters.priority || "all"} onValueChange={(value) => handleFilterChange('priority', value)}>
+                <SelectTrigger className="bg-[#F0F5F9]">
+                  <SelectValue placeholder="All Priorities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-[#6B7B8E]">Progress</Label>
+              <Select value={filters.progress || "all"} onValueChange={(value) => handleFilterChange('progress', value)}>
+                <SelectTrigger className="bg-[#F0F5F9]">
+                  <SelectValue placeholder="Any Progress" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any Progress</SelectItem>
+                  <SelectItem value="0-25">0–25%</SelectItem>
+                  <SelectItem value="25-50">25–50%</SelectItem>
+                  <SelectItem value="50-75">50–75%</SelectItem>
+                  <SelectItem value="75-100">75–100%</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-[#6B7B8E]">From date</Label>
+              <Input
+                type="date"
+                value={filters.dateFrom || ""}
+                onChange={(e) => onFilterChange({ ...filters, dateFrom: e.target.value })}
+                className="bg-[#F0F5F9]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-[#6B7B8E]">To date</Label>
+              <Input
+                type="date"
+                value={filters.dateTo || ""}
+                onChange={(e) => onFilterChange({ ...filters, dateTo: e.target.value })}
+                className="bg-[#F0F5F9]"
+              />
             </div>
           </div>
 
-          {/* Advanced Filters */}
-          {showAdvancedFilters && (
-            <div className="border rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm">Priority</Label>
-                  <Select value={filters.priority || "all"} onValueChange={(value) => handleFilterChange('priority', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Priorities" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Priorities</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm">Progress Range</Label>
-                  <Select value={filters.progress || "all"} onValueChange={(value) => handleFilterChange('progress', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Any Progress" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any Progress</SelectItem>
-                      <SelectItem value="0-25">0-25%</SelectItem>
-                      <SelectItem value="25-50">25-50%</SelectItem>
-                      <SelectItem value="50-75">50-75%</SelectItem>
-                      <SelectItem value="75-100">75-100%</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm">Date From</Label>
-                  <Input
-                    type="date"
-                    value={filters.dateFrom || ""}
-                    onChange={(e) => onFilterChange({ ...filters, dateFrom: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm">Date To</Label>
-                  <Input
-                    type="date"
-                    value={filters.dateTo || ""}
-                    onChange={(e) => onFilterChange({ ...filters, dateTo: e.target.value })}
-                  />
-                </div>
-              </div>
+          {activeFilterCount > 0 && (
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={onClearFilters} className="text-[#6B7B8E] hover:text-[#2A4D69]">
+                <X className="h-3.5 w-3.5 mr-1.5" />Clear filters
+              </Button>
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </CollapsibleSection>
+    </div>
   );
 }
 
@@ -2078,8 +2052,8 @@ export default function MaintenancePage() {
   const [sortField, setSortField] = useState<SortField>('dateRaised');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<any>({});
-  const [editingWorkOrder, setEditingWorkOrder] = useState<WorkOrder | null>(null);
+  const [filters, setFilters] = useState<WorkOrderFilters>({});
+  const [, setEditingWorkOrder] = useState<WorkOrder | null>(null);
   const [showWorkOrderForm, setShowWorkOrderForm] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [showPresets, setShowPresets] = useState(false);
@@ -2383,7 +2357,7 @@ export default function MaintenancePage() {
   };
 
   const filteredAndSortedWorkOrders = useMemo(() => {
-    let filtered = workOrders.filter(wo => {
+    const filtered = workOrders.filter(wo => {
       // Search query filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -2421,12 +2395,12 @@ export default function MaintenancePage() {
 
     // Sort work orders
     filtered.sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+      let aValue: string | number | null | undefined = a[sortField] as string | number | null | undefined;
+      let bValue: string | number | null | undefined = b[sortField] as string | number | null | undefined;
 
       if (sortField === 'dateRaised' || sortField === 'createdAt' || sortField === 'dueDate' || sortField === 'completedAt') {
-        aValue = aValue ? new Date(aValue).getTime() : 0;
-        bValue = bValue ? new Date(bValue).getTime() : 0;
+        aValue = aValue ? new Date(aValue as string).getTime() : 0;
+        bValue = bValue ? new Date(bValue as string).getTime() : 0;
       }
 
       if (sortField === 'estimatedHours' || sortField === 'progress') {
@@ -2435,9 +2409,9 @@ export default function MaintenancePage() {
       }
 
       if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        return (aValue as string) < (bValue as string) ? -1 : (aValue as string) > (bValue as string) ? 1 : 0;
       } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        return (aValue as string) > (bValue as string) ? -1 : (aValue as string) < (bValue as string) ? 1 : 0;
       }
     });
 
@@ -2504,53 +2478,31 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
-                <Wrench className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">Maintenance Dashboard</h1>
-                <p className="text-blue-100 text-sm">
-                  Manage and track maintenance work orders
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                onClick={loadWorkOrders}
-                variant="outline" 
-                className="bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button 
-                onClick={() => setShowPresets(true)}
-                variant="outline" 
-                className="bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Templates
-              </Button>
-              <Button 
-                onClick={handleCreateNewWorkOrder}
-                className="bg-white text-blue-600 hover:bg-blue-50"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Work Order
-              </Button>
-            </div>
+    <PageShell>
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        {/* Ozech Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Maintenance</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Maintenance Dashboard</h1>
+            <p className="text-[#6B7B8E] mt-1">Manage and track work orders, PM schedules, and equipment maintenance.</p>
+          </div>
+          <div className="flex flex-wrap gap-2 self-start">
+            <Button onClick={loadWorkOrders} variant="outline" size="sm" className="gap-1 border-[#2A4D69]/20 text-[#2A4D69]">
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </Button>
+            <Button onClick={() => setShowPresets(true)} variant="outline" size="sm" className="gap-1 border-[#2A4D69]/20 text-[#2A4D69]">
+              <Copy className="h-4 w-4" /> Templates
+            </Button>
+            <Button onClick={handleCreateNewWorkOrder} className="gap-1 bg-[#2A4D69] hover:bg-[#1e3a52] text-white">
+              <Plus className="h-4 w-4" /> New Work Order
+            </Button>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4">
         {/* Stats Overview */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
           <Card className="bg-white border">
@@ -2726,9 +2678,11 @@ export default function MaintenancePage() {
                   <Badge key={key} variant="secondary" className="gap-1">
                     {key}: {String(value)}
                     <button
+                      type="button"
+                      aria-label={`Remove ${key} filter`}
                       onClick={() => {
                         const newFilters = { ...filters };
-                        delete newFilters[key];
+                        delete newFilters[key as keyof WorkOrderFilters];
                         setFilters(newFilters);
                       }}
                       className="ml-1 hover:bg-gray-200 rounded"
@@ -2808,18 +2762,18 @@ export default function MaintenancePage() {
                 <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full flex items-center justify-center mb-4">
                   <FileText className="h-10 w-10 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No work orders found</h3>
-                <p className="text-gray-600 max-w-md mx-auto mb-6">
-                  {searchQuery || Object.keys(filters).length > 0 
-                    ? 'Try adjusting your search terms or filters to see more results.' 
-                    : 'Get started by creating your first work order.'}
+                <h3 className="text-xl font-bold text-[#2A4D69] mb-2">No work orders found</h3>
+                <p className="text-[#6B7B8E] max-w-md mx-auto mb-6">
+                  {searchQuery || Object.keys(filters).length > 0
+                    ? 'No work orders match your current search or filters. Try clearing filters or broadening your search.'
+                    : 'No work orders yet. Click "New Work Order" to log your first maintenance task.'}
                 </p>
-                <Button 
+                <Button
                   onClick={handleCreateNewWorkOrder}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Work Order
+                  New Work Order
                 </Button>
               </div>
             )}
@@ -2937,7 +2891,7 @@ export default function MaintenancePage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }
 
@@ -3016,27 +2970,29 @@ function calculateWorkOrderStats(workOrders: WorkOrder[]): WorkOrderStats {
   };
 }
 
-function backendToWorkOrder(backendOrder: any): WorkOrder {
+function backendToWorkOrder(backendOrder: Record<string, unknown>): WorkOrder {
+  const b = backendOrder as Record<string, string | number | boolean | null | undefined | unknown[]>;
   let jobType: JobType = { operational: false, maintenance: false, mining: false };
-  if (backendOrder.job_type) {
-    if (typeof backendOrder.job_type === 'string') {
+  if (b.job_type) {
+    if (typeof b.job_type === 'string') {
       jobType = {
-        operational: backendOrder.job_type.includes('operational'),
-        maintenance: backendOrder.job_type.includes('maintenance'),
-        mining: backendOrder.job_type.includes('mining'),
+        operational: b.job_type.includes('operational'),
+        maintenance: b.job_type.includes('maintenance'),
+        mining: b.job_type.includes('mining'),
       };
-    } else if (typeof backendOrder.job_type === 'object') {
-      jobType = backendOrder.job_type;
+    } else if (typeof b.job_type === 'object') {
+      jobType = (b.job_type as unknown) as JobType;
     }
   }
 
   let manpower: ManpowerRow[] = [];
-  if (backendOrder.manpower) {
-    if (Array.isArray(backendOrder.manpower)) {
-      manpower = backendOrder.manpower;
-    } else if (typeof backendOrder.manpower === 'string') {
+  const rawManpower = backendOrder.manpower;
+  if (rawManpower) {
+    if (Array.isArray(rawManpower)) {
+      manpower = rawManpower as ManpowerRow[];
+    } else if (typeof rawManpower === 'string') {
       try {
-        manpower = JSON.parse(backendOrder.manpower);
+        manpower = JSON.parse(rawManpower);
       } catch {
         manpower = [];
       }
@@ -3044,66 +3000,66 @@ function backendToWorkOrder(backendOrder: any): WorkOrder {
   }
 
   return {
-    id: backendOrder.id?.toString() || backendOrder.work_order_number || `WO-${Date.now()}`,
-    workOrderNumber: backendOrder.work_order_number || backendOrder.workOrderNumber || `WO-${Date.now()}`,
-    title: backendOrder.title || backendOrder.job_request_details?.substring(0, 50) || `Work Order: ${backendOrder.work_order_number}`,
-    description: backendOrder.description || backendOrder.job_request_details || 'No description provided',
-    status: (backendOrder.status as WorkOrderStatus) || 'pending',
-    priority: (backendOrder.priority as WorkOrderPriority) || 'medium',
-    allocatedTo: backendOrder.allocated_to || backendOrder.allocatedTo || 'Unassigned',
-    toDepartment: backendOrder.to_department || backendOrder.toDepartment || 'Unknown Department',
-    equipmentInfo: backendOrder.equipment_info || backendOrder.equipmentInfo || 'No equipment specified',
-    requestedBy: backendOrder.requested_by || backendOrder.requestedBy || 'Unknown',
-    dateRaised: backendOrder.date_raised || backendOrder.dateRaised || new Date().toISOString().split('T')[0],
-    timeRaised: backendOrder.time_raised || backendOrder.timeRaised || new Date().toTimeString().slice(0, 5),
-    estimatedHours: backendOrder.estimated_hours || backendOrder.estimatedHours || '0',
-    workDoneDetails: backendOrder.work_done_details || backendOrder.workDoneDetails || '',
-    progress: backendOrder.progress || 0,
-    createdAt: backendOrder.created_at || backendOrder.createdAt || new Date().toISOString(),
-    updatedAt: backendOrder.updated_at || backendOrder.updatedAt || new Date().toISOString(),
-    dueDate: backendOrder.due_date || backendOrder.dueDate,
-    location: backendOrder.location,
-    actualHours: backendOrder.actual_hours || backendOrder.actualHours,
-    actualCost: backendOrder.actual_cost || backendOrder.actualCost,
-    costEstimate: backendOrder.cost_estimate || backendOrder.costEstimate,
-    safetyLevel: backendOrder.safety_level || backendOrder.safetyLevel,
-    completedAt: backendOrder.completed_at || backendOrder.completedAt,
-    completedBy: backendOrder.completed_by || backendOrder.completedBy,
-    cancellationReason: backendOrder.cancellation_reason || backendOrder.cancellationReason,
-    postponeDate: backendOrder.postpone_date || backendOrder.postponeDate,
-    notes: backendOrder.notes,
-    attachments: backendOrder.attachments ? (Array.isArray(backendOrder.attachments) ? backendOrder.attachments : JSON.parse(backendOrder.attachments)) : [],
-    tags: backendOrder.tags ? (Array.isArray(backendOrder.tags) ? backendOrder.tags : JSON.parse(backendOrder.tags)) : [],
-    
+    id: String(b.id ?? b.work_order_number ?? `WO-${Date.now()}`),
+    workOrderNumber: String(b.work_order_number ?? b.workOrderNumber ?? `WO-${Date.now()}`),
+    title: String(b.title ?? (b.job_request_details ? String(b.job_request_details).substring(0, 50) : null) ?? `Work Order: ${b.work_order_number}`),
+    description: String(b.description ?? b.job_request_details ?? 'No description provided'),
+    status: (b.status as WorkOrderStatus) || 'pending',
+    priority: (b.priority as WorkOrderPriority) || 'medium',
+    allocatedTo: String(b.allocated_to ?? b.allocatedTo ?? 'Unassigned'),
+    toDepartment: String(b.to_department ?? b.toDepartment ?? 'Unknown Department'),
+    equipmentInfo: String(b.equipment_info ?? b.equipmentInfo ?? 'No equipment specified'),
+    requestedBy: String(b.requested_by ?? b.requestedBy ?? 'Unknown'),
+    dateRaised: String(b.date_raised ?? b.dateRaised ?? new Date().toISOString().split('T')[0]),
+    timeRaised: String(b.time_raised ?? b.timeRaised ?? new Date().toTimeString().slice(0, 5)),
+    estimatedHours: String(b.estimated_hours ?? b.estimatedHours ?? '0'),
+    workDoneDetails: String(b.work_done_details ?? b.workDoneDetails ?? ''),
+    progress: (b.progress as number) || 0,
+    createdAt: String(b.created_at ?? b.createdAt ?? new Date().toISOString()),
+    updatedAt: String(b.updated_at ?? b.updatedAt ?? new Date().toISOString()),
+    dueDate: b.due_date != null ? String(b.due_date) : b.dueDate != null ? String(b.dueDate) : undefined,
+    location: b.location != null ? String(b.location) : undefined,
+    actualHours: b.actual_hours != null ? Number(b.actual_hours) : b.actualHours != null ? Number(b.actualHours) : undefined,
+    actualCost: b.actual_cost != null ? Number(b.actual_cost) : b.actualCost != null ? Number(b.actualCost) : undefined,
+    costEstimate: b.cost_estimate != null ? Number(b.cost_estimate) : b.costEstimate != null ? Number(b.costEstimate) : undefined,
+    safetyLevel: (b.safety_level ?? b.safetyLevel) as 'low' | 'medium' | 'high' | undefined,
+    completedAt: b.completed_at != null ? String(b.completed_at) : b.completedAt != null ? String(b.completedAt) : undefined,
+    completedBy: b.completed_by != null ? String(b.completed_by) : b.completedBy != null ? String(b.completedBy) : undefined,
+    cancellationReason: b.cancellation_reason != null ? String(b.cancellation_reason) : b.cancellationReason != null ? String(b.cancellationReason) : undefined,
+    postponeDate: b.postpone_date != null ? String(b.postpone_date) : b.postponeDate != null ? String(b.postponeDate) : undefined,
+    notes: b.notes != null ? String(b.notes) : undefined,
+    attachments: b.attachments ? (Array.isArray(b.attachments) ? b.attachments as WorkOrder['attachments'] : JSON.parse(String(b.attachments))) : [],
+    tags: b.tags ? (Array.isArray(b.tags) ? b.tags as string[] : JSON.parse(String(b.tags))) : [],
+
     // Form fields
-    toSection: backendOrder.to_section || backendOrder.toSection || '',
-    fromDepartment: backendOrder.from_department || backendOrder.fromDepartment || '',
-    fromSection: backendOrder.from_section || backendOrder.fromSection || '',
-    accountNumber: backendOrder.account_number || backendOrder.accountNumber || '',
-    userLabToday: backendOrder.user_lab_today || backendOrder.userLabToday || '',
+    toSection: String(b.to_section ?? b.toSection ?? ''),
+    fromDepartment: String(b.from_department ?? b.fromDepartment ?? ''),
+    fromSection: String(b.from_section ?? b.fromSection ?? ''),
+    accountNumber: String(b.account_number ?? b.accountNumber ?? ''),
+    userLabToday: String(b.user_lab_today ?? b.userLabToday ?? ''),
     jobType,
-    jobRequestDetails: backendOrder.job_request_details || backendOrder.jobRequestDetails || '',
-    authorisingForeman: backendOrder.authorising_foreman || backendOrder.authorisingForeman || '',
-    authorisingEngineer: backendOrder.authorising_engineer || backendOrder.authorisingEngineer || '',
-    responsibleForeman: backendOrder.responsible_foreman || backendOrder.responsibleForeman || '',
-    jobInstructions: backendOrder.job_instructions || backendOrder.jobInstructions || '',
+    jobRequestDetails: String(b.job_request_details ?? b.jobRequestDetails ?? ''),
+    authorisingForeman: String(b.authorising_foreman ?? b.authorisingForeman ?? ''),
+    authorisingEngineer: String(b.authorising_engineer ?? b.authorisingEngineer ?? ''),
+    responsibleForeman: String(b.responsible_foreman ?? b.responsibleForeman ?? ''),
+    jobInstructions: String(b.job_instructions ?? b.jobInstructions ?? ''),
     manpower,
-    causeOfFailure: backendOrder.cause_of_failure || backendOrder.causeOfFailure || '',
-    delayDetails: backendOrder.delay_details || backendOrder.delayDetails || '',
-    artisanName: backendOrder.artisan_name || backendOrder.artisanName || '',
-    artisanSign: backendOrder.artisan_sign || backendOrder.artisanSign || '',
-    artisanDate: backendOrder.artisan_date || backendOrder.artisanDate || '',
-    foremanName: backendOrder.foreman_name || backendOrder.foremanName || '',
-    foremanSign: backendOrder.foreman_sign || backendOrder.foremanSign || '',
-    foremanDate: backendOrder.foreman_date || backendOrder.foremanDate || '',
-    timeWorkStarted: backendOrder.time_work_started || backendOrder.timeWorkStarted || '',
-    timeWorkFinished: backendOrder.time_work_finished || backendOrder.timeWorkFinished || '',
-    totalTimeWorked: backendOrder.total_time_worked || backendOrder.totalTimeWorked || '',
-    overtimeStartTime: backendOrder.overtime_start_time || backendOrder.overtimeStartTime || '',
-    overtimeEndTime: backendOrder.overtime_end_time || backendOrder.overtimeEndTime || '',
-    overtimeHours: backendOrder.overtime_hours || backendOrder.overtimeHours || '',
-    delayFromTime: backendOrder.delay_from_time || backendOrder.delayFromTime || '',
-    delayToTime: backendOrder.delay_to_time || backendOrder.delayToTime || '',
-    totalDelayHours: backendOrder.total_delay_hours || backendOrder.totalDelayHours || ''
+    causeOfFailure: String(b.cause_of_failure ?? b.causeOfFailure ?? ''),
+    delayDetails: String(b.delay_details ?? b.delayDetails ?? ''),
+    artisanName: String(b.artisan_name ?? b.artisanName ?? ''),
+    artisanSign: String(b.artisan_sign ?? b.artisanSign ?? ''),
+    artisanDate: String(b.artisan_date ?? b.artisanDate ?? ''),
+    foremanName: String(b.foreman_name ?? b.foremanName ?? ''),
+    foremanSign: String(b.foreman_sign ?? b.foremanSign ?? ''),
+    foremanDate: String(b.foreman_date ?? b.foremanDate ?? ''),
+    timeWorkStarted: String(b.time_work_started ?? b.timeWorkStarted ?? ''),
+    timeWorkFinished: String(b.time_work_finished ?? b.timeWorkFinished ?? ''),
+    totalTimeWorked: String(b.total_time_worked ?? b.totalTimeWorked ?? ''),
+    overtimeStartTime: String(b.overtime_start_time ?? b.overtimeStartTime ?? ''),
+    overtimeEndTime: String(b.overtime_end_time ?? b.overtimeEndTime ?? ''),
+    overtimeHours: String(b.overtime_hours ?? b.overtimeHours ?? ''),
+    delayFromTime: String(b.delay_from_time ?? b.delayFromTime ?? ''),
+    delayToTime: String(b.delay_to_time ?? b.delayToTime ?? ''),
+    totalDelayHours: String(b.total_delay_hours ?? b.totalDelayHours ?? '')
   };
 }

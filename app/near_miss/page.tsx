@@ -6,8 +6,9 @@ import {
   Calendar, Clock, MapPin, Building2, User, 
   FileWarning, ClipboardList, Info, Loader2,
   Eye, Pencil, Trash2, ChevronDown, ChevronUp,
-  Users, Download, RefreshCw
+  Users, Download, RefreshCw, ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
 
 // Shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 
 // =============== CONSTANTS ===============
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -734,23 +736,20 @@ export default function NearMissPage() {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-7xl space-y-8">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight flex items-center gap-3">
-            <AlertTriangle className="h-10 w-10 text-amber-500" />
-            Near Miss Reporting System
-          </h1>
-          <p className="text-muted-foreground max-w-3xl mt-2">
-            To be completed by any employee who witnesses a dangerous occurrence in which no injuries or property damage occurred.
-            Completing this report does not constitute an admission of liability.
-          </p>
+          <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+            <span>Home</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-[#2A4D69] font-medium">Near Miss</span>
+          </nav>
+          <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Near Miss Reporting</h1>
+          <p className="text-[#6B7B8E] mt-1 max-w-2xl">Report dangerous occurrences where no injury or damage occurred — every report helps prevent future incidents.</p>
         </div>
-        <Button onClick={() => {
-          setEditingReport(null);
-          setFormModalOpen(true);
-        }} className="bg-amber-600 hover:bg-amber-700">
+        <Button onClick={() => { setEditingReport(null); setFormModalOpen(true); }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start">
           <AlertTriangle className="h-4 w-4 mr-2" /> New Report
         </Button>
       </div>
@@ -832,25 +831,45 @@ export default function NearMissPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-          <div className="space-y-2 md:col-span-2">
-            <Label>Search</Label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search by department or reporter..." 
-                className="pl-8" 
-                value={nameFilter} 
-                onChange={e => setNameFilter(e.target.value)} 
-              />
-            </div>
-          </div>
+      {/* Search — always visible */}
+      <div className="relative bg-white rounded-lg border shadow-sm p-3">
+        <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6B7B8E]" />
+        <Input
+          placeholder="Search by department or reporter..."
+          className="pl-10 pr-10 bg-white border-0 shadow-none focus-visible:ring-0"
+          value={nameFilter}
+          onChange={e => setNameFilter(e.target.value)}
+        />
+        {nameFilter && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => setNameFilter('')}
+            className="absolute right-5 top-1/2 transform -translate-y-1/2 text-[#6B7B8E] hover:text-[#2A4D69]"
+          >
+            <FilterX className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Advanced Filters */}
+      <CollapsibleSection
+        title="Filters"
+        description="Filter reports by section and date range"
+        badge={
+          (sectionFilter !== 'all' || dateStart || dateEnd)
+            ? <Badge className="ml-2 bg-[#2A4D69] text-white text-xs px-2 py-0.5">
+                {[sectionFilter !== 'all', !!dateStart, !!dateEnd].filter(Boolean).length}
+              </Badge>
+            : null
+        }
+        defaultOpen={false}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end pt-2">
           <div className="space-y-2">
-            <Label>Section</Label>
+            <Label className="text-[#2A4D69] font-medium">Section</Label>
             <Select value={sectionFilter} onValueChange={setSectionFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-[#F0F5F9]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -861,19 +880,21 @@ export default function NearMissPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 md:col-span-1">
-            <Label>From</Label>
-            <Input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} />
+          <div className="space-y-2">
+            <Label className="text-[#2A4D69] font-medium">From</Label>
+            <Input type="date" className="bg-[#F0F5F9]" value={dateStart} onChange={e => setDateStart(e.target.value)} />
           </div>
-          <div className="space-y-2 md:col-span-1">
-            <Label>To</Label>
-            <Input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} />
+          <div className="space-y-2">
+            <Label className="text-[#2A4D69] font-medium">To</Label>
+            <Input type="date" className="bg-[#F0F5F9]" value={dateEnd} onChange={e => setDateEnd(e.target.value)} />
           </div>
-          <Button variant="outline" onClick={clearFilters} className="md:col-span-1">
-            <FilterX className="h-4 w-4 mr-2" /> Clear
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" onClick={clearFilters} className="text-[#6B7B8E] hover:text-[#2A4D69]">
+            <FilterX className="h-4 w-4 mr-2" /> Clear Filters
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleSection>
 
       {/* Loading State */}
       {loading && (
@@ -1015,6 +1036,7 @@ export default function NearMissPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
-    </div>
+      </main>
+    </PageShell>
   );
 }

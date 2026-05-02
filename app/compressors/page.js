@@ -131,8 +131,10 @@ import {
   FileImage,
   FileVideo,
   FileAudio,
-  File
+  File,
+  ChevronRight
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 
 // API Configuration - Use relative URL for same-origin or full URL for different origin
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
@@ -1618,57 +1620,27 @@ const CompressorReadingsSystem = () => {
   }
 
   return (
-    <div className={`min-h-screen p-4 md:p-6 transition-colors ${
-      settings.darkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white' 
-        : 'bg-gradient-to-br from-slate-50 via-blue-50/20 to-emerald-50/20'
-    }`}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
-                <Gauge className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Compressor Tracking System
-                </h1>
-                <p className={`mt-1 ${settings.darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Daily readings, maintenance scheduling & efficiency tracking
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSettings(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-                    >
-                      {settings.darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {settings.darkMode ? 'Light mode' : 'Dark mode'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadAllData}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Compressors</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Compressor Tracking</h1>
+            <p className="text-[#6B7B8E] mt-1">Daily readings, maintenance scheduling & efficiency tracking.</p>
           </div>
+          <div className="flex items-center gap-2 self-start">
+            <Button variant="outline" size="sm" onClick={loadAllData} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto">
           
           {/* Stats */}
           {stats && (
@@ -2732,7 +2704,9 @@ const CompressorReadingsSystem = () => {
 
       {/* Status Update Dialog */}
       <StatusUpdateDialog />
-    </div>
+        </div>
+      </main>
+    </PageShell>
   );
 };
 

@@ -11,9 +11,10 @@ import {
   AlertTriangle, ThumbsUp, ThumbsDown, Calendar, MapPin, Tag,
   Mountain, Gem, Landmark, Drill, Pickaxe, Factory, UserCheck,
   Building, Settings, Award, Crown, FilterX, Layers,
-  Database, Eye as EyeIcon, EyeOff
+  Database, Eye as EyeIcon, EyeOff, ChevronRight
 } from "lucide-react";
 import Link from "next/link";
+import { PageShell } from "@/components/PageShell";
 
 // Shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -1327,37 +1328,30 @@ export default function PPEManagement() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageShell>
       <Toaster position="top-right" richColors />
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="rounded bg-primary p-1.5">
-                <Database className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-bold">Mine PPE</span>
-            </Link>
-            <Separator orientation="vertical" className="h-6" />
-            <nav className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/">Home</Link>
-              </Button>
-              <span className="text-sm text-muted-foreground">/</span>
-              <span className="text-sm font-medium">PPE Management</span>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">PPE</span>
             </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">PPE Management</h1>
+            <p className="text-[#6B7B8E] mt-1">Track personal protective equipment issued, usage, and compliance across all personnel.</p>
           </div>
-          <QuickActions
-            onNewRecord={() => { setSelectedEmployee(null); setEditData(null); setShowForm(true); }}
-            onRefresh={fetchAllData}
-            loading={loading}
-          />
+          <div className="flex items-center gap-2 self-start">
+            <Button variant="outline" size="sm" onClick={fetchAllData} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => { setSelectedEmployee(null); setEditData(null); setShowForm(true); }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
+              <Plus className="h-4 w-4 mr-2" /> New Record
+            </Button>
+          </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Alerts */}
         {error && (
           <div className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-3">
@@ -1384,38 +1378,35 @@ export default function PPEManagement() {
 
         {/* Stats */}
         {enhancedStats && (
-          <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Total Employees" value={enhancedStats.unique_employees} icon={Users} color="slate" onClick={() => setFilterType('all')} />
-              <StatCard title="Active PPE" value={enhancedStats.activeRecords} icon={CheckCircle2} color="emerald" onClick={() => setFilterType('active')} />
-              <StatCard title="Soon to Due" value={enhancedStats.expiringSoon} icon={AlertTriangle} color="amber" onClick={() => setFilterType('soon-to-due')} subtitle={`${enhancedStats.employeesWithExpiring} employees`} />
-              <StatCard title="Due" value={enhancedStats.expired} icon={XCircle} color="rose" onClick={() => setFilterType('due')} subtitle={`${enhancedStats.employeesWithExpired} employees`} />
-            </div>
-
-            {/* Due Summary Card */}
-            {(enhancedStats.expiringSoon > 0 || enhancedStats.expired > 0) && (
-              <Card>
-                <CardContent className="p-4 flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-semibold">Quick Summary:</span>
-                  </div>
-                  {enhancedStats.expiringSoon > 0 && (
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setFilterType('soon-to-due')}>
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      {enhancedStats.expiringSoon} items soon to due
-                    </Button>
-                  )}
-                  {enhancedStats.expired > 0 && (
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setFilterType('due')}>
-                      <XCircle className="h-4 w-4 text-destructive" />
-                      {enhancedStats.expired} due items
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 bg-white border rounded-lg text-sm">
+            <button onClick={() => setFilterType('all')} className="flex items-center gap-1.5 hover:text-[#2A4D69] transition-colors">
+              <Users className="w-4 h-4 text-slate-500" />
+              <span className="text-lg font-bold text-[#2A4D69]">{enhancedStats.unique_employees}</span>
+              <span className="text-[#6B7B8E]">Employees</span>
+            </button>
+            <span className="text-[#6B7B8E] hidden sm:block">·</span>
+            <button onClick={() => setFilterType('active')} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span className="text-lg font-bold text-emerald-600">{enhancedStats.activeRecords}</span>
+              <span className="text-[#6B7B8E]">Active</span>
+            </button>
+            {enhancedStats.expiringSoon > 0 && (<>
+              <span className="text-[#6B7B8E] hidden sm:block">·</span>
+              <button onClick={() => setFilterType('soon-to-due')} className="flex items-center gap-1.5 hover:text-amber-600 transition-colors">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <span className="text-lg font-bold text-amber-600">{enhancedStats.expiringSoon}</span>
+                <span className="text-[#6B7B8E]">Soon to due ({enhancedStats.employeesWithExpiring} emp.)</span>
+              </button>
+            </>)}
+            {enhancedStats.expired > 0 && (<>
+              <span className="text-[#6B7B8E] hidden sm:block">·</span>
+              <button onClick={() => setFilterType('due')} className="flex items-center gap-1.5 hover:text-rose-600 transition-colors">
+                <XCircle className="w-4 h-4 text-rose-500" />
+                <span className="text-lg font-bold text-rose-600">{enhancedStats.expired}</span>
+                <span className="text-[#6B7B8E]">Due ({enhancedStats.employeesWithExpired} emp.)</span>
+              </button>
+            </>)}
+          </div>
         )}
 
         {/* Main Content */}
@@ -1494,7 +1485,6 @@ export default function PPEManagement() {
             )}
           </CardContent>
         </Card>
-      </main>
 
       {/* Modals */}
       {showForm && (
@@ -1516,6 +1506,7 @@ export default function PPEManagement() {
           onEdit={(item) => { setEditData(item); setShowForm(true); }}
         />
       )}
-    </div>
+      </main>
+    </PageShell>
   );
 }

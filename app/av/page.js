@@ -46,8 +46,10 @@ import {
   Eye,
   EyeOff,
   Users,
-  Building
+  Building,
+  ChevronRight
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 import { format, addDays, startOfDay, endOfDay, isWithinInterval, eachDayOfInterval } from 'date-fns';
 
 // Equipment types and categories
@@ -1394,50 +1396,21 @@ const EquipmentAvailabilitySystem = () => {
   }
 
   return (
-    <div className={`min-h-screen p-6 transition-colors ${
-      settings.darkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white' 
-        : 'bg-gradient-to-br from-slate-50 via-blue-50/20 to-emerald-50/20'
-    }`}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div></div>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
-                <Factory className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Equipment Availability
-                </h1>
-                <p className="text-slate-600 mt-2">Track and manage equipment utilization and maintenance</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const newSettings = { ...settings, darkMode: !settings.darkMode };
-                        setSettings(newSettings);
-                        saveSettings(newSettings);
-                      }}
-                    >
-                      {settings.darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {settings.darkMode ? 'Light mode' : 'Dark mode'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Equipment Availability</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Equipment Availability</h1>
+            <p className="text-[#6B7B8E] mt-1">Track and manage equipment utilization, downtime, and maintenance schedules.</p>
           </div>
+        </div>
+        <div className="max-w-7xl mx-auto">
           
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto mb-6">
@@ -1923,8 +1896,9 @@ const EquipmentAvailabilitySystem = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+        </div>
+      </main>
+    </PageShell>
   );
 };
 

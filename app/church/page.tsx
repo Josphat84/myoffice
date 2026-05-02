@@ -97,7 +97,8 @@ import {
   Projector,
   Speaker,
   Headphones,
-  LucideIcon
+  LucideIcon,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -112,6 +113,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { PageShell } from '@/components/PageShell';
 
 // =============== ANIMATION STYLES ===============
 const animationStyles = `
@@ -732,10 +734,9 @@ function DonationItem({ donation }: { donation: RecentDonation }) {
 
 // =============== MAIN PAGE ===============
 export default function ChurchPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<UserData | null>(null);
-  const [churchName, setChurchName] = useState('Grace Community Church');
-  const [loading, setLoading] = useState(true);
+  const [isLoggedIn] = useState(true);
+  const [user] = useState<UserData | null>(null);
+  const [churchName] = useState('Grace Community Church');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'financial': true,
@@ -784,33 +785,11 @@ export default function ChurchPage() {
     { id: 4, title: 'Easter Service', date: 'Mar 31', time: '9:00 AM', type: 'service', attendees: 800 },
   ];
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    const church = localStorage.getItem('church');
-    
-    if (token && userData) {
-      try {
-        const parsedUser: UserData = JSON.parse(userData);
-        setIsLoggedIn(true);
-        setUser(parsedUser);
-        if (church) setChurchName(church);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('church');
-      }
-    }
-    setLoading(false);
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('church');
-    setIsLoggedIn(false);
-    setUser(null);
     window.location.reload();
   };
 
@@ -939,305 +918,17 @@ export default function ChurchPage() {
     setMobileMenuOpen(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
-          <p className="text-purple-800 text-sm font-medium">Loading ChurchTrack...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
+    <PageShell>
       <style jsx global>{animationStyles}</style>
-      
-      {/* Beautiful Church Background Image */}
-      <div className="fixed inset-0 z-0">
-        <div 
-          className="absolute inset-0 bg-gradient-to-br from-purple-900/40 to-blue-900/30"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&q=80&w=2070')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.9,
-            filter: 'brightness(1.05) contrast(1.1) saturate(1.1)'
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/40 via-transparent to-blue-900/30" />
+      {/* Page Header */}
+      <div className="container mx-auto px-4 py-6">
+        <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+          <span>Home</span><ChevronRight className="h-3 w-3" /><span className="text-[#2A4D69] font-medium">Church</span>
+        </nav>
+        <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">ChurchTrack — Ministry Management</h1>
+        <p className="text-[#6B7B8E] mt-1">Manage finances, membership, ministries, and media for {churchName}.</p>
       </div>
-
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="sticky top-0 z-50 w-full border-b border-purple-200/40 bg-purple-900/80 backdrop-blur-xl backdrop-saturate-150">
-          <div className="container mx-auto px-4">
-            <div className="flex h-16 items-center justify-between">
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/90 to-blue-500/90 shadow-lg">
-                  <Church className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-white text-lg drop-shadow-lg">ChurchTrack</span>
-                  <span className="text-xs text-purple-200">Ministry Management</span>
-                </div>
-              </Link>
-
-              {/* Mobile Menu Button */}
-              <div className="lg:hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="text-white hover:bg-white/10"
-                >
-                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </Button>
-              </div>
-
-              {/* Desktop Navigation */}
-              <nav className="hidden lg:flex items-center gap-1">
-                <Link href="/" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                  Dashboard
-                </Link>
-                
-                <div className="relative group">
-                  <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                    Finances
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-purple-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
-                    {financialModules.slice(0, 5).map((module) => {
-                      const Icon = module.icon;
-                      return (
-                        <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
-                          <Icon className="h-4 w-4 text-white/70" />
-                          {module.title}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="relative group">
-                  <button className="flex items-center gap-2 text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                    Members
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <div className="absolute top-full left-0 mt-2 hidden group-hover:block w-48 bg-purple-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-2 z-50">
-                    {membershipModules.slice(0, 5).map((module) => {
-                      const Icon = module.icon;
-                      return (
-                        <Link key={module.link} href={module.link} className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
-                          <Icon className="h-4 w-4 text-white/70" />
-                          {module.title}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <Link href="/calendar" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                  Calendar
-                </Link>
-                <Link href="/media" className="text-sm text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm drop-shadow-sm font-medium">
-                  Media
-                </Link>
-              </nav>
-
-              {/* Right Side Actions - Desktop */}
-              <div className="hidden lg:flex items-center gap-3">
-                {isLoggedIn ? (
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 border-2 border-white/30">
-                        <AvatarFallback className="bg-gradient-to-br from-purple-500/80 to-blue-500/80 text-white text-sm">
-                          {user?.name?.charAt(0) || 'P'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-white font-medium drop-shadow-sm">{user?.name || 'Pastor'}</span>
-                        <span className="text-xs text-purple-200">{churchName}</span>
-                      </div>
-                    </div>
-                    <Button onClick={handleLogout} variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
-                      Sign Out
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-sm bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white transition-all duration-300 font-medium">
-                          <LogIn className="h-4 w-4 mr-2" /> Login
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
-                        <DialogHeader>
-                          <DialogTitle className="sr-only">Login to ChurchTrack</DialogTitle>
-                        </DialogHeader>
-                        <AuthForm />
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="bg-gradient-to-r from-purple-500/90 to-blue-500/90 hover:from-purple-600 hover:to-blue-600 text-sm transition-all duration-300 shadow-lg hover:shadow-xl text-white font-medium">
-                          <UserPlus className="h-4 w-4 mr-2" /> Sign Up
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
-                        <DialogHeader>
-                          <DialogTitle className="sr-only">Sign Up for ChurchTrack</DialogTitle>
-                        </DialogHeader>
-                        <AuthForm />
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-              <div className="lg:hidden border-t border-purple-200/20 bg-purple-900/95 backdrop-blur-xl mt-2 py-4 rounded-b-xl">
-                <div className="space-y-1 px-4">
-                  <Link 
-                    href="/" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-                  >
-                    Dashboard
-                  </Link>
-                  
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between p-3 text-sm text-white/90">
-                      Finances
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      {financialModules.slice(0, 3).map((module) => {
-                        const Icon = module.icon;
-                        return (
-                          <Link 
-                            key={module.link} 
-                            href={module.link}
-                            onClick={closeMobileMenu}
-                            className="flex items-center gap-3 p-3 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-                          >
-                            <Icon className="h-4 w-4 text-white/60" />
-                            {module.title}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between p-3 text-sm text-white/90">
-                      Members
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      {membershipModules.slice(0, 3).map((module) => {
-                        const Icon = module.icon;
-                        return (
-                          <Link 
-                            key={module.link} 
-                            href={module.link}
-                            onClick={closeMobileMenu}
-                            className="flex items-center gap-3 p-3 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-                          >
-                            <Icon className="h-4 w-4 text-white/60" />
-                            {module.title}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <Link 
-                    href="/calendar" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-                  >
-                    Calendar
-                  </Link>
-                  
-                  <Link 
-                    href="/media" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-3 p-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-                  >
-                    Media
-                  </Link>
-                </div>
-
-                {/* Mobile Auth Actions */}
-                <div className="mt-4 pt-4 border-t border-purple-200/20 px-4">
-                  {isLoggedIn ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-3">
-                        <Avatar className="h-10 w-10 border-2 border-white/30">
-                          <AvatarFallback className="bg-gradient-to-br from-purple-500/80 to-blue-500/80 text-white">
-                            {user?.name?.charAt(0) || 'P'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="text-sm text-white font-medium">{user?.name || 'Pastor'}</span>
-                          <span className="text-xs text-purple-200">{churchName}</span>
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={handleLogout} 
-                        variant="outline" 
-                        className="w-full text-white border-white/30 hover:bg-white/10 hover:text-white"
-                      >
-                        Sign Out
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            onClick={closeMobileMenu}
-                            className="w-full bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white"
-                          >
-                            <LogIn className="h-4 w-4 mr-2" /> Login
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
-                          <DialogHeader>
-                            <DialogTitle className="sr-only">Login to ChurchTrack</DialogTitle>
-                          </DialogHeader>
-                          <AuthForm />
-                        </DialogContent>
-                      </Dialog>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            onClick={closeMobileMenu}
-                            className="w-full bg-gradient-to-r from-purple-500/90 to-blue-500/90 hover:from-purple-600 hover:to-blue-600 text-white"
-                          >
-                            <UserPlus className="h-4 w-4 mr-2" /> Sign Up
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-sm border-white/30 bg-transparent backdrop-blur-none">
-                          <DialogHeader>
-                            <DialogTitle className="sr-only">Sign Up for ChurchTrack</DialogTitle>
-                          </DialogHeader>
-                          <AuthForm />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
-
         {/* Main Content */}
         <main className="container mx-auto px-4 py-8">
           {/* Hero Section */}
@@ -1627,55 +1318,6 @@ export default function ChurchPage() {
             </Card>
           </div>
         </main>
-
-        {/* Footer */}
-        <footer className="border-t border-purple-200/30 bg-purple-900/60 backdrop-blur-xl mt-12">
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/90 to-blue-500/90 shadow-lg">
-                  <Church className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <span className="font-bold text-white text-lg">ChurchTrack</span>
-                  <p className="text-xs text-purple-200">Ministry Management Platform</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-6 text-sm">
-                <Link href="#" className="text-purple-100 hover:text-white transition-colors duration-300">
-                  Privacy Policy
-                </Link>
-                <Link href="#" className="text-purple-100 hover:text-white transition-colors duration-300">
-                  Terms of Service
-                </Link>
-                <Link href="#" className="text-purple-100 hover:text-white transition-colors duration-300">
-                  Support
-                </Link>
-                <Link href="#" className="text-purple-100 hover:text-white transition-colors duration-300">
-                  Contact
-                </Link>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" className="text-purple-100 hover:text-white hover:bg-white/10">
-                  <Facebook className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="text-purple-100 hover:text-white hover:bg-white/10">
-                  <Twitter className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="text-purple-100 hover:text-white hover:bg-white/10">
-                  <Youtube className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="text-xs text-purple-200">
-                © {new Date().getFullYear()} Church Ministries. All rights reserved.
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
+    </PageShell>
   );
 }

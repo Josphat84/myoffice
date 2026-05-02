@@ -113,6 +113,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageShell } from '@/components/PageShell';
 
 // Custom Badge component
 const StatusBadge = ({ 
@@ -868,171 +869,16 @@ export default function RestaurantPage() {
   };
 
   return (
-    <>
+    <PageShell>
       <style jsx global>{animationStyles}</style>
-      
-      {/* Background gradient */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-50/30 via-orange-50/20 to-white" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-200/20 via-transparent to-transparent" />
+      {/* Page Header */}
+      <div className="container mx-auto px-4 py-6">
+        <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+          <span>Home</span><ChevronRight className="h-3 w-3" /><span className="text-[#2A4D69] font-medium">Restaurant</span>
+        </nav>
+        <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">La Belle Vue Restaurant</h1>
+        <p className="text-[#6B7B8E] mt-1">Fine dining management, reservations, and menu showcase.</p>
       </div>
-
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="sticky top-0 z-50 w-full border-b border-amber-100/50 bg-white/90 backdrop-blur-xl backdrop-saturate-150">
-          <div className="container mx-auto px-4">
-            <div className="flex h-16 items-center justify-between">
-              {/* Logo - Restaurant focused */}
-              <Link href="/" className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg animate-cooking">
-                  <Utensils className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-gray-900 text-xl tracking-tight">La Belle Vue</span>
-                  <span className="text-xs text-amber-600">Fine Dining Restaurant</span>
-                </div>
-              </Link>
-
-              {/* Desktop Navigation with Dropdowns */}
-              <nav className="hidden lg:flex items-center gap-1">
-                <Link href="/" className="text-sm text-gray-700 hover:text-amber-600 px-4 py-2 rounded-lg hover:bg-amber-50 transition-all duration-300 font-medium">
-                  <Home className="h-4 w-4 inline mr-2" /> Home
-                </Link>
-                
-                <RestaurantDropdownMenu 
-                  title="Menu" 
-                  items={menuItemsList}
-                />
-
-                <RestaurantDropdownMenu 
-                  title="About" 
-                  items={aboutItems}
-                />
-
-                <RestaurantDropdownMenu 
-                  title="Events" 
-                  items={eventsItems}
-                />
-
-                <Link href="/reservations" className="text-sm text-gray-700 hover:text-amber-600 px-4 py-2 rounded-lg hover:bg-amber-50 transition-all duration-300 font-medium">
-                  <Calendar className="h-4 w-4 inline mr-2" /> Reservations
-                </Link>
-
-                <Link href="/contact" className="text-sm text-gray-700 hover:text-amber-600 px-4 py-2 rounded-lg hover:bg-amber-50 transition-all duration-300 font-medium">
-                  <Phone className="h-4 w-4 inline mr-2" /> Contact
-                </Link>
-              </nav>
-
-              {/* Right Side Actions */}
-              <div className="flex items-center gap-4">
-                <div className="hidden lg:flex items-center gap-4">
-                  {/* Reservation Button */}
-                  <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
-                    <Calendar className="h-4 w-4 mr-2" /> Book Table
-                  </Button>
-
-                  {/* Cart for takeout */}
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 hover:bg-amber-50 relative group">
-                    <ShoppingBag className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[10px] text-white flex items-center justify-center">
-                      2
-                    </span>
-                    <div className="absolute top-full right-0 mt-2 hidden group-hover:block w-48 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-amber-100 p-4 z-50">
-                      <p className="text-sm font-medium text-gray-800">Takeout Order</p>
-                      <p className="text-xs text-gray-600">2 items • $48.97</p>
-                    </div>
-                  </Button>
-                </div>
-
-                {/* Mobile Menu Button */}
-                <div className="lg:hidden">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="text-gray-600 hover:text-amber-600"
-                  >
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-amber-100 bg-white/95 backdrop-blur-xl mt-2 py-4 rounded-b-xl shadow-xl">
-              <div className="container mx-auto px-4">
-                {/* Mobile Navigation */}
-                <div className="space-y-1">
-                  <Link 
-                    href="/" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 p-3 text-sm text-gray-700 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-300"
-                  >
-                    <Home className="h-4 w-4" /> Home
-                  </Link>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between p-3 text-sm text-gray-700">
-                      <span className="font-medium">Menu</span>
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      {menuItemsList.slice(0, 3).map((item) => (
-                        <Link 
-                          key={item.name}
-                          href={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 p-3 text-sm text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-300"
-                        >
-                          {item.icon}
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between p-3 text-sm text-gray-700">
-                      <span className="font-medium">About</span>
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      {aboutItems.slice(0, 3).map((item) => (
-                        <Link 
-                          key={item.name}
-                          href={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 p-3 text-sm text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-300"
-                        >
-                          {item.icon}
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Link 
-                    href="/reservations" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 p-3 text-sm text-gray-700 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-300"
-                  >
-                    <Calendar className="h-4 w-4" /> Reservations
-                  </Link>
-                </div>
-
-                {/* Mobile Actions */}
-                <div className="flex items-center justify-around mt-6 pt-6 border-t border-amber-100">
-                  <Button variant="outline" size="sm" className="border-amber-200 text-amber-600 hover:bg-amber-50">
-                    <Phone className="h-4 w-4 mr-2" /> Call
-                  </Button>
-                  <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                    <Calendar className="h-4 w-4 mr-2" /> Book
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </header>
-
         {/* Hero Section */}
         <section className="relative overflow-hidden rounded-3xl mx-4 mt-6 mb-12">
           <div className="relative h-[500px] overflow-hidden rounded-3xl">
@@ -1393,120 +1239,6 @@ export default function RestaurantPage() {
           </section>
         </main>
 
-        {/* Footer */}
-        <footer className="border-t border-amber-100 bg-white/80 backdrop-blur-xl">
-          <div className="container mx-auto px-4 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-              {/* Brand */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
-                    <Utensils className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-900 text-xl">La Belle Vue</span>
-                    <span className="text-xs text-amber-600">Fine Dining Restaurant</span>
-                  </div>
-                </div>
-                <p className="text-gray-600 mb-6">
-                  Experience culinary excellence in an elegant atmosphere. 
-                  Award-winning cuisine with locally sourced ingredients.
-                </p>
-                <div className="flex gap-4">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 hover:bg-amber-50">
-                    <Instagram className="h-5 w-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 hover:bg-amber-50">
-                    <Facebook className="h-5 w-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 hover:bg-amber-50">
-                    <Twitter className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Hours */}
-              <div>
-                <h3 className="font-semibold text-gray-900 text-lg mb-6">Hours</h3>
-                <ul className="space-y-3">
-                  <li className="flex justify-between text-gray-600">
-                    <span>Monday - Thursday</span>
-                    <span className="font-medium">5 PM - 10 PM</span>
-                  </li>
-                  <li className="flex justify-between text-gray-600">
-                    <span>Friday - Saturday</span>
-                    <span className="font-medium">5 PM - 11 PM</span>
-                  </li>
-                  <li className="flex justify-between text-gray-600">
-                    <span>Sunday</span>
-                    <span className="font-medium">11 AM - 9 PM</span>
-                  </li>
-                  <li className="flex justify-between text-gray-600">
-                    <span>Brunch</span>
-                    <span className="font-medium">Sat-Sun 11 AM - 3 PM</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Contact */}
-              <div>
-                <h3 className="font-semibold text-gray-900 text-lg mb-6">Contact</h3>
-                <ul className="space-y-4">
-                  <li className="flex items-center gap-3 text-gray-600">
-                    <MapPin className="h-4 w-4 text-amber-500" />
-                    123 Gourmet Avenue, Culinary District
-                  </li>
-                  <li className="flex items-center gap-3 text-gray-600">
-                    <Phone className="h-4 w-4 text-amber-500" />
-                    (555) 123-4567
-                  </li>
-                  <li className="flex items-center gap-3 text-gray-600">
-                    <Mail className="h-4 w-4 text-amber-500" />
-                    reservations@labellevue.com
-                  </li>
-                  <li className="flex items-center gap-3 text-gray-600">
-                    <Globe className="h-4 w-4 text-amber-500" />
-                    www.labellevue.com
-                  </li>
-                </ul>
-              </div>
-
-              {/* Quick Links */}
-              <div>
-                <h3 className="font-semibold text-gray-900 text-lg mb-6">Quick Links</h3>
-                <ul className="space-y-3">
-                  <li><Link href="/menu" className="text-gray-600 hover:text-amber-600 transition-colors duration-300">Menu</Link></li>
-                  <li><Link href="/reservations" className="text-gray-600 hover:text-amber-600 transition-colors duration-300">Reservations</Link></li>
-                  <li><Link href="/private-events" className="text-gray-600 hover:text-amber-600 transition-colors duration-300">Private Events</Link></li>
-                  <li><Link href="/gift-cards" className="text-gray-600 hover:text-amber-600 transition-colors duration-300">Gift Cards</Link></li>
-                  <li><Link href="/careers" className="text-gray-600 hover:text-amber-600 transition-colors duration-300">Careers</Link></li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="pt-8 border-t border-amber-100">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <p className="text-gray-600 text-sm">
-                  © {new Date().getFullYear()} La Belle Vue Restaurant. All rights reserved.
-                </p>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-gray-600">Safety Certified</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Leaf className="h-4 w-4 text-emerald-500" />
-                    <span className="text-sm text-gray-600">Sustainable Dining</span>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600">
-                  Designed with ❤️ for food lovers
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
+    </PageShell>
   );
 }

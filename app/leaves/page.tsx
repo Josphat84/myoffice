@@ -1,8 +1,7 @@
 // app/leaves/page.tsx
 'use client';
 
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageShell } from '@/components/PageShell';
 
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -13,7 +12,7 @@ import {
   Stethoscope, Shield, Heart, Users, GraduationCap,
   CalendarDays, BookOpen, Database, Layers, Server, Home as HomeIcon,
   BarChart3, PieChart, Mail, ExternalLink, Filter, FilterX,
-  ArrowUpDown, SortAsc, SortDesc, EyeOff
+  ArrowUpDown, SortAsc, SortDesc, EyeOff, ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -87,117 +86,9 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 
-// ============= STUNNING NATURE WALLPAPER COLLECTION =============
-const natureWallpapers = [
-  {
-    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Iceland Ice Cave",
-    location: "Iceland - Crystal Ice Cave"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Enchanted Forest",
-    location: "Pacific Northwest"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Misty Morning",
-    location: "Great Smoky Mountains"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Sunbeams Through Forest",
-    location: "Olympic National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Alpine Lake",
-    location: "Canadian Rockies"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Waterfall Valley",
-    location: "Yosemite National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Desert Dunes",
-    location: "Namibia"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Mountain Lake Reflection",
-    location: "Lake Moraine, Canada"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Majestic Waterfall",
-    location: "Iguazu Falls"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Desert Rock Formation",
-    location: "Monument Valley"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Rolling Hills",
-    location: "Tuscany, Italy"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Mountain Wildflowers",
-    location: "Colorado Rockies"
-  }
-];
+// Animation styles defined in globals.css
 
-// ============= ANIMATION STYLES =============
-const animationStyles = `
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes bounce-light {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-bounce-light {
-    animation: bounce-light 2s ease-in-out infinite;
-  }
-
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
-`;
 
 // ============= Employee search result type =============
 interface EmployeeSearchResult {
@@ -554,7 +445,7 @@ const StatCard = ({ title, value, icon: Icon, color, onClick, subtitle }: {
 
   return (
     <Card 
-      className={`cursor-pointer transition-all hover:shadow-lg ${onClick ? 'hover:scale-[1.02]' : ''} bg-white/90 backdrop-blur-sm`}
+      className={`cursor-pointer transition-all hover:shadow-lg ${onClick ? 'hover:scale-[1.02]' : ''} bg-white`}
       onClick={onClick}
     >
       <CardContent className="p-6">
@@ -604,7 +495,7 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   };
 
   return (
-    <Card className="group relative hover:shadow-lg transition-all cursor-pointer bg-white/90 backdrop-blur-sm" onClick={() => onView(leave)}>
+    <Card className="group relative hover:shadow-lg transition-all cursor-pointer bg-white" onClick={() => onView(leave)}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -727,7 +618,6 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [employeeSelectOpen, setEmployeeSelectOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   // Check auth on mount
@@ -735,7 +625,6 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     if (token && userData) {
-      setIsLoggedIn(true);
       setUser(JSON.parse(userData));
     }
   }, []);
@@ -931,7 +820,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-between bg-white/80 backdrop-blur-sm"
+                  className="w-full justify-between bg-white"
                   disabled={!!editData}
                 >
                   {formData.employee_name ? (
@@ -1003,7 +892,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 onChange={(e) => handleChange('employee_id', e.target.value)}
                 placeholder="e.g., C1165"
                 disabled={!!editData}
-                className="bg-white/80 backdrop-blur-sm"
+                className="bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -1056,7 +945,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.leave_type || 'annual'}
                 onValueChange={(val) => handleChange('leave_type', val)}
               >
-                <SelectTrigger className="bg-white/80 backdrop-blur-sm">
+                <SelectTrigger className="bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1083,7 +972,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 required
                 value={formData.start_date || ''}
                 onChange={(e) => handleChange('start_date', e.target.value)}
-                className="bg-white/80 backdrop-blur-sm"
+                className="bg-white"
               />
               {validationErrors.start_date && (
                 <p className="text-sm text-destructive">{validationErrors.start_date}</p>
@@ -1098,7 +987,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.end_date || ''}
                 onChange={(e) => handleChange('end_date', e.target.value)}
                 min={formData.start_date}
-                className="bg-white/80 backdrop-blur-sm"
+                className="bg-white"
               />
               {validationErrors.end_date && (
                 <p className="text-sm text-destructive">{validationErrors.end_date}</p>
@@ -1124,7 +1013,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
               onChange={(e) => handleReasonChange(e.target.value)}
               onKeyDown={handleReasonKeyDown}
               placeholder="Type a reason or choose from suggestions..."
-              className="bg-white/80 backdrop-blur-sm"
+              className="bg-white"
             />
             {validationErrors.reason && (
               <p className="text-sm text-destructive">{validationErrors.reason}</p>
@@ -1161,7 +1050,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.emergency_contact || ''}
                 onChange={(e) => handleChange('emergency_contact', e.target.value)}
                 placeholder="Name and phone number"
-                className="bg-white/80 backdrop-blur-sm"
+                className="bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -1171,7 +1060,7 @@ const LeaveApplicationForm = ({ onClose, onSuccess, editData }: {
                 value={formData.handover_to || ''}
                 onChange={(e) => handleChange('handover_to', e.target.value)}
                 placeholder="Colleague's name"
-                className="bg-white/80 backdrop-blur-sm"
+                className="bg-white"
               />
             </div>
           </div>
@@ -1248,7 +1137,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <User className="h-4 w-4" /> Employee
@@ -1264,7 +1153,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4" /> Details
@@ -1299,7 +1188,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
             </Card>
           </div>
 
-          <Card className="bg-white/80 backdrop-blur-sm">
+          <Card className="bg-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <FileText className="h-4 w-4" /> Reason
@@ -1311,7 +1200,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
           </Card>
 
           {(leave.manager_approval || leave.hr_approval) && (
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Approval Status</CardTitle>
               </CardHeader>
@@ -1337,7 +1226,7 @@ const LeaveDetailsModal = ({ leave, onClose, onEdit, onDelete, onStatusUpdate }:
           )}
 
           {leave.supporting_docs && leave.supporting_docs.length > 0 && (
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Supporting Documents</CardTitle>
               </CardHeader>
@@ -1405,9 +1294,7 @@ export default function LeaveManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState({ leaves: true });
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     pending: 0,
@@ -1419,23 +1306,6 @@ export default function LeaveManagementPage() {
     average_days: 0
   });
 
-  // Check auth on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  // Rotating nature wallpaper every 2 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
-    }, 120000);
-    return () => clearInterval(interval);
-  }, []);
 
   const fetchAllData = async () => {
     try {
@@ -1503,14 +1373,6 @@ export default function LeaveManagementPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null);
-    window.location.reload();
-  };
-
   const filteredLeaves = useMemo(() => {
     let filtered = leaves;
 
@@ -1557,67 +1419,36 @@ export default function LeaveManagementPage() {
   };
 
   return (
-    <>
-      <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen">
-        {/* Rotating Nature Wallpaper Background */}
-        <div className="fixed inset-0 z-0">
-          {natureWallpapers.map((wallpaper, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
-              style={{
-                backgroundImage: `url('${wallpaper.url}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: index === currentWallpaperIndex ? 1 : 0,
-                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
-                transition: 'opacity 2000ms ease-in-out',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
-            {natureWallpapers[currentWallpaperIndex].location}
+    <PageShell>
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Ozech Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Leaves</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Leave Management</h1>
+            <p className="text-[#6B7B8E] mt-1">
+              Manage employee leave requests, track balances, and approve time off.
+            </p>
           </div>
+          <Button onClick={() => setShowForm(true)} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start" size="lg">
+            <Plus className="h-5 w-5" /> New Leave Request
+          </Button>
         </div>
 
-        <div className="relative z-10">
-          <Header 
-            isLoggedIn={isLoggedIn} 
-            user={user} 
-            onLogout={handleLogout} 
-          />
-
-          <main className="container mx-auto px-4 py-8 space-y-8">
-            <div className="text-center space-y-2 animate-fade-in">
-              <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">Leave Management</h1>
-              <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                Manage employee leave requests, track status, and approve time off.
-              </p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up delay-100">
-              <StatCard title="Total Requests" value={stats.total} icon={FileText} color="slate" />
-              <StatCard title="Pending" value={stats.pending} icon={Clock} color="amber" onClick={() => setFilter('pending')} />
-              <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} color="emerald" onClick={() => setFilter('approved')} />
-              <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
-            </div>
-
-            {/* NEW LEAVE BUTTON - Added here */}
-            <div className="flex justify-end animate-slide-up delay-150">
-              <Button 
-                onClick={() => setShowForm(true)} 
-                className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
-                size="lg"
-              >
-                <Plus className="h-5 w-5" /> New Leave Request
-              </Button>
-            </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Total Requests" value={stats.total} icon={FileText} color="slate" />
+          <StatCard title="Pending" value={stats.pending} icon={Clock} color="amber" onClick={() => setFilter('pending')} />
+          <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} color="emerald" onClick={() => setFilter('approved')} />
+          <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
+        </div>
 
             {/* Filters Card */}
-            <Card className="bg-white/90 backdrop-blur-sm border-white/30 shadow-xl animate-slide-up delay-200">
+            <Card className="bg-white border-white/30 shadow-xl animate-slide-up delay-200">
               <CardHeader className="pb-3">
                 <div className="flex flex-col lg:flex-row justify-between gap-4">
                   <div>
@@ -1633,12 +1464,12 @@ export default function LeaveManagementPage() {
                         placeholder="Search..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 bg-white/80 backdrop-blur-sm"
+                        className="pl-9 bg-white"
                       />
                     </div>
 
                     <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-[180px] bg-white/80 backdrop-blur-sm">
+                      <SelectTrigger className="w-[180px] bg-white">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1677,7 +1508,7 @@ export default function LeaveManagementPage() {
                     <div>
                       <Label className="text-xs">Status</Label>
                       <Select value={filter} onValueChange={setFilter}>
-                        <SelectTrigger className="mt-1 bg-white/80 backdrop-blur-sm">
+                        <SelectTrigger className="mt-1 bg-white">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1692,7 +1523,7 @@ export default function LeaveManagementPage() {
                     <div>
                       <Label className="text-xs">Leave Type</Label>
                       <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="mt-1 bg-white/80 backdrop-blur-sm">
+                        <SelectTrigger className="mt-1 bg-white">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1710,7 +1541,7 @@ export default function LeaveManagementPage() {
                         type="date"
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
-                        className="mt-1 bg-white/80 backdrop-blur-sm"
+                        className="mt-1 bg-white"
                       />
                     </div>
 
@@ -1720,7 +1551,7 @@ export default function LeaveManagementPage() {
                         type="date"
                         value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
-                        className="mt-1 bg-white/80 backdrop-blur-sm"
+                        className="mt-1 bg-white"
                       />
                     </div>
                   </div>
@@ -1818,11 +1649,7 @@ export default function LeaveManagementPage() {
                 )}
               </CardContent>
             </Card>
-          </main>
-
-          <Footer />
-        </div>
-      </div>
+      </main>
 
       {showForm && (
         <LeaveApplicationForm
@@ -1841,6 +1668,6 @@ export default function LeaveManagementPage() {
           onStatusUpdate={handleStatusUpdate}
         />
       )}
-    </>
+    </PageShell>
   );
 }

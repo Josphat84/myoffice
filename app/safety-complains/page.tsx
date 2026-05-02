@@ -203,6 +203,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import Link from "next/link";
+import { PageShell } from '@/components/PageShell';
 
 // Import Header and Footer - Comment out if these don't exist yet
 // import { Header } from "@/components/Header";
@@ -1120,9 +1121,6 @@ export default function SafetyComplaintsPage() {
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<Complaint | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -1159,23 +1157,6 @@ export default function SafetyComplaintsPage() {
   // Expanded rows in table view
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  // Check auth on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  // Rotating nature wallpaper every 2 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
-    }, 120000);
-    return () => clearInterval(interval);
-  }, []);
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -1228,13 +1209,6 @@ export default function SafetyComplaintsPage() {
     setComplaints((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null);
-    window.location.reload();
-  };
 
   const toggleRowExpanded = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1496,53 +1470,29 @@ export default function SafetyComplaintsPage() {
   }, [searchTerm, dateFrom, dateTo, monthFilter, yearFilter, selectedTypes, selectedSeverities, selectedStatuses, statusFilter, typeFilter, severityFilter, reporterFilter, selectedReporterName]);
 
   return (
-    <>
-      <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen">
-        {/* Rotating Nature Wallpaper Background */}
-        <div className="fixed inset-0 z-0">
-          {natureWallpapers.map((wallpaper, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
-              style={{
-                backgroundImage: `url('${wallpaper.url}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: index === currentWallpaperIndex ? 1 : 0,
-                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
-                transition: 'opacity 2000ms ease-in-out',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
-            {natureWallpapers[currentWallpaperIndex].location}
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Safety Complaints</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Safety Complaints</h1>
+            <p className="text-[#6B7B8E] mt-1">Report, track, and resolve safety concerns. Every report helps create a safer workplace.</p>
+          </div>
+          <div className="flex items-center gap-2 self-start">
+            <Button variant="outline" size="sm" onClick={fetchAllData} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => { setEditData(null); setShowForm(true); }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
+              <Plus className="h-4 w-4 mr-2" /> New Complaint
+            </Button>
           </div>
         </div>
-
-        <div className="relative z-10">
-          <Header 
-            isLoggedIn={isLoggedIn} 
-            user={user} 
-            onLogout={handleLogout} 
-          />
-
-          <main className="container mx-auto px-4 py-8 space-y-8">
-            {/* Header */}
-            <div className="text-center space-y-2 animate-fade-in">
-              <div className="flex justify-center mb-4">
-                <div className="p-3 rounded-full bg-red-500/10 animate-bounce-light">
-                  <AlertTriangle className="h-8 w-8 text-red-500" />
-                </div>
-              </div>
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent drop-shadow-lg">
-                Safety Complaints Management
-              </h1>
-              <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                Report, track, and resolve safety concerns. Every report helps create a safer workplace.
-              </p>
-            </div>
 
             {/* Stats Dashboard */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 animate-slide-up delay-100">
@@ -1915,13 +1865,8 @@ export default function SafetyComplaintsPage() {
                 {/* Pagination component would go here */}
               </>
             )}
-          </main>
+      </main>
 
-          <Footer />
-        </div>
-      </div>
-
-      {/* Modals would go here */}
       {showForm && (
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogContent>
@@ -1933,11 +1878,11 @@ export default function SafetyComplaintsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-              <Button onClick={() => setShowForm(false)}>Submit</Button>
+              <Button onClick={() => setShowForm(false)} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white">Submit</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </PageShell>
   );
-  }
+}

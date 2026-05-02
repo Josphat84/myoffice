@@ -10,8 +10,10 @@ import {
   Maximize2, Minimize2, BarChart3, PieChart, TrendingUp,
   Users, AlertTriangle, CheckCircle2, Clock3, CalendarRange,
   HardHat, Wrench, Zap, Droplets, Flame, Shield,
-  Settings, RefreshCw, Loader2, Award, Star, Target
+  Settings, RefreshCw, Loader2, Award, Star, Target, ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 
 // Shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -317,7 +319,7 @@ const FindingForm = ({
 }: { 
   finding: InspectionFinding; 
   index: number; 
-  onChange: (id: string, field: keyof InspectionFinding, value: any) => void;
+  onChange: (id: string, field: keyof InspectionFinding, value: InspectionFinding[keyof InspectionFinding]) => void;
   onRemove: (id: string) => void;
 }) => {
   return (
@@ -519,7 +521,7 @@ const InspectionFormModal = ({
     }));
   };
 
-  const updateFinding = (id: string, field: keyof InspectionFinding, value: any) => {
+  const updateFinding = (id: string, field: keyof InspectionFinding, value: InspectionFinding[keyof InspectionFinding]) => {
     setFormData(prev => ({
       ...prev,
       findings: prev.findings?.map(f => 
@@ -707,7 +709,7 @@ const InspectionFormModal = ({
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(v) => setFormData({ ...formData, status: v as any })}
+                    onValueChange={(v) => setFormData({ ...formData, status: v as SHEQFormData['status'] })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -858,7 +860,7 @@ const InspectionCard = ({
 
   return (
     <Card 
-      className="bg-white/90 backdrop-blur-sm border-slate-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer" 
+      className="bg-white border-slate-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer" 
       onClick={handleCardClick}
     >
       <CardContent className="p-5">
@@ -1344,37 +1346,27 @@ export default function SHEQInspectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <div className="container mx-auto py-10 px-4 max-w-7xl">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-3">
-              <ClipboardCheck className="h-10 w-10 text-primary" />
-              SHEQ Inspections
-            </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-300">
-              Safety, Health, Environment, and Quality compliance tracking
-            </p>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">SHEQ Inspections</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">SHEQ Inspections</h1>
+            <p className="text-[#6B7B8E] mt-1">Safety, Health, Environment, and Quality compliance tracking.</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setViewMode('grid')}
-              className={viewMode === 'grid' ? 'bg-primary text-primary-foreground' : ''}
-            >
+          <div className="flex items-center gap-2 self-start">
+            <Button variant="outline" size="icon" onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'bg-[#2A4D69] text-white' : ''}>
               <LayoutGrid className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setViewMode('list')}
-              className={viewMode === 'list' ? 'bg-primary text-primary-foreground' : ''}
-            >
+            <Button variant="outline" size="icon" onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'bg-[#2A4D69] text-white' : ''}>
               <TableIcon className="h-4 w-4" />
             </Button>
-            <Button onClick={handleNew} className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
+            <Button onClick={handleNew} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
               <Plus className="h-4 w-4 mr-2" /> New Inspection
             </Button>
           </div>
@@ -1382,56 +1374,56 @@ export default function SHEQInspectionPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm border-slate-200">
+          <Card className="bg-white border-slate-200">
             <CardContent className="p-4 text-center">
               <ClipboardCheck className="h-5 w-5 text-purple-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               <p className="text-xs text-gray-500">Total</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-yellow-200">
+          <Card className="bg-white border-yellow-200">
             <CardContent className="p-4 text-center">
               <AlertTriangle className="h-5 w-5 text-yellow-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.open}</p>
               <p className="text-xs text-gray-500">Open</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-blue-200">
+          <Card className="bg-white border-blue-200">
             <CardContent className="p-4 text-center">
               <Clock3 className="h-5 w-5 text-blue-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.inProgress}</p>
               <p className="text-xs text-gray-500">In Progress</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200">
+          <Card className="bg-white border-green-200">
             <CardContent className="p-4 text-center">
               <CheckCircle2 className="h-5 w-5 text-green-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.closed}</p>
               <p className="text-xs text-gray-500">Closed</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-red-200">
+          <Card className="bg-white border-red-200">
             <CardContent className="p-4 text-center">
               <XCircle className="h-5 w-5 text-red-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.overdue}</p>
               <p className="text-xs text-gray-500">Overdue</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-red-300">
+          <Card className="bg-white border-red-300">
             <CardContent className="p-4 text-center">
               <Target className="h-5 w-5 text-red-800 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.critical}</p>
               <p className="text-xs text-gray-500">Critical</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-blue-200">
+          <Card className="bg-white border-blue-200">
             <CardContent className="p-4 text-center">
               <Wrench className="h-5 w-5 text-blue-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.bySection.mechanical || 0}</p>
               <p className="text-xs text-gray-500">Mechanical</p>
             </CardContent>
           </Card>
-          <Card className="bg-white/90 backdrop-blur-sm border-yellow-200">
+          <Card className="bg-white border-yellow-200">
             <CardContent className="p-4 text-center">
               <Zap className="h-5 w-5 text-yellow-700 mx-auto mb-1" />
               <p className="text-2xl font-bold text-gray-900">{stats.bySection.electrical || 0}</p>
@@ -1440,144 +1432,133 @@ export default function SHEQInspectionPage() {
           </Card>
         </div>
 
-        {/* Search and Filters */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by title, inspector, location..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10"
+        {/* Search bar — always visible */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7B8E]" />
+            <Input
+              placeholder="Search inspections by title, inspector, location…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-10 bg-white"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7B8E] hover:text-[#2A4D69]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={expandAll} title="Expand all inspection rows">
+              <Maximize2 className="h-4 w-4 mr-1.5" />Expand all
+            </Button>
+            <Button variant="outline" size="sm" onClick={collapseAll} title="Collapse all inspection rows">
+              <Minimize2 className="h-4 w-4 mr-1.5" />Collapse all
+            </Button>
+          </div>
+        </div>
+
+        {/* Filters — collapsed by default */}
+        <CollapsibleSection
+          title="Filters"
+          description="Narrow inspections by inspector, section, status, or date range"
+          badge={
+            (selectedInspector !== 'all' || selectedSection !== 'all' || selectedStatus !== 'all' || dateRange.from) ? (
+              <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A4D69] text-[10px] font-bold text-white">
+                {[selectedInspector !== 'all', selectedSection !== 'all', selectedStatus !== 'all', !!dateRange.from].filter(Boolean).length}
+              </span>
+            ) : null
+          }
+        >
+          <div className="flex flex-wrap gap-3">
+            {/* Inspector Filter */}
+            <Select value={selectedInspector} onValueChange={setSelectedInspector}>
+              <SelectTrigger className="w-[180px] bg-[#F0F5F9]">
+                <SelectValue placeholder="All Inspectors" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Inspectors</SelectItem>
+                {uniqueInspectors.map(inspector => (
+                  <SelectItem key={inspector} value={inspector}>{inspector}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Section Filter */}
+            <Select value={selectedSection} onValueChange={setSelectedSection}>
+              <SelectTrigger className="w-[160px] bg-[#F0F5F9]">
+                <SelectValue placeholder="All Sections" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sections</SelectItem>
+                {SECTIONS.map(section => (
+                  <SelectItem key={section} value={section}>{SECTION_LABELS[section]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-[150px] bg-[#F0F5F9]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Date Range */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[130px] bg-[#F0F5F9]" title="Filter by start date">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {dateRange.from ? format(dateRange.from, 'LLL dd, y') : 'From date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateRange.from || undefined}
+                  onSelect={(date) => setDateRange(prev => ({ ...prev, from: date || null }))}
+                  initialFocus
                 />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+              </PopoverContent>
+            </Popover>
 
-              {/* Expand/Collapse All */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={expandAll}
-                >
-                  <Maximize2 className="h-4 w-4 mr-2" />
-                  Expand All
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[130px] bg-[#F0F5F9]" title="Filter by end date">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {dateRange.to ? format(dateRange.to, 'LLL dd, y') : 'To date'}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={collapseAll}
-                >
-                  <Minimize2 className="h-4 w-4 mr-2" />
-                  Collapse All
-                </Button>
-              </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateRange.to || undefined}
+                  onSelect={(date) => setDateRange(prev => ({ ...prev, to: date || null }))}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
 
-              {/* Inspector Filter */}
-              <Select value={selectedInspector} onValueChange={setSelectedInspector}>
-                <SelectTrigger className="w-full lg:w-[180px]">
-                  <SelectValue placeholder="All Inspectors" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Inspectors</SelectItem>
-                  {uniqueInspectors.map(inspector => (
-                    <SelectItem key={inspector} value={inspector}>{inspector}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Section Filter */}
-              <Select value={selectedSection} onValueChange={setSelectedSection}>
-                <SelectTrigger className="w-full lg:w-[150px]">
-                  <SelectValue placeholder="All Sections" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sections</SelectItem>
-                  {SECTIONS.map(section => (
-                    <SelectItem key={section} value={section}>
-                      {SECTION_LABELS[section]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Status Filter */}
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full lg:w-[150px]">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Date Range Filter - FIXED */}
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[130px]">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {dateRange.from ? format(dateRange.from, 'LLL dd, y') : 'Start'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <CalendarComponent
-                      mode="single"
-                      selected={dateRange.from || undefined}
-                      onSelect={(date) => setDateRange(prev => ({ 
-                        ...prev, 
-                        from: date || null 
-                      }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[130px]">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {dateRange.to ? format(dateRange.to, 'LLL dd, y') : 'End'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <CalendarComponent
-                      mode="single"
-                      selected={dateRange.to || undefined}
-                      onSelect={(date) => setDateRange(prev => ({ 
-                        ...prev, 
-                        to: date || null 
-                      }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Clear Filters */}
-              {(searchTerm || selectedInspector !== 'all' || selectedSection !== 'all' || 
-                selectedStatus !== 'all' || dateRange.from) && (
-                <Button variant="ghost" onClick={clearFilters} className="text-purple-700 hover:text-purple-800">
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            {/* Clear Filters */}
+            {(selectedInspector !== 'all' || selectedSection !== 'all' || selectedStatus !== 'all' || dateRange.from) && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-[#6B7B8E] hover:text-[#2A4D69]">
+                <X className="h-4 w-4 mr-1.5" />Clear filters
+              </Button>
+            )}
+          </div>
+        </CollapsibleSection>
 
         {/* Loading State */}
         {loading && (
@@ -1730,7 +1711,6 @@ export default function SHEQInspectionPage() {
             </div>
           </Card>
         ) : null}
-      </div>
 
       {/* Form Modal */}
       <InspectionFormModal
@@ -1750,6 +1730,7 @@ export default function SHEQInspectionPage() {
         onClose={() => setDetailModalOpen(false)}
         onEdit={handleEdit}
       />
-    </div>
+      </main>
+    </PageShell>
   );
 }

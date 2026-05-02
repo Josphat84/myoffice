@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
+import { PageShell } from "@/components/PageShell";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import {
   AlertCircle,
   CheckCircle,
@@ -51,6 +53,7 @@ import {
   FilterX,
   LayoutGrid,
   Table as TableIcon,
+  ChevronRight,
 } from 'lucide-react';
 
 // shadcn/ui imports
@@ -126,7 +129,7 @@ const isBackendAvailable = async (): Promise<boolean> => {
 interface StatusType {
   name: string;
   color: string;
-  icon: any;
+  icon: React.ElementType;
   gradient: string;
   bgColor: string;
   textColor: string;
@@ -136,7 +139,7 @@ interface StatusType {
 interface PriorityType {
   name: string;
   color: string;
-  icon: any;
+  icon: React.ElementType;
   gradient: string;
   bgColor: string;
   textColor: string;
@@ -146,7 +149,7 @@ interface PriorityType {
 interface BreakdownType {
   name: string;
   color: string;
-  icon: any;
+  icon: React.ElementType;
   gradient: string;
   bgColor: string;
   textColor: string;
@@ -159,6 +162,18 @@ interface SparePart {
   part_number?: string;
   unit_price: number;
   total_cost: number;
+}
+
+interface SpareUsed {
+  part_number?: string;
+  description?: string;
+  qty?: number;
+  unit?: string;
+  cost?: number;
+  name?: string;
+  quantity?: number;
+  unit_price?: number;
+  total_cost?: number;
 }
 
 interface Breakdown {
@@ -650,7 +665,7 @@ const createBreakdown = async (breakdownData: BreakdownFormData): Promise<any> =
       cleanData.spares_used = [];
     }
     
-    cleanData.spares_used = cleanData.spares_used.map((spare: any) => ({
+    cleanData.spares_used = cleanData.spares_used.map((spare: SpareUsed) => ({
       name: spare.name || '',
       quantity: spare.quantity || 1,
       part_number: spare.part_number || '',
@@ -707,7 +722,7 @@ const updateBreakdown = async (breakdownId: number, breakdownData: BreakdownForm
       cleanData.spares_used = [];
     }
     
-    cleanData.spares_used = cleanData.spares_used.map((spare: any) => ({
+    cleanData.spares_used = cleanData.spares_used.map((spare: SpareUsed) => ({
       name: spare.name || '',
       quantity: spare.quantity || 1,
       part_number: spare.part_number || '',
@@ -828,13 +843,13 @@ const MetricCard = ({
   trend, 
   change 
 }: { 
-  title: string; 
-  value: string | number; 
-  icon: any; 
-  color: string; 
-  description?: string; 
-  loading?: boolean; 
-  trend?: number; 
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+  description?: string;
+  loading?: boolean;
+  trend?: number;
   change?: number;
 }) => {
   const colorMap: Record<string, string> = {
@@ -996,210 +1011,157 @@ const FilterBar = ({
   onClearFilters: () => void;
   activeFilterCount: number;
 }) => {
-  const [showFilters, setShowFilters] = useState(true);
-
   return (
-    <Card className="border border-gray-200">
-      <CardContent className="p-4">
-        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-gray-900">Filters & Search</h3>
-            <p className="text-sm text-gray-500">Narrow down breakdown records by selecting filters below</p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search by machine, artisan, location..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-9 w-56 text-sm"
-              />
+    <div className="space-y-3">
+      {/* Search + Date Range — always visible */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6B7B8E]" />
+          <Input
+            type="text"
+            placeholder="Search by machine, artisan, location…"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9 text-sm bg-white"
+          />
+        </div>
+        <Button
+          variant={showDateRange ? "default" : "outline"}
+          size="sm"
+          onClick={onToggleDateRange}
+          title="Toggle date range filter"
+          className={showDateRange ? 'bg-[#2A4D69] text-white' : ''}
+        >
+          <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
+          Date Range
+        </Button>
+        <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm" title="Refresh breakdown records">
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+          Refresh
+        </Button>
+      </div>
+
+      {/* Date Range Picker */}
+      {showDateRange && (
+        <div className="rounded-lg border bg-white p-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1">
+              <Label className="text-xs text-[#6B7B8E]">Start Date</Label>
+              <Input type="date" value={startDate} onChange={(e) => onStartDateChange(e.target.value)} className="mt-1" />
             </div>
-            
-            <Button
-              variant={showDateRange ? "default" : "outline"}
-              size="sm"
-              onClick={onToggleDateRange}
-              className="gap-1"
-            >
-              <CalendarIcon className="h-3.5 w-3.5" />
-              Date Range
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="gap-1"
-            >
-              {showFilters ? <EyeOff className="h-3.5 w-3.5" /> : <Filter className="h-3.5 w-3.5" />}
-              {showFilters ? "Hide Filters" : "Show Filters"}
-              {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </Button>
-            
-            <Button
-              onClick={onRefresh}
-              disabled={loading}
-              variant="outline"
-              size="sm"
-              className="gap-1"
-            >
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-              Refresh
-            </Button>
+            <div className="flex-1">
+              <Label className="text-xs text-[#6B7B8E]">End Date</Label>
+              <Input type="date" value={endDate} onChange={(e) => onEndDateChange(e.target.value)} className="mt-1" />
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => {
+              const today = new Date();
+              const monthAgo = new Date();
+              monthAgo.setDate(today.getDate() - 30);
+              onStartDateChange(monthAgo.toISOString().split('T')[0]);
+              onEndDateChange(today.toISOString().split('T')[0]);
+            }}>Last 30 days</Button>
           </div>
         </div>
-        
-        {/* Date Range Picker */}
-        {showDateRange && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1">
-                <Label className="text-xs text-gray-500">Start Date</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => onStartDateChange(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex-1">
-                <Label className="text-xs text-gray-500">End Date</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => onEndDateChange(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => {
-                const today = new Date();
-                const monthAgo = new Date();
-                monthAgo.setDate(today.getDate() - 30);
-                onStartDateChange(monthAgo.toISOString().split('T')[0]);
-                onEndDateChange(today.toISOString().split('T')[0]);
-              }}>
-                Last 30 days
-              </Button>
-            </div>
+      )}
+
+      {/* Advanced Filters — collapsed by default */}
+      <CollapsibleSection
+        title="Advanced Filters"
+        description="Filter by status, type, priority, department, artisan, or machine"
+        badge={
+          activeFilterCount > 0 ? (
+            <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A4D69] text-[10px] font-bold text-white">
+              {activeFilterCount}
+            </span>
+          ) : null
+        }
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Status</Label>
+            <Select value={filters.status} onValueChange={(v) => onFilterChange('status', v)}>
+              <SelectTrigger className="mt-1 h-9 bg-[#F0F5F9]"><SelectValue placeholder="All Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.entries(STATUS_TYPES).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Type</Label>
+            <Select value={filters.breakdown_type} onValueChange={(v) => onFilterChange('breakdown_type', v)}>
+              <SelectTrigger className="mt-1 h-9 bg-[#F0F5F9]"><SelectValue placeholder="All Types" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {Object.entries(BREAKDOWN_TYPES).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Priority</Label>
+            <Select value={filters.priority} onValueChange={(v) => onFilterChange('priority', v)}>
+              <SelectTrigger className="mt-1 h-9 bg-[#F0F5F9]"><SelectValue placeholder="All Priorities" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                {Object.entries(PRIORITY_TYPES).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Department</Label>
+            <Select value={filters.department} onValueChange={(v) => onFilterChange('department', v)}>
+              <SelectTrigger className="mt-1 h-9 bg-[#F0F5F9]"><SelectValue placeholder="All Depts" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {DEPARTMENTS.map(dept => (<SelectItem key={dept} value={dept}>{dept}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Location</Label>
+            <Input
+              placeholder="Type location…"
+              value={filters.location !== 'all' ? filters.location : ''}
+              onChange={(e) => onFilterChange('location', e.target.value || 'all')}
+              className="mt-1 h-9 bg-[#F0F5F9]"
+            />
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Artisan</Label>
+            <Select value={filters.artisan_name} onValueChange={(v) => onFilterChange('artisan_name', v)}>
+              <SelectTrigger className="mt-1 h-9 bg-[#F0F5F9]"><SelectValue placeholder="All Artisans" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Artisans</SelectItem>
+                {ARTISANS.map(art => (<SelectItem key={art} value={art}>{art}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-[#6B7B8E]">Machine</Label>
+            <Select value={filters.machine_name} onValueChange={(v) => onFilterChange('machine_name', v)}>
+              <SelectTrigger className="mt-1 h-9 bg-[#F0F5F9]"><SelectValue placeholder="All Machines" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Machines</SelectItem>
+                {MACHINES.map(machine => (<SelectItem key={machine} value={machine}>{machine}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {activeFilterCount > 0 && (
+          <div className="mt-3 flex justify-end">
+            <Button variant="ghost" size="sm" onClick={onClearFilters} className="text-[#6B7B8E] hover:text-[#2A4D69] gap-1">
+              <FilterX className="h-3.5 w-3.5" />Clear all filters
+            </Button>
           </div>
         )}
-        
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Status</Label>
-                <Select value={filters.status} onValueChange={(v) => onFilterChange('status', v)}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    {Object.entries(STATUS_TYPES).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Type</Label>
-                <Select value={filters.breakdown_type} onValueChange={(v) => onFilterChange('breakdown_type', v)}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {Object.entries(BREAKDOWN_TYPES).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Priority</Label>
-                <Select value={filters.priority} onValueChange={(v) => onFilterChange('priority', v)}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="All Priorities" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    {Object.entries(PRIORITY_TYPES).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Department</Label>
-                <Select value={filters.department} onValueChange={(v) => onFilterChange('department', v)}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="All Depts" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
-                    {DEPARTMENTS.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Location</Label>
-                <Input
-                  placeholder="Type location..."
-                  value={filters.location !== 'all' ? filters.location : ''}
-                  onChange={(e) => onFilterChange('location', e.target.value || 'all')}
-                  className="mt-1 h-9"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Artisan</Label>
-                <Select value={filters.artisan_name} onValueChange={(v) => onFilterChange('artisan_name', v)}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="All Artisans" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Artisans</SelectItem>
-                    {ARTISANS.map(art => (
-                      <SelectItem key={art} value={art}>{art}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-gray-700">Machine</Label>
-                <Select value={filters.machine_name} onValueChange={(v) => onFilterChange('machine_name', v)}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="All Machines" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Machines</SelectItem>
-                    {MACHINES.map(machine => (
-                      <SelectItem key={machine} value={machine}>{machine}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button variant="ghost" size="sm" onClick={onClearFilters} className="text-gray-500 gap-1">
-                <FilterX className="h-3.5 w-3.5" />
-                Clear All Filters
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </CollapsibleSection>
+    </div>
   );
 };
 
@@ -1224,9 +1186,9 @@ const BreakdownCard = ({
   );
   
   const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
-    ? breakdown.spares_used.reduce((total: number, spare: any) => {
+    ? breakdown.spares_used.reduce((total: number, spare: SpareUsed) => {
         return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
-      }, 0) 
+      }, 0)
     : 0;
   
   const typeConfig = BREAKDOWN_TYPES[breakdown.breakdown_type] || BREAKDOWN_TYPES.other;
@@ -1405,11 +1367,13 @@ const BreakdownTable = ({
   if (!breakdowns.length) {
     return (
       <div className="text-center py-12">
-        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <AlertCircle className="h-8 w-8 text-gray-400" />
+        <div className="mx-auto w-16 h-16 bg-[#F0F5F9] rounded-full flex items-center justify-center mb-4">
+          <AlertCircle className="h-8 w-8 text-[#2A4D69]" />
         </div>
-        <h3 className="text-lg font-medium text-gray-500 mb-2">No breakdowns found</h3>
-        <p className="text-sm text-gray-400">Try adjusting your filters or create a new breakdown</p>
+        <h3 className="text-lg font-semibold text-[#2A4D69] mb-2">No breakdowns found</h3>
+        <p className="text-sm text-[#6B7B8E] mb-4">
+          No records match your current search or filters.<br />Try clearing filters, or log a new breakdown using the button above.
+        </p>
       </div>
     );
   }
@@ -1439,9 +1403,9 @@ const BreakdownTable = ({
               );
               
               const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
-                ? breakdown.spares_used.reduce((total: number, spare: any) => {
+                ? breakdown.spares_used.reduce((total: number, spare: SpareUsed) => {
                     return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
-                  }, 0) 
+                  }, 0)
                 : 0;
 
               const breakdownId = String(breakdown.id);
@@ -1572,9 +1536,9 @@ const BreakdownDetailsModal = ({
   );
   
   const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
-    ? breakdown.spares_used.reduce((total: number, spare: any) => {
+    ? breakdown.spares_used.reduce((total: number, spare: SpareUsed) => {
         return total + (parseFloat(spare.total_cost?.toString() || '0') || 0);
-      }, 0) 
+      }, 0)
     : 0;
 
   return (
@@ -1672,7 +1636,7 @@ const BreakdownDetailsModal = ({
                 <span className="text-sm font-semibold">Total: ${totalSparesCost.toFixed(2)}</span>
               </div>
               <div className="space-y-2">
-                {breakdown.spares_used.map((spare: any, idx: number) => (
+                {breakdown.spares_used.map((spare: SpareUsed, idx: number) => (
                   <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded-md text-sm">
                     <span>{spare.name} x{spare.quantity}</span>
                     <span className="font-medium">${spare.total_cost?.toFixed(2)}</span>
@@ -1793,8 +1757,8 @@ const BreakdownFormModal = ({
       await onSubmit(formData);
       onClose();
       toast.success(mode === 'create' ? 'Breakdown created successfully' : 'Breakdown updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save breakdown');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save breakdown');
     } finally {
       setLoading(false);
     }
@@ -2300,9 +2264,9 @@ const BreakdownsPage = () => {
         await deleteBreakdown(breakdown.id);
         toast.success('Breakdown deleted successfully');
         await loadBreakdowns();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Delete error:', err);
-        toast.error(err.message || 'Failed to delete breakdown. Please check the console for details.');
+        toast.error(err instanceof Error ? err.message : 'Failed to delete breakdown. Please check the console for details.');
       }
     }
   };
@@ -2326,9 +2290,9 @@ const BreakdownsPage = () => {
         toast.success('Breakdown updated successfully');
       }
       await loadBreakdowns();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save breakdown:', err);
-      toast.error(err.message || 'Failed to save breakdown');
+      toast.error(err instanceof Error ? err.message : 'Failed to save breakdown');
       throw err;
     }
   };
@@ -2340,7 +2304,7 @@ const BreakdownsPage = () => {
       ...filteredBreakdowns.map(breakdown => {
         const downtime = minutesToDisplay(calculateDowntime(breakdown.breakdown_start, breakdown.breakdown_end));
         const totalSparesCost = (breakdown.spares_used && Array.isArray(breakdown.spares_used)) 
-          ? breakdown.spares_used.reduce((total: number, spare: any) => total + (parseFloat(spare.total_cost?.toString() || '0') || 0), 0) : 0;
+          ? breakdown.spares_used.reduce((total: number, spare: SpareUsed) => total + (parseFloat(spare.total_cost?.toString() || '0') || 0), 0) : 0;
         const row = [
           `"${(breakdown.machine_name || '').replace(/"/g, '""')}"`,
           `"${(breakdown.machine_id || '').replace(/"/g, '""')}"`,
@@ -2388,29 +2352,28 @@ const BreakdownsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <PageShell>
       <Toaster position="top-right" richColors />
-      
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        {/* Ozech Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-              Equipment Breakdowns
-            </h1>
-            <p className="text-gray-500 mt-1">Monitor and manage equipment maintenance issues</p>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Breakdowns</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Equipment Breakdowns</h1>
+            <p className="text-[#6B7B8E] mt-1">Log, track, and resolve equipment failures. Click any record to view full details.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportToCSV} className="gap-1">
-              <Download className="h-4 w-4" /> Export CSV
+          <div className="flex flex-wrap items-center gap-2 self-start">
+            <Button variant="outline" size="sm" onClick={exportToCSV} className="gap-1 border-[#2A4D69]/20 text-[#2A4D69]">
+              <Download className="h-4 w-4" /> Export
             </Button>
-            <Button variant="outline" size="sm" onClick={expandAll} className="gap-1">
+            <Button variant="outline" size="sm" onClick={expandAll} className="gap-1 border-[#2A4D69]/20 text-[#2A4D69]">
               <Maximize2 className="h-4 w-4" /> Expand All
             </Button>
-            <Button variant="outline" size="sm" onClick={collapseAll} className="gap-1">
-              <Minimize2 className="h-4 w-4" /> Collapse All
-            </Button>
-            <Button onClick={handleCreate} className="gap-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+            <Button onClick={handleCreate} className="gap-1 bg-[#2A4D69] hover:bg-[#1e3a52] text-white">
               <Plus className="h-4 w-4" /> New Breakdown
             </Button>
           </div>
@@ -2543,7 +2506,7 @@ const BreakdownsPage = () => {
         initialData={selectedBreakdown}
         mode={formMode}
       />
-    </div>
+    </PageShell>
   );
 };
 

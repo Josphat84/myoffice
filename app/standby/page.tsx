@@ -77,6 +77,7 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 
 // ---------- API Configuration ----------
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -1070,43 +1071,37 @@ const EmployeeStandbyScheduler = () => {
   }
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-primary to-primary/60 rounded-lg shadow">
-                  <ShieldCheck className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-foreground">Standby Management System</h1>
-                  <p className="text-sm text-muted-foreground">Manage employee standby assignments</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
-                {!backendAvailable && (
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    Demo Mode
-                  </Badge>
-                )}
-                <Button variant="outline" size="sm" onClick={fetchData}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
-                <Button onClick={() => setIsScheduleDialogOpen(true)} size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Schedule
-                </Button>
-              </div>
+    <PageShell>
+      <TooltipProvider>
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+                <span>Home</span>
+                <ChevronRightIcon className="h-3 w-3" />
+                <span className="text-[#2A4D69] font-medium">Standby</span>
+              </nav>
+              <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Standby Management</h1>
+              <p className="text-[#6B7B8E] mt-1">Manage employee standby assignments and on-call schedules.</p>
+            </div>
+            <div className="flex items-center gap-2 self-start">
+              {!backendAvailable && (
+                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Demo Mode
+                </Badge>
+              )}
+              <Button variant="outline" size="sm" onClick={fetchData}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+              <Button onClick={() => setIsScheduleDialogOpen(true)} size="sm" className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
+                <Plus className="w-4 h-4 mr-2" />
+                New Schedule
+              </Button>
             </div>
           </div>
-        </header>
-
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Error Alert */}
           {error && (
             <Alert variant="destructive" className="mb-6 animate-in fade-in duration-300">
@@ -1821,24 +1816,8 @@ const EmployeeStandbyScheduler = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Footer */}
-        <footer className="mt-12 border-t bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary" />
-                <span className="font-medium">Standby Management System v2.0</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span>{employees.length} employees</span>
-                <span>•</span>
-                <span>{standbySchedules.length} schedules</span>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </TooltipProvider>
+      </TooltipProvider>
+    </PageShell>
   );
 };
 

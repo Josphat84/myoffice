@@ -1,8 +1,7 @@
 // app/documents/page.tsx
 'use client';
 
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageShell } from '@/components/PageShell';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Folder,
@@ -157,29 +156,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from "@/lib/utils";
 
-// ============= STUNNING NATURE WALLPAPER COLLECTION =============
-const natureWallpapers = [
-  { url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070", location: "Iceland - Crystal Ice Cave" },
-  { url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070", location: "Pacific Northwest" },
-  { url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070", location: "Great Smoky Mountains" },
-  { url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070", location: "Olympic National Park" },
-  { url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070", location: "Canadian Rockies" }
-];
+// Animation styles defined in globals.css
 
-// ============= ANIMATION STYLES =============
-const animationStyles = `
-  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-  @keyframes slide-right { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-  .animate-fade-in { animation: fade-in 0.5s ease-out forwards; opacity: 0; }
-  .animate-slide-up { animation: slide-up 0.5s ease-out forwards; opacity: 0; }
-  .animate-scale-in { animation: scale-in 0.3s ease-out forwards; opacity: 0; }
-  .animate-slide-right { animation: slide-right 0.3s ease-out forwards; opacity: 0; }
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-`;
+
 
 // Base category structure
 const BASE_CATEGORIES = [
@@ -312,9 +291,6 @@ export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [path, setPath] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -347,22 +323,8 @@ export default function DocumentsPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
 
-  // Rotating wallpaper
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
-    }, 120000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Load saved data on mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
     const isDark = localStorage.getItem('darkMode') === 'true';
     setIsDarkMode(isDark);
     if (isDark) document.documentElement.classList.add('dark');
@@ -1336,26 +1298,7 @@ export default function DocumentsPage() {
   );
 
   return (
-    <>
-      <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen">
-        {/* Background */}
-        <div className="fixed inset-0 z-0">
-          {natureWallpapers.map((wallpaper, index) => (
-            <div key={index} className="absolute inset-0 transition-opacity duration-2000" style={{
-              backgroundImage: `url('${wallpaper.url}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              opacity: index === currentWallpaperIndex ? 1 : 0,
-              transition: 'opacity 2000ms ease-in-out',
-            }} />
-          ))}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-        </div>
-
-        <div className="relative z-10">
-          <Header isLoggedIn={isLoggedIn} user={user} onLogout={() => {}} />
-
+    <PageShell>
           <div className="container mx-auto px-4 py-6">
             {/* Top Bar */}
             <div className="flex items-center justify-between mb-6 animate-fade-in">
@@ -1438,10 +1381,6 @@ export default function DocumentsPage() {
             {/* Main Content */}
             {!currentCategory ? renderHomeView() : !currentFolder ? renderCategoryView() : renderSubfolderView()}
           </div>
-
-          <Footer />
-        </div>
-      </div>
 
       {/* Create Folder Dialog */}
       <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
@@ -1569,6 +1508,6 @@ export default function DocumentsPage() {
       </AlertDialog>
 
       <Toaster position="bottom-right" richColors />
-    </>
+    </PageShell>
   );
 }

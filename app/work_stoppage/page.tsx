@@ -14,8 +14,9 @@ import {
   CircleDot, Circle, CircleCheck, CircleEllipsis, CircleOff,
   CalendarRange, UserCircle, Filter, PieChart, ChevronsDown, ChevronsUp,
   MoreHorizontal, MoreVertical, RotateCcw, CheckCircle as CheckCircleSolid,
-  XCircle, PlayCircle, PauseCircle
+  XCircle, PlayCircle, PauseCircle, ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
 
 // Shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 
 // =============== CONSTANTS ===============
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -506,7 +508,7 @@ const AutoCompleteInput: React.FC<AutoCompleteInputProps> = ({
 interface ActionFormProps {
   action: CorrectiveAction;
   index: number;
-  onChange: (id: string, field: keyof CorrectiveAction, value: any) => void;
+  onChange: (id: string, field: keyof CorrectiveAction, value: CorrectiveAction[keyof CorrectiveAction]) => void;
   onRemove: (id: string) => void;
   onStatusChange?: (id: string, newStatus: StatusType) => void;
 }
@@ -718,7 +720,7 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({
     }));
   };
 
-  const updateAction = (id: string, field: keyof CorrectiveAction, value: any) => {
+  const updateAction = (id: string, field: keyof CorrectiveAction, value: CorrectiveAction[keyof CorrectiveAction]) => {
     setFormData(prev => ({
       ...prev,
       correctiveActions: prev.correctiveActions?.map(a =>
@@ -1894,57 +1896,38 @@ export default function WorkStoppagePage() {
   ];
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-        <div className="container mx-auto py-10 px-4 max-w-7xl">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <PageShell>
+      <TooltipProvider>
+        <main className="container mx-auto px-4 py-6 space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2 flex items-center gap-3">
-                <Octagon className="h-10 w-10 text-destructive" />
-                Work Stoppage
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                Document and track unsafe acts, practices, and corrective actions
-              </p>
+              <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+                <span>Home</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-[#2A4D69] font-medium">Work Stoppage</span>
+              </nav>
+              <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Work Stoppage</h1>
+              <p className="text-[#6B7B8E] mt-1">Document and track unsafe acts, practices, and corrective actions.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 self-start">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setViewMode('grid')}
-                    className={viewMode === 'grid' ? 'bg-accent text-accent-foreground' : ''}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'bg-accent text-accent-foreground' : ''}>
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>Grid View</p>
-                </TooltipContent>
+                <TooltipContent><p>Grid View</p></TooltipContent>
               </Tooltip>
-              
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setViewMode('table')}
-                    className={viewMode === 'table' ? 'bg-accent text-accent-foreground' : ''}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setViewMode('table')} className={viewMode === 'table' ? 'bg-accent text-accent-foreground' : ''}>
                     <TableIcon className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>Table View</p>
-                </TooltipContent>
+                <TooltipContent><p>Table View</p></TooltipContent>
               </Tooltip>
-              
-              <Button onClick={() => {
-                setEditingReport(null);
-                setIsFormModalOpen(true);
-              }}>
+              <Button onClick={() => { setEditingReport(null); setIsFormModalOpen(true); }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
                 <Plus className="h-4 w-4 mr-2" /> New Stoppage
               </Button>
             </div>
@@ -2007,59 +1990,79 @@ export default function WorkStoppagePage() {
             </Card>
           )}
 
-          {/* Search and Filters */}
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by department, description, inspector..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+          {/* Search — always visible */}
+          <div className="relative bg-white rounded-lg border shadow-sm p-3 mb-3">
+            <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6B7B8E]" />
+            <Input
+              placeholder="Search by department, description, inspector..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-10 bg-white border-0 shadow-none focus-visible:ring-0"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-5 top-1/2 transform -translate-y-1/2 text-[#6B7B8E] hover:text-[#2A4D69]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-                {/* Expand/Collapse All */}
-                <div className="flex gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={expandAll}>
-                        <ChevronsDown className="h-4 w-4 mr-2" />
-                        Expand All
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Expand all cards to show full details</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={collapseAll}>
-                        <ChevronsUp className="h-4 w-4 mr-2" />
-                        Collapse All
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Collapse all cards</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+          {/* Expand/Collapse All — outside filters */}
+          <div className="flex gap-2 mb-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={expandAll}>
+                  <ChevronsDown className="h-4 w-4 mr-2" />
+                  Expand All
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Expand all cards to show full details</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={collapseAll}>
+                  <ChevronsUp className="h-4 w-4 mr-2" />
+                  Collapse All
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Collapse all cards</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
 
-                {/* Section Filter */}
+          {/* Advanced Filters */}
+          <CollapsibleSection
+            title="Filters"
+            description="Filter reports by section, inspector, status, and date range"
+            badge={
+              (() => {
+                const count = [
+                  selectedSection !== 'all',
+                  selectedInspector !== 'all',
+                  statusFilter !== 'all',
+                  !!dateRange.from,
+                  !!dateRange.to,
+                ].filter(Boolean).length;
+                return count > 0
+                  ? <Badge className="ml-2 bg-[#2A4D69] text-white text-xs px-2 py-0.5">{count}</Badge>
+                  : null;
+              })()
+            }
+            defaultOpen={false}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+              {/* Section Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Section</Label>
                 <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger className="w-full lg:w-[150px]">
+                  <SelectTrigger className="bg-[#F0F5F9]">
                     <SelectValue placeholder="All Sections" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2069,10 +2072,13 @@ export default function WorkStoppagePage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
 
-                {/* Inspector Filter */}
+              {/* Inspector Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Inspector</Label>
                 <Select value={selectedInspector} onValueChange={setSelectedInspector}>
-                  <SelectTrigger className="w-full lg:w-[180px]">
+                  <SelectTrigger className="bg-[#F0F5F9]">
                     <SelectValue placeholder="All Inspectors" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2082,10 +2088,13 @@ export default function WorkStoppagePage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
 
-                {/* Status Filter */}
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Status</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full lg:w-[150px]">
+                  <SelectTrigger className="bg-[#F0F5F9]">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2096,60 +2105,68 @@ export default function WorkStoppagePage() {
                     <SelectItem value="overdue">Overdue</SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Date Range Filter */}
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[130px]">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {dateRange.from ? format(dateRange.from, 'LLL dd, y') : 'Start'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={dateRange.from || undefined}
-                        onSelect={(date) => setDateRange(prev => ({ ...prev, from: date || null }))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[130px]">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {dateRange.to ? format(dateRange.to, 'LLL dd, y') : 'End'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={dateRange.to || undefined}
-                        onSelect={(date) => setDateRange(prev => ({ ...prev, to: date || null }))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Clear Filters */}
-                {(searchTerm || selectedSection !== 'all' || selectedInspector !== 'all' || 
-                  statusFilter !== 'all' || dateRange.from || dateRange.to) && (
-                  <Button variant="ghost" onClick={clearFilters}>
-                    <FilterX className="h-4 w-4 mr-2" />
-                    Clear
-                  </Button>
-                )}
               </div>
 
-              {/* Results Count */}
-              <div className="mt-4 text-sm text-muted-foreground">
+              {/* Date Range Filter */}
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full bg-[#F0F5F9] justify-start">
+                      <Calendar className="h-4 w-4 mr-2 text-[#6B7B8E]" />
+                      <span className="text-[#6B7B8E]">{dateRange.from ? format(dateRange.from, 'LLL dd, y') : 'Start'}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateRange.from || undefined}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, from: date || null }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[#2A4D69] font-medium">End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full bg-[#F0F5F9] justify-start">
+                      <Calendar className="h-4 w-4 mr-2 text-[#6B7B8E]" />
+                      <span className="text-[#6B7B8E]">{dateRange.to ? format(dateRange.to, 'LLL dd, y') : 'End'}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateRange.to || undefined}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, to: date || null }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-sm text-[#6B7B8E]">
                 Showing {filteredReports.length} of {reports.length} reports
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              {(selectedSection !== 'all' || selectedInspector !== 'all' ||
+                statusFilter !== 'all' || dateRange.from || dateRange.to) && (
+                <Button variant="ghost" onClick={clearFilters} className="text-[#6B7B8E] hover:text-[#2A4D69]">
+                  <FilterX className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Results Count — always visible */}
+          <div className="mt-2 mb-6 text-sm text-[#6B7B8E]">
+            Showing {filteredReports.length} of {reports.length} reports
+          </div>
 
           {/* Loading State */}
           {loading && (
@@ -2530,8 +2547,8 @@ export default function WorkStoppagePage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
-    </TooltipProvider>
+        </main>
+      </TooltipProvider>
+    </PageShell>
   );
 }

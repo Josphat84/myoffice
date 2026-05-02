@@ -35,6 +35,7 @@ import {
   X,
   SlidersHorizontal
 } from "lucide-react";
+import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -384,112 +385,50 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950/20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-              <div className="flex items-center gap-3 ml-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-700 shadow-lg">
-                  <FilePieChart className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-extrabold tracking-tight text-foreground">Reports Center</span>
-                  <span className="text-xs text-primary font-semibold uppercase tracking-wider hidden sm:inline-block">
-                    Analytics & Insights
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                <Home className="h-4 w-4" />
-              </Link>
-              <Link href="/employees" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Personnel
-              </Link>
-              <Link href="/equipment" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Assets
-              </Link>
-              <Link href="/overtime" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                Overtime
-              </Link>
-              <Link href="/reports" className="text-sm font-semibold text-primary transition-colors">
-                Reports
-              </Link>
+    <PageShell>
+      <main className="container mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Reports</span>
             </nav>
-
-            <Button 
-              size="sm" 
-              asChild 
-              className="bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800"
-              disabled={isLoading}
-            >
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Reports & Analytics</h1>
+            <p className="text-[#6B7B8E] mt-1">Manage, analyze, and export your operational reports.</p>
+          </div>
+          <div className="flex items-center gap-2 self-start">
+            <div className="flex items-center border rounded-lg overflow-hidden">
+              <Button variant={viewMode === "grid" ? "default" : "ghost"} size="sm" className="rounded-none border-0" onClick={() => setViewMode("grid")}>
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="rounded-none border-0" onClick={() => setViewMode("list")}>
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+            <Select value={sortBy} onValueChange={(value) => { setSortBy(value); setReports(sortReports(reports, value)); }}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="name">Name A-Z</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={loadReports} disabled={isLoading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button size="sm" asChild className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md" disabled={isLoading}>
               <Link href="/reports/generate">
                 <Plus className="h-4 w-4 mr-2" />
-                {isLoading ? "Loading..." : "New Report"}
+                New Report
               </Link>
             </Button>
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 sm:px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Reports & Analytics
-              </h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                Manage, analyze, and export your operational reports
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border rounded-lg bg-white dark:bg-slate-800 overflow-hidden">
-                <Button 
-                  variant={viewMode === "grid" ? "default" : "ghost"} 
-                  size="sm" 
-                  className="rounded-none border-0"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant={viewMode === "list" ? "default" : "ghost"} 
-                  size="sm" 
-                  className="rounded-none border-0"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-              <Select value={sortBy} onValueChange={(value) => {
-                setSortBy(value);
-                setReports(sortReports(reports, value));
-              }}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={loadReports} disabled={isLoading}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
 
           {/* Quick Stats */}
           {reports.length > 0 && (
@@ -816,7 +755,7 @@ export default function ReportsPage() {
           </Tabs>
         </div>
       </main>
-    </div>
+    </PageShell>
   );
 }
 

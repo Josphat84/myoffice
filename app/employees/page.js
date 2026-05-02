@@ -18,9 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// Import Header and Footer
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+// Import PageShell
+import { PageShell } from "@/components/PageShell";
 
 // shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -77,82 +76,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// ============= STUNNING NATURE WALLPAPER COLLECTION =============
-const natureWallpapers = [
-  {
-    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Iceland Ice Cave",
-    location: "Iceland - Crystal Ice Cave"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Enchanted Forest",
-    location: "Pacific Northwest"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Misty Morning",
-    location: "Great Smoky Mountains"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Sunbeams Through Forest",
-    location: "Olympic National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Alpine Lake",
-    location: "Canadian Rockies"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Waterfall Valley",
-    location: "Yosemite National Park"
-  }
-];
-
-// ============= ANIMATION STYLES =============
-const animationStyles = `
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes bounce-light {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-bounce-light {
-    animation: bounce-light 2s ease-in-out infinite;
-  }
-
-  .delay-100 { animation-delay: 100ms; opacity: 0; animation-fill-mode: forwards; }
-  .delay-200 { animation-delay: 200ms; opacity: 0; animation-fill-mode: forwards; }
-  .delay-300 { animation-delay: 300ms; opacity: 0; animation-fill-mode: forwards; }
-  .delay-400 { animation-delay: 400ms; opacity: 0; animation-fill-mode: forwards; }
-`;
+// Animation styles are defined in globals.css (ozech-fade-up, ozech-fade-in)
 
 // API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -231,7 +155,11 @@ const createEmployee = async (employee) => {
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || `Failed to create employee: ${res.status}`);
+    const detail = error.detail;
+    const message = Array.isArray(detail)
+      ? detail.map(e => e.msg || String(e)).join('; ')
+      : (typeof detail === 'string' ? detail : `Failed to create employee: ${res.status}`);
+    throw new Error(message);
   }
   return res.json();
 };
@@ -266,7 +194,10 @@ const updateEmployee = async (employeeId, employee) => {
     let errorMessage;
     try {
       const error = await res.json();
-      errorMessage = error.detail || error.message || `Failed to update employee: ${res.status}`;
+      const detail = error.detail;
+      errorMessage = Array.isArray(detail)
+        ? detail.map(e => e.msg || String(e)).join('; ')
+        : (typeof detail === 'string' ? detail : (error.message || `Failed to update employee: ${res.status}`));
     } catch {
       errorMessage = `Failed to update employee: ${res.status}`;
     }
@@ -290,7 +221,7 @@ const deleteEmployee = async (employeeId) => {
 const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from-primary/10 to-primary/5' }) => {
   const CardWrapper = onClick ? (
     <Card
-      className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden relative group bg-white/90 backdrop-blur-sm`}
+      className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden relative group bg-white`}
       onClick={onClick}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50 group-hover:opacity-70 transition-opacity`} />
@@ -319,7 +250,7 @@ const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from
       </CardContent>
     </Card>
   ) : (
-    <Card className="overflow-hidden relative group bg-white/90 backdrop-blur-sm">
+    <Card className="overflow-hidden relative group bg-white">
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
       <CardContent className="p-6 relative z-10">
         <div className="flex items-center justify-between">
@@ -799,7 +730,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete }) => {
   const awardCount = employee.awards_recognition?.length ?? 0;
 
   return (
-    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden bg-white/90 backdrop-blur-sm">
+    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden bg-white">
       <CardHeader className="pb-3 pt-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -954,7 +885,7 @@ const EmployeeListItem = ({ employee, onEdit, onDelete }) => {
   const qualCount = employee.qualifications?.length ?? 0;
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-lg border hover:shadow-md transition-all duration-300">
+    <div className="bg-white rounded-lg border hover:shadow-md transition-all duration-300">
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
@@ -1122,7 +1053,7 @@ const AdvancedFilters = ({
           placeholder="Search by name, ID, or ID number..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 h-10 bg-white/80 backdrop-blur-sm"
+          className="pl-9 h-10 bg-white"
         />
       </div>
 
@@ -1130,7 +1061,7 @@ const AdvancedFilters = ({
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">Role / Designation</Label>
           <Select value={filterDesignation} onValueChange={onFilterDesignationChange}>
-            <SelectTrigger className="bg-white/80 backdrop-blur-sm">
+            <SelectTrigger className="bg-white">
               <SelectValue placeholder="All Roles" />
             </SelectTrigger>
             <SelectContent>
@@ -1145,7 +1076,7 @@ const AdvancedFilters = ({
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">Employment Class</Label>
           <Select value={filterClass} onValueChange={onFilterClassChange}>
-            <SelectTrigger className="bg-white/80 backdrop-blur-sm">
+            <SelectTrigger className="bg-white">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
@@ -1160,7 +1091,7 @@ const AdvancedFilters = ({
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">Department</Label>
           <Select value={filterDepartment} onValueChange={onFilterDepartmentChange}>
-            <SelectTrigger className="bg-white/80 backdrop-blur-sm">
+            <SelectTrigger className="bg-white">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
             <SelectContent>
@@ -1177,7 +1108,7 @@ const AdvancedFilters = ({
         <div className="flex items-center gap-2">
           <Label className="text-xs font-medium text-muted-foreground">Sort By</Label>
           <Select value={sortBy} onValueChange={onSortByChange}>
-            <SelectTrigger className="w-[140px] bg-white/80 backdrop-blur-sm">
+            <SelectTrigger className="w-[140px] bg-white">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -1247,8 +1178,6 @@ export default function EmployeesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDesignation, setFilterDesignation] = useState("all");
   const [filterClass, setFilterClass] = useState("all");
@@ -1259,28 +1188,8 @@ export default function EmployeesPage() {
   const [activeTab, setActiveTab] = useState("profiles");
   const [currentPage, setCurrentPage] = useState(1);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  
+
   const itemsPerPage = 12;
-
-  // Rotating nature wallpaper
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
-    }, 120000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Check auth
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
-  }, []);
 
   const loadEmployees = useCallback(async () => {
     setIsLoading(true);
@@ -1435,14 +1344,6 @@ export default function EmployeesPage() {
     toast.success('All filters cleared');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null);
-    window.location.reload();
-  };
-
   const stats = useMemo(() => {
     const total = processedEmployees.length;
     const uniqueDesignationsCount = new Set(processedEmployees.map(e => e.designation).filter(Boolean)).size;
@@ -1452,86 +1353,59 @@ export default function EmployeesPage() {
   }, [processedEmployees]);
 
   return (
-    <>
-      <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen">
-        {/* Rotating Nature Wallpaper Background */}
-        <div className="fixed inset-0 z-0">
-          {natureWallpapers.map((wallpaper, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
-              style={{
-                backgroundImage: `url('${wallpaper.url}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: index === currentWallpaperIndex ? 1 : 0,
-                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
-                transition: 'opacity 2000ms ease-in-out',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
-            {natureWallpapers[currentWallpaperIndex].location}
+    <PageShell>
+      <main className="container mx-auto px-4 py-8 space-y-8">
+
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ozech-fade-up">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRightIcon className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Personnel</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">
+              Personnel Registry
+            </h1>
+            <p className="text-[#6B7B8E] mt-1 max-w-xl">
+              Manage your workforce — view profiles, track qualifications, and keep employee records up to date.
+            </p>
           </div>
+          <Button
+            onClick={handleAdd}
+            className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start sm:self-auto"
+            size="lg"
+          >
+            <Plus className="h-5 w-5" /> Add Employee
+          </Button>
         </div>
 
-        <div className="relative z-10">
-          <Header 
-            isLoggedIn={isLoggedIn} 
-            user={user} 
-            onLogout={handleLogout} 
-          />
+        {/* Stats Dashboard */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 ozech-fade-up">
+          <StatCard title="Total Employees" value={stats.total} icon={Users} />
+          <StatCard title="Unique Roles" value={stats.uniqueDesignationsCount} icon={Briefcase} />
+          <StatCard title="Qualifications" value={stats.totalQuals} icon={GraduationCap} />
+          <StatCard title="Permanent Staff" value={stats.activeEmployees} icon={UserCheck} />
+        </div>
 
-          <main className="container mx-auto px-4 py-8 space-y-8">
-            {/* Header */}
-            <div className="text-center space-y-2 animate-fade-in">
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent drop-shadow-lg">
-                Personnel Registry
-              </h1>
-              <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                Comprehensive employee management system with detailed profiles and performance tracking
-              </p>
-            </div>
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+            <Button variant="ghost" size="sm" className="ml-auto h-6 px-2" onClick={() => setError(null)}>
+              <X className="h-3 w-3" />
+            </Button>
+          </Alert>
+        )}
 
-            {/* Stats Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up delay-100">
-              <StatCard title="Total Employees" value={stats.total} icon={Users} />
-              <StatCard title="Unique Roles" value={stats.uniqueDesignationsCount} icon={Briefcase} />
-              <StatCard title="Qualifications" value={stats.totalQuals} icon={GraduationCap} />
-              <StatCard title="Active Staff" value={stats.activeEmployees} icon={UserCheck} />
-            </div>
-
-            {/* Add Employee Button */}
-            <div className="flex justify-end animate-slide-up delay-200">
-              <Button 
-                onClick={handleAdd} 
-                className="gap-2 bg-primary hover:bg-primary/90 shadow-lg"
-                size="lg"
-              >
-                <Plus className="h-5 w-5" /> Add New Employee
-              </Button>
-            </div>
-
-            {/* Error Alert */}
-            {error && (
-              <Alert variant="destructive" className="animate-slide-up delay-250">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-                <Button variant="ghost" size="sm" className="ml-auto h-6 px-2" onClick={() => setError(null)}>
-                  <X className="h-3 w-3" />
-                </Button>
-              </Alert>
-            )}
-
-            {/* Filter Section */}
-            <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm animate-slide-up delay-300">
-              <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
-                <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+        {/* Filter Section */}
+        <Card className="border shadow-sm overflow-hidden bg-white ozech-fade-up">
+          <CardHeader className="pb-3 bg-[#F0F5F9] border-b">
+            <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                       <Filter className="h-5 w-5 text-primary" />
                       <h2 className="text-lg font-semibold">Filters</h2>
                       {activeFilterCount > 0 && (
@@ -1582,110 +1456,114 @@ export default function EmployeesPage() {
               </CardHeader>
             </Card>
 
-            {/* View Toggle */}
-            <div className="flex justify-end animate-slide-up delay-400">
-              <div className="flex rounded-lg border bg-background p-1">
-                <Button
-                  variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="rounded-md px-3"
-                  onClick={() => setViewMode('cards')}
-                >
-                  <LayoutGrid className="h-4 w-4 mr-1" /> Cards
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="rounded-md px-3"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-4 w-4 mr-1" /> List
-                </Button>
-              </div>
-            </div>
-
-            {/* Loading State */}
-            {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-full" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Skeleton className="h-64 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              </div>
-            ) : paginatedEmployees.length === 0 ? (
-              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
-                <CardContent className="py-12">
-                  <div className="text-center">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No employees found</h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      {employees.length === 0
-                        ? 'Get started by adding your first employee.'
-                        : 'No records match your current filters. Try adjusting them.'}
-                    </p>
-                    {employees.length === 0 && (
-                      <Button onClick={handleAdd} className="gap-2">
-                        <Plus className="h-4 w-4" /> Add Employee
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : viewMode === 'cards' ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {paginatedEmployees.map((emp) => (
-                    <EmployeeCard
-                      key={emp.id}
-                      employee={emp}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              </>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {paginatedEmployees.map((emp) => (
-                    <EmployeeListItem
-                      key={emp.id}
-                      employee={emp}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              </>
-            )}
-          </main>
-
-          <Footer />
+        {/* View Toggle */}
+        <div className="flex justify-end">
+          <div className="flex rounded-lg border bg-white p-1 shadow-sm">
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-md px-3"
+              onClick={() => setViewMode('cards')}
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Cards
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-md px-3"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4 mr-1" /> List
+            </Button>
+          </div>
         </div>
-      </div>
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton className="h-64 w-full rounded-xl" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </div>
+          </div>
+        ) : paginatedEmployees.length === 0 ? (
+          <Card className="border shadow-sm bg-white">
+            <CardContent className="py-16">
+              <div className="text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F0F5F9] mx-auto mb-4">
+                  <Users className="h-8 w-8 text-[#2A4D69]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#2A4D69] mb-2">
+                  {employees.length === 0 ? 'No employees yet' : 'No results found'}
+                </h3>
+                <p className="text-sm text-[#6B7B8E] mb-6 max-w-sm mx-auto">
+                  {employees.length === 0
+                    ? 'Add your first employee to start building your personnel registry.'
+                    : 'No records match your current filters. Try broadening your search or clearing the filters.'}
+                </p>
+                {employees.length === 0 ? (
+                  <Button onClick={handleAdd} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white">
+                    <Plus className="h-4 w-4" /> Add First Employee
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={clearFilters} className="gap-2">
+                    <FilterX className="h-4 w-4" /> Clear Filters
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : viewMode === 'cards' ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {paginatedEmployees.map((emp) => (
+                <EmployeeCard
+                  key={emp.id}
+                  employee={emp}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {paginatedEmployees.map((emp) => (
+                <EmployeeListItem
+                  key={emp.id}
+                  employee={emp}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
+
+      </main>
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-xl bg-white/95 backdrop-blur-sm">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-gray-50 to-white rounded-t-xl">
-            <DialogTitle className="text-xl font-semibold">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-xl">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b bg-[#F0F5F9] rounded-t-xl">
+            <DialogTitle className="text-xl font-semibold text-[#2A4D69]">
               {selectedEmployee ? 'Edit Employee' : 'Add New Employee'}
             </DialogTitle>
             <DialogDescription>
-              Fill in the employee details. Fields marked with * are required.
+              Fill in the employee details below. Fields marked with * are required.
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 py-6">
@@ -1698,6 +1576,6 @@ export default function EmployeesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </PageShell>
   );
 }

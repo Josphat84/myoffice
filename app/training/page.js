@@ -4,9 +4,10 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-    Users, Shield, Calendar, AlertTriangle, FileText, CheckCircle, Clock, 
-    Search, X, Plus, Trash2, BookOpen, Download, UploadCloud, Loader2
+    Users, Shield, Calendar, AlertTriangle, FileText, CheckCircle, Clock,
+    Search, X, Plus, Trash2, BookOpen, Download, UploadCloud, Loader2, ChevronRight
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 
 // --- Configuration ---
 const API_BASE_URL = 'http://localhost:8000/api/training'; 
@@ -297,15 +298,20 @@ export default function Training() { // Renamed to Training
     }
 
     return (
-        <div className="p-6 md:p-10 bg-slate-50 min-h-screen">
-            
-            {/* --- Header --- */}
-            <header className="max-w-7xl mx-auto mb-10">
-                <h1 className="text-4xl font-extrabold text-slate-800 flex items-center gap-4">
-                    <BookOpen className="h-9 w-9 text-indigo-600" /> Training & Certification Compliance
-                </h1>
-                <p className="text-lg text-slate-500 mt-1">Manage mandatory employee qualifications, track expiry dates, and maintain audit readiness.</p>
-            </header>
+        <PageShell>
+        <main className="container mx-auto px-4 py-6 space-y-6">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+                  <span>Home</span>
+                  <ChevronRight className="h-3 w-3" />
+                  <span className="text-[#2A4D69] font-medium">Training</span>
+                </nav>
+                <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Training & Certification</h1>
+                <p className="text-[#6B7B8E] mt-1">Manage mandatory employee qualifications, track expiry dates, and maintain audit readiness.</p>
+              </div>
+            </div>
             
             {/* --- 1. Expiry Alerts (Polished Stat Cards) --- */}
             <div className="max-w-7xl mx-auto mb-12">
@@ -489,6 +495,7 @@ export default function Training() { // Renamed to Training
                 isSaving={isSaving}
             />
 
-        </div>
+        </main>
+        </PageShell>
     );
 }

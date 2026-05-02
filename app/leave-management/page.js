@@ -47,8 +47,10 @@ import {
   List,
   FileUp,
   MoreHorizontal,
-  EyeIcon
+  EyeIcon,
+  ChevronRight
 } from 'lucide-react';
+import { PageShell } from '@/components/PageShell';
 import { jsPDF } from 'jspdf';
 
 // Sample data
@@ -539,23 +541,21 @@ const LeaveManagementSystem = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-emerald-50/20 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg">
-              <Calendar className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-blue-800 bg-clip-text text-transparent">
-                Leave Management System
-              </h1>
-              <p className="text-xl text-slate-600 mt-2">
-                Manage employee leave requests and track time off
-              </p>
-            </div>
+    <PageShell>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Leave Management</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Leave Management</h1>
+            <p className="text-[#6B7B8E] mt-1">Manage employee leave requests and track time off across all departments.</p>
           </div>
+        </div>
+        <div className="max-w-7xl mx-auto">
           
           {/* Stats Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto mb-6">
@@ -1436,8 +1436,9 @@ const LeaveManagementSystem = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+        </div>
+      </main>
+    </PageShell>
   );
 };
 

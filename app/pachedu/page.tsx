@@ -15,8 +15,9 @@ import {
   Send, HardHat, Wrench, Zap, Building2, X, Plus,
   Award, Flag, BookOpen, BarChart3, PieChart, TrendingUp,
   Clock, Clock3, AlertCircle, FileCheck, ClipboardCheck,
-  Heart, Hand, Shield, Users2, Briefcase, Home
+  Heart, Hand, Shield, Users2, Briefcase, Home, ChevronRight
 } from "lucide-react";
+import { PageShell } from '@/components/PageShell';
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -1139,35 +1140,24 @@ export default function PacheduFormPage() {
   }, [stats]);
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="container mx-auto py-10 px-4 max-w-7xl">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <PageShell>
+      <TooltipProvider>
+        <main className="container mx-auto px-4 py-6 space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <HeartHandshake className="h-10 w-10 text-orange-600" />
-                <h1 className="text-4xl md:text-5xl font-bold text-foreground">
-                  Pachedu
-                </h1>
-              </div>
-              <p className="text-lg text-muted-foreground">
-                Be Your Brother's Keeper - Care Observations
-              </p>
-              <div className="flex items-center gap-2 mt-1 text-xs font-bold text-slate-500">
-                <span>PICKSTONE PEERLESS MINE | BMS-PPM-7.4-STP-07: FRM-010</span>
-                <Badge className="bg-orange-600">Revision: 0</Badge>
-              </div>
+              <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+                <span>Home</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-[#2A4D69] font-medium">Pachedu</span>
+              </nav>
+              <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Pachedu — Care Observations</h1>
+              <p className="text-[#6B7B8E] mt-1">Be Your Brother's Keeper — track care observations and supportive actions.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setViewMode('grid')}
-                    className={viewMode === 'grid' ? 'bg-accent' : ''}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'bg-accent' : ''}>
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -1175,12 +1165,7 @@ export default function PacheduFormPage() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setViewMode('table')}
-                    className={viewMode === 'table' ? 'bg-accent' : ''}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setViewMode('table')} className={viewMode === 'table' ? 'bg-accent' : ''}>
                     <TableIcon className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -1205,7 +1190,7 @@ export default function PacheduFormPage() {
                   status: "draft"
                 });
                 setIsFormModalOpen(true);
-              }} className="bg-orange-600 hover:bg-orange-700 text-white">
+              }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
                 <Plus className="h-4 w-4 mr-2" /> New Care Observation
               </Button>
             </div>
@@ -1833,8 +1818,8 @@ export default function PacheduFormPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
-    </TooltipProvider>
+        </main>
+      </TooltipProvider>
+    </PageShell>
   );
 }

@@ -1,23 +1,33 @@
 // frontend/app/layout.tsx
-
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-heading",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const inter = Inter({
+  variable: "--font-body",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "MyOffice - Maintenance Management",
-  description: "Complete office management system with equipment and employee management",
+  title: "MyOffice — Business Operating Platform by Ozech",
+  description:
+    "Organise your business information elegantly. Personnel, operations, safety, analytics — all in one platform designed for African businesses.",
+  keywords: ["business management", "ERP", "workflow", "Africa", "Ozech"],
 };
 
 export default function RootLayout({
@@ -28,16 +38,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${montserrat.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <Toaster 
+        <Toaster
           position="top-right"
+          richColors
           toastOptions={{
             style: {
-              background: '#fff',
-              color: '#333',
-              border: '1px solid #e2e8f0',
+              fontFamily: "var(--font-body)",
+              border: "1px solid #e2ecf5",
+              boxShadow: "0 4px 16px rgba(42,77,105,0.10)",
             },
           }}
         />

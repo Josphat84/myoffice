@@ -205,8 +205,7 @@ import {
 import Link from "next/link";
 
 // Import Header and Footer
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageShell } from '@/components/PageShell';
 
 // shadcn/ui imports
 import { Button } from "@/components/ui/button";
@@ -282,117 +281,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// ============= STUNNING NATURE WALLPAPER COLLECTION =============
-const natureWallpapers = [
-  {
-    url: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Iceland Ice Cave",
-    location: "Iceland - Crystal Ice Cave"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Enchanted Forest",
-    location: "Pacific Northwest"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Misty Morning",
-    location: "Great Smoky Mountains"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Sunbeams Through Forest",
-    location: "Olympic National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Alpine Lake",
-    location: "Canadian Rockies"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Waterfall Valley",
-    location: "Yosemite National Park"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Desert Dunes",
-    location: "Namibia"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Mountain Lake Reflection",
-    location: "Lake Moraine, Canada"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Majestic Waterfall",
-    location: "Iguazu Falls"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Desert Rock Formation",
-    location: "Monument Valley"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Rolling Hills",
-    location: "Tuscany, Italy"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&q=90&w=2070",
-    credit: "Unsplash - Mountain Wildflowers",
-    location: "Colorado Rockies"
-  }
-];
+// Animation styles defined in globals.css
 
-// ============= ANIMATION STYLES =============
-const animationStyles = `
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes bounce-light {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .animate-bounce-light {
-    animation: bounce-light 2s ease-in-out infinite;
-  }
-
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
-`;
 
 // API Configuration
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -768,7 +659,7 @@ const TypeBadge = ({ type }) => {
 const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from-primary/10 to-primary/5' }) => {
   const CardWrapper = onClick ? (
     <Card
-      className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden relative group ${onClick ? 'hover:border-primary' : ''} bg-white/90 backdrop-blur-sm`}
+      className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden relative group ${onClick ? 'hover:border-primary' : ''} bg-white`}
       onClick={onClick}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50 group-hover:opacity-70 transition-opacity`} />
@@ -797,7 +688,7 @@ const StatCard = ({ title, value, icon: Icon, onClick, tooltip, gradient = 'from
       </CardContent>
     </Card>
   ) : (
-    <Card className="overflow-hidden relative group bg-white/90 backdrop-blur-sm">
+    <Card className="overflow-hidden relative group bg-white">
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
       <CardContent className="p-6 relative z-10">
         <div className="flex items-center justify-between">
@@ -841,7 +732,7 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
   };
 
   return (
-    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden border-t-4 bg-white/90 backdrop-blur-sm" style={{ borderTopColor: `var(--${typeConfig.color}-500)` }}>
+    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden border-t-4 bg-white" style={{ borderTopColor: `var(--${typeConfig.color}-500)` }}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1234,7 +1125,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-between h-auto py-3 bg-white/80 backdrop-blur-sm"
+                  className="w-full justify-between h-auto py-3 bg-white"
                   disabled={!!editData}
                 >
                   {formData.employee_name ? (
@@ -1308,7 +1199,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 onChange={(e) => handleChange('employee_id', e.target.value)}
                 placeholder="e.g., C1165"
                 disabled={!!editData}
-                className="h-10 bg-white/80 backdrop-blur-sm"
+                className="h-10 bg-white"
               />
               {validationErrors.employee_id && (
                 <p className="text-sm text-destructive">{validationErrors.employee_id}</p>
@@ -1364,7 +1255,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 value={formData.overtime_type}
                 onValueChange={(val) => handleChange('overtime_type', val)}
               >
-                <SelectTrigger className="h-10 bg-white/80 backdrop-blur-sm">
+                <SelectTrigger className="h-10 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1386,7 +1277,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 required
                 value={formData.date}
                 onChange={(e) => handleChange('date', e.target.value)}
-                className="h-10 bg-white/80 backdrop-blur-sm"
+                className="h-10 bg-white"
               />
               {validationErrors.date && (
                 <p className="text-sm text-destructive">{validationErrors.date}</p>
@@ -1399,7 +1290,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 required
                 value={formData.start_time}
                 onChange={(e) => handleChange('start_time', e.target.value)}
-                className="h-10 bg-white/80 backdrop-blur-sm"
+                className="h-10 bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -1409,7 +1300,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
                 required
                 value={formData.end_time}
                 onChange={(e) => handleChange('end_time', e.target.value)}
-                className="h-10 bg-white/80 backdrop-blur-sm"
+                className="h-10 bg-white"
               />
             </div>
           </div>
@@ -1429,7 +1320,7 @@ const OvertimeApplicationForm = ({ onClose, onSuccess, editData, onUpdate }) => 
               value={formData.reason}
               onChange={(e) => handleChange('reason', e.target.value)}
               placeholder="Please provide details about why overtime is required..."
-              className="resize-none bg-white/80 backdrop-blur-sm"
+              className="resize-none bg-white"
             />
             {validationErrors.reason && (
               <p className="text-sm text-destructive">{validationErrors.reason}</p>
@@ -1501,7 +1392,7 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Employee Card */}
-            <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
+            <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <User className="h-4 w-4 text-primary" /> Employee
@@ -1548,7 +1439,7 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
             </Card>
 
             {/* Details Card */}
-            <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
+            <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" /> Details
@@ -1615,7 +1506,7 @@ const OvertimeDetailsModal = ({ overtime, onClose, onStatusUpdate, onDelete, onE
           </div>
 
           {/* Reason Card */}
-          <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white/80 backdrop-blur-sm">
+          <Card className="border-0 shadow-none bg-gradient-to-br from-primary/5 to-transparent bg-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-primary" /> Reason
@@ -1720,7 +1611,7 @@ const EmployeeSummary = ({ data, show, onToggle, onEmployeeSelect }) => {
   const totalHours = summary.reduce((sum, emp) => sum + emp.totalHours, 0);
 
   return (
-    <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm">
+    <Card className="border-0 shadow-lg overflow-hidden bg-white">
       <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -1820,7 +1711,7 @@ const TypeSummary = ({ data, onTypeSelect }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Card 
-                  className="border-0 shadow-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1 bg-white/90 backdrop-blur-sm"
+                  className="border-0 shadow-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1 bg-white"
                   onClick={() => onTypeSelect(key)}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-10 transition-opacity`} />
@@ -1959,7 +1850,7 @@ const AdvancedFilters = ({
           placeholder="Search by name, ID, position, or reason..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 h-10 bg-white/80 backdrop-blur-sm"
+          className="pl-9 h-10 bg-white"
         />
       </div>
 
@@ -1981,7 +1872,7 @@ const AdvancedFilters = ({
             type="date"
             value={dateFrom}
             onChange={(e) => onDateFromChange(e.target.value)}
-            className="h-10 bg-white/80 backdrop-blur-sm"
+            className="h-10 bg-white"
           />
         </div>
         <div className="space-y-2">
@@ -2000,7 +1891,7 @@ const AdvancedFilters = ({
             type="date"
             value={dateTo}
             onChange={(e) => onDateToChange(e.target.value)}
-            className="h-10 bg-white/80 backdrop-blur-sm"
+            className="h-10 bg-white"
           />
         </div>
 
@@ -2023,7 +1914,7 @@ const AdvancedFilters = ({
             value={minHours}
             onChange={(e) => onMinHoursChange(e.target.value)}
             placeholder="e.g., 2"
-            className="h-10 bg-white/80 backdrop-blur-sm"
+            className="h-10 bg-white"
           />
         </div>
         <div className="space-y-2">
@@ -2044,7 +1935,7 @@ const AdvancedFilters = ({
             value={maxHours}
             onChange={(e) => onMaxHoursChange(e.target.value)}
             placeholder="e.g., 8"
-            className="h-10 bg-white/80 backdrop-blur-sm"
+            className="h-10 bg-white"
           />
         </div>
       </div>
@@ -2214,9 +2105,6 @@ export default function OvertimeManagementPage() {
   const [selectedOvertime, setSelectedOvertime] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -2243,7 +2131,7 @@ export default function OvertimeManagementPage() {
   const [viewMode, setViewMode] = useState('table');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
-  const [showTypeSummary, setShowTypeSummary] = useState(true);
+  const [showTypeSummary, setShowTypeSummary] = useState(false);
   
   // Sorting
   const [sortBy, setSortBy] = useState('date');
@@ -2252,23 +2140,6 @@ export default function OvertimeManagementPage() {
   // Expanded rows in table view
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // Check auth on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  // Rotating nature wallpaper every 2 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentWallpaperIndex((prev) => (prev + 1) % natureWallpapers.length);
-    }, 120000);
-    return () => clearInterval(interval);
-  }, []);
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -2318,14 +2189,6 @@ export default function OvertimeManagementPage() {
   const handleDelete = async (id) => {
     await deleteOvertime(id);
     setOvertime((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null);
-    window.location.reload();
   };
 
   const toggleRowExpanded = (id, e) => {
@@ -2577,98 +2440,51 @@ export default function OvertimeManagementPage() {
   }, [searchTerm, dateFrom, dateTo, monthFilter, yearFilter, minHours, maxHours, selectedTypes, selectedStatuses, statusFilter, typeFilter, employeeFilter, selectedEmployeeName]);
 
   return (
-    <>
-      <style jsx global>{animationStyles}</style>
-      <div className="min-h-screen">
-        {/* Rotating Nature Wallpaper Background */}
-        <div className="fixed inset-0 z-0">
-          {natureWallpapers.map((wallpaper, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
-              style={{
-                backgroundImage: `url('${wallpaper.url}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: index === currentWallpaperIndex ? 1 : 0,
-                filter: 'brightness(1.1) contrast(1.05) saturate(1.1)',
-                transition: 'opacity 2000ms ease-in-out',
-              }}
-            />
-          ))}
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute bottom-4 right-4 text-white/30 text-xs font-light">
-            {natureWallpapers[currentWallpaperIndex].location}
+    <PageShell>
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Ozech Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
+              <span>Home</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-[#2A4D69] font-medium">Overtime</span>
+            </nav>
+            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Overtime Management</h1>
+            <p className="text-[#6B7B8E] mt-1">
+              Track, review, and manage all overtime requests. Use the filters to analyse specific periods or employees.
+            </p>
           </div>
+          <Button onClick={() => setShowForm(true)} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start">
+            <Plus className="h-5 w-5" /> New OT Request
+          </Button>
         </div>
 
-        <div className="relative z-10">
-          <Header 
-            isLoggedIn={isLoggedIn} 
-            user={user} 
-            onLogout={handleLogout} 
-          />
-
-          <main className="container mx-auto px-4 py-8 space-y-8">
-            {/* Header */}
-            <div className="text-center space-y-2 animate-fade-in">
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent drop-shadow-lg">
-                Overtime Management
-              </h1>
-              <p className="text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                Track, review, and manage all overtime requests. Use the filters below to analyze specific periods or employees.
-              </p>
-            </div>
-
-            {/* Stats Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up delay-100">
-              <StatCard 
-                title="Total Requests" 
-                value={stats.total} 
-                icon={FileText} 
-                gradient="from-blue-500/20 to-blue-500/5"
-                tooltip="Total number of overtime requests based on current filters"
-              />
-              <StatCard 
-                title="Total Hours" 
-                value={`${stats.totalHours} h`} 
-                icon={Clock} 
-                gradient="from-green-500/20 to-green-500/5"
-                tooltip="Sum of all overtime hours from filtered requests"
-              />
-              <StatCard 
-                title="Pending" 
-                value={stats.pending} 
-                icon={Clock} 
-                gradient="from-yellow-500/20 to-yellow-500/5"
-                onClick={() => {
-                  setStatusFilter('pending');
-                  handleStatusToggle('pending');
-                }}
-                tooltip="Click to filter by pending requests"
-              />
-              <StatCard 
-                title="Approved" 
-                value={stats.approved} 
-                icon={CheckCircle2} 
-                gradient="from-green-500/20 to-green-500/5"
-                onClick={() => {
-                  setStatusFilter('approved');
-                  handleStatusToggle('approved');
-                }}
-                tooltip="Click to filter by approved requests"
-              />
-            </div>
-
-            {/* New Overtime Button */}
-            <div className="flex justify-end animate-slide-up delay-200">
-              <Button 
-                onClick={() => setShowForm(true)} 
-                className="gap-2 bg-primary hover:bg-primary/90 shadow-lg"
-                size="lg"
-              >
-                <Plus className="h-5 w-5" /> New Overtime Request
-              </Button>
+            {/* Stats */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 bg-white border rounded-lg text-sm">
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-blue-500" />
+                <span className="text-lg font-bold text-[#2A4D69]">{stats.total}</span>
+                <span className="text-[#6B7B8E]">Requests</span>
+              </div>
+              <span className="text-[#6B7B8E] hidden sm:block">·</span>
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-green-500" />
+                <span className="text-lg font-bold text-[#2A4D69]">{stats.totalHours}h</span>
+                <span className="text-[#6B7B8E]">Total hrs</span>
+              </div>
+              <span className="text-[#6B7B8E] hidden sm:block">·</span>
+              <button onClick={() => { setStatusFilter('pending'); handleStatusToggle('pending'); }} className="flex items-center gap-1.5 hover:text-amber-600 transition-colors">
+                <Clock className="w-4 h-4 text-amber-500" />
+                <span className="text-lg font-bold text-amber-600">{stats.pending}</span>
+                <span className="text-[#6B7B8E]">Pending</span>
+              </button>
+              <span className="text-[#6B7B8E] hidden sm:block">·</span>
+              <button onClick={() => { setStatusFilter('approved'); handleStatusToggle('approved'); }} className="flex items-center gap-1.5 hover:text-green-600 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span className="text-lg font-bold text-green-600">{stats.approved}</span>
+                <span className="text-[#6B7B8E]">Approved</span>
+              </button>
             </div>
 
             {/* Type Summary - Clickable */}
@@ -2679,7 +2495,7 @@ export default function OvertimeManagementPage() {
             )}
 
             {/* Filter Section */}
-            <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm animate-slide-up delay-400">
+            <Card className="border-0 shadow-lg overflow-hidden bg-white animate-slide-up delay-400">
               <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
                 <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
                   <div className="flex items-center justify-between">
@@ -2742,8 +2558,8 @@ export default function OvertimeManagementPage() {
             </Card>
 
             {/* View Toggle and Sort Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex rounded-lg border bg-background p-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -2756,7 +2572,7 @@ export default function OvertimeManagementPage() {
                         <TableIcon className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Switch to table view</TooltipContent>
+                    <TooltipContent>Table view</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -2769,11 +2585,20 @@ export default function OvertimeManagementPage() {
                         <Grid className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Switch to card view</TooltipContent>
+                    <TooltipContent>Card view</TooltipContent>
                   </Tooltip>
                 </div>
-                <span className="text-sm text-white/80">
-                  Showing {paginatedData.length} of {processedOvertime.length} requests
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search employee or type..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 w-56 h-9 bg-white"
+                  />
+                </div>
+                <span className="text-sm text-[#6B7B8E]">
+                  {paginatedData.length} of {processedOvertime.length} requests
                 </span>
               </div>
 
@@ -2783,7 +2608,7 @@ export default function OvertimeManagementPage() {
                   setSortBy(by);
                   setSortOrder(order);
                 }}>
-                  <SelectTrigger className="w-[200px] bg-white/80 backdrop-blur-sm">
+                  <SelectTrigger className="w-[200px] bg-white">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2825,7 +2650,7 @@ export default function OvertimeManagementPage() {
                 </div>
               </div>
             ) : paginatedData.length === 0 ? (
-              <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
+              <Card className="border-0 shadow-lg bg-white">
                 <CardContent className="py-12">
                   <div className="text-center">
                     <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -2868,7 +2693,7 @@ export default function OvertimeManagementPage() {
               </>
             ) : (
               <>
-                <Card className="border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur-sm">
+                <Card className="border-0 shadow-lg overflow-hidden bg-white">
                   <div className="overflow-x-auto">
                     <ShadcnTable>
                       <TableHeader className="bg-muted/50">
@@ -3005,11 +2830,7 @@ export default function OvertimeManagementPage() {
                 />
               </>
             )}
-          </main>
-
-          <Footer />
-        </div>
-      </div>
+      </main>
 
       {/* Modals */}
       {showForm && (
@@ -3037,6 +2858,6 @@ export default function OvertimeManagementPage() {
           onEdit={(ot) => { setEditData(ot); setShowForm(true); }}
         />
       )}
-    </>
+    </PageShell>
   );
 }
