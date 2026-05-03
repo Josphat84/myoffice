@@ -2475,8 +2475,6 @@ const CompressorReadingsSystem = () => {
                 </Card>
               </div>
             </div>
-              </div>
-            </div>
           </TabsContent>
 
           {/* Management Tab */}
@@ -2693,7 +2691,6 @@ const CompressorReadingsSystem = () => {
                   </CardContent>
                 </Card>
               </div>
-            </div>
             </div>
           </TabsContent>
         </Tabs>
