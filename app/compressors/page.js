@@ -131,7 +131,7 @@ import {
   FileImage,
   FileVideo,
   FileAudio,
-  File,
+  File
   //ChevronRight
 } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';

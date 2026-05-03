@@ -282,6 +282,8 @@ const formatDate = (dateString) => {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 export default function DocumentsPage() {
+  const user = null; // replace with auth context when auth is wired up
+
   // View state
   const [viewMode, setViewMode] = useState('grid');
   const [currentCategory, setCurrentCategory] = useState(null);
