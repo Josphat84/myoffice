@@ -2475,6 +2475,8 @@ const CompressorReadingsSystem = () => {
                 </Card>
               </div>
             </div>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Management Tab */}
@@ -2692,15 +2694,15 @@ const CompressorReadingsSystem = () => {
                 </Card>
               </div>
             </div>
+            </div>
           </TabsContent>
         </Tabs>
-        
+
         {/* Footer */}
         <div className={`mt-8 text-center text-sm ${settings.darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
           <p>Connected to backend API at {API_BASE_URL}</p>
           <p className="mt-1">Total Compressors: {compressors.length} • Last Updated: {new Date().toLocaleTimeString()}</p>
         </div>
-      </div>
 
       {/* Status Update Dialog */}
       <StatusUpdateDialog />

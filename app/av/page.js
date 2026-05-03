@@ -1896,7 +1896,6 @@ const EquipmentAvailabilitySystem = () => {
             </div>
           </TabsContent>
         </Tabs>
-        </div>
       </main>
     </PageShell>
   );
