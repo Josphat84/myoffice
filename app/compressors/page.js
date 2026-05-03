@@ -2704,7 +2704,6 @@ const CompressorReadingsSystem = () => {
 
       {/* Status Update Dialog */}
       <StatusUpdateDialog />
-        </div>
       </main>
     </PageShell>
   );

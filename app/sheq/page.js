@@ -16,7 +16,7 @@ import {
   Star, Table, UserPlus, Hash, BriefcaseIcon, Expand, ChevronLeft,
   Database, Wrench, Activity, Gauge, TrendingDown, Thermometer,
   BarChart4, CircleAlert, Percent, Square, Archive, SquareDashed,
-  File, Info, AlertCircle as AlertCircleIcon, ChevronRight
+  File, Info, AlertCircle as AlertCircleIcon
 } from "lucide-react";
 import { PageShell } from '@/components/PageShell';
 

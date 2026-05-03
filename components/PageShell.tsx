@@ -8,11 +8,11 @@ import { Footer } from "@/components/Footer";
 
 // 5 curated Unsplash nature wallpapers — rotate every 90 seconds
 const WALLPAPERS = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2560&q=90&auto=format&fit=crop', // Swiss Alps
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=2560&q=90&auto=format&fit=crop', // Sunlit forest
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=2560&q=90&auto=format&fit=crop', // Tropical ocean
-  'https://images.unsplash.com/photo-1439853949212-36089919ea25?w=2560&q=90&auto=format&fit=crop', // Mountain lake
-  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=2560&q=90&auto=format&fit=crop', // Misty meadow
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=3840&q=95&auto=format&fit=crop', // Swiss Alps
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=3840&q=95&auto=format&fit=crop', // Sunlit forest
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=3840&q=95&auto=format&fit=crop', // Tropical ocean
+  'https://images.unsplash.com/photo-1439853949212-36089919ea25?w=3840&q=95&auto=format&fit=crop', // Mountain lake
+  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=3840&q=95&auto=format&fit=crop', // Misty meadow
 ];
 
 interface PageShellProps {

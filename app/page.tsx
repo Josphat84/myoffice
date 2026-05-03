@@ -11,6 +11,7 @@ import {
   Building, Utensils, Church, Database,
   AlertOctagon, ShieldAlert, ClipboardList, FileWarning, PackageOpen,
   ClipboardPlus, Target, Activity, ArrowRight, Search, Sparkles,
+  ChevronsUp, ChevronsDown, Minimize2, Maximize2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,11 +21,11 @@ import { Footer } from '@/components/Footer';
 // ─── Nature wallpapers — same 5 as PageShell ─────────────────────────────────
 
 const WALLPAPERS = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2560&q=90&auto=format&fit=crop', // Swiss Alps
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=2560&q=90&auto=format&fit=crop', // Sunlit forest
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=2560&q=90&auto=format&fit=crop', // Tropical ocean
-  'https://images.unsplash.com/photo-1439853949212-36089919ea25?w=2560&q=90&auto=format&fit=crop', // Mountain lake
-  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=2560&q=90&auto=format&fit=crop', // Misty meadow
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=3840&q=95&auto=format&fit=crop', // Swiss Alps
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=3840&q=95&auto=format&fit=crop', // Sunlit forest
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=3840&q=95&auto=format&fit=crop', // Tropical ocean
+  'https://images.unsplash.com/photo-1439853949212-36089919ea25?w=3840&q=95&auto=format&fit=crop', // Mountain lake
+  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=3840&q=95&auto=format&fit=crop', // Misty meadow
 ];
 
 // ─── Delay classes for stagger animation (no inline styles) ───────────────────
@@ -188,15 +189,18 @@ function ModuleCard({ module, index = 0 }: { module: Module; index?: number }) {
 
 // ─── Category Section ─────────────────────────────────────────────────────────
 
-function CategorySection({ category }: { category: Category }) {
-  const [expanded, setExpanded] = useState(true);
+function CategorySection({ category, expanded, onToggle }: {
+  category: Category;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const Icon = category.icon;
 
   return (
     <div className="bg-white/42 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm overflow-hidden mb-3">
       <button
         type="button"
-        onClick={() => setExpanded(!expanded)}
+        onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/40 transition-colors duration-150 text-left"
       >
         <div className="flex items-center gap-3">
@@ -281,8 +285,6 @@ function SearchResults({ query }: { query: string }) {
 const STATS = [
   { label: 'modules', value: '28', icon: Activity },
   { label: 'categories', value: '6', icon: Building },
-  { label: 'industries', value: '8+', icon: Sparkles },
-  { label: 'centralised', value: '100%', icon: Database },
 ];
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -292,6 +294,17 @@ export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [incoming, setIncoming] = useState<number | null>(null);
   const [fadeIn, setFadeIn] = useState(false);
+  const [showCategories, setShowCategories] = useState(true);
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(CATEGORIES.map(c => [c.id, true]))
+  );
+  const toggleCategory = (id: string) =>
+    setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
+  const expandAll = () =>
+    setExpandedMap(Object.fromEntries(CATEGORIES.map(c => [c.id, true])));
+  const collapseAll = () =>
+    setExpandedMap(Object.fromEntries(CATEGORIES.map(c => [c.id, false])));
+  const anyExpanded = Object.values(expandedMap).some(Boolean);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -406,16 +419,67 @@ export default function HomePage() {
 
         {/* Top bar */}
         {!searchQuery && (
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-base font-bold text-[#2A4D69] font-heading">All Modules</h2>
               <p className="text-xs text-[#6B7B8E] mt-0.5">Click any module to open it.</p>
             </div>
-            <Link href="/reports">
-              <Button size="sm" className="text-xs bg-[#2A4D69]/90 hover:bg-[#2A4D69] text-white gap-1.5 backdrop-blur-sm">
-                Reports <ArrowRight className="h-3 w-3" />
-              </Button>
-            </Link>
+            <div className="flex items-center gap-1.5">
+              {showCategories ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={anyExpanded ? collapseAll : expandAll}
+                    title={anyExpanded ? 'Collapse all categories' : 'Expand all categories'}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/50 hover:bg-white/70 text-[#2A4D69] border border-white/60 transition-all duration-150"
+                  >
+                    {anyExpanded
+                      ? <><ChevronsUp className="h-3 w-3" /> Collapse</>
+                      : <><ChevronsDown className="h-3 w-3" /> Expand</>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCategories(false)}
+                    title="Hide all categories"
+                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-white/50 hover:bg-white/70 text-[#6B7B8E] border border-white/60 transition-all duration-150"
+                  >
+                    <Minimize2 className="h-3 w-3" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setShowCategories(true); expandAll(); }}
+                  title="Show all categories"
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#2A4D69]/80 hover:bg-[#2A4D69] text-white border border-[#2A4D69]/40 transition-all duration-150"
+                >
+                  <Maximize2 className="h-3 w-3" /> Show Modules
+                </button>
+              )}
+              <Link href="/reports">
+                <Button size="sm" className="text-xs bg-[#2A4D69]/90 hover:bg-[#2A4D69] text-white gap-1.5 backdrop-blur-sm">
+                  Reports <ArrowRight className="h-3 w-3" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Collapsed summary pill — shown when categories are hidden */}
+        {!searchQuery && !showCategories && (
+          <div className="bg-white/42 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-4 mb-3 flex items-center justify-between">
+            <p className="text-sm text-[#2A4D69] font-medium">
+              {CATEGORIES.reduce((s, c) => s + c.modules.length, 0)} modules across {CATEGORIES.length} categories
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCategories(true)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-white/60 hover:bg-white/80 text-[#2A4D69] border border-white/60 transition-all"
+              >
+                Browse
+              </button>
+            </div>
           </div>
         )}
 
@@ -426,15 +490,25 @@ export default function HomePage() {
             <div className="mt-6 pt-5 border-t border-[#2A4D69]/08">
               <p className="text-xs text-[#6B7B8E] mb-3 font-medium">Or browse by category:</p>
               {CATEGORIES.map(cat => (
-                <CategorySection key={cat.id} category={cat} />
+                <CategorySection
+                  key={cat.id}
+                  category={cat}
+                  expanded={expandedMap[cat.id] ?? true}
+                  onToggle={() => toggleCategory(cat.id)}
+                />
               ))}
             </div>
           </div>
-        ) : (
+        ) : showCategories ? (
           CATEGORIES.map(cat => (
-            <CategorySection key={cat.id} category={cat} />
+            <CategorySection
+              key={cat.id}
+              category={cat}
+              expanded={expandedMap[cat.id] ?? true}
+              onToggle={() => toggleCategory(cat.id)}
+            />
           ))
-        )}
+        ) : null}
 
         {/* Info callout */}
         <div className="mt-5 bg-white/42 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-5">

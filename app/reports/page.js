@@ -476,7 +476,6 @@ export default function ReportsPage() {
               </Card>
             </div>
           )}
-        </div>
 
         {/* Main Content */}
         <div className="space-y-6">
