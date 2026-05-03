@@ -35,6 +35,7 @@ import {
   MapPin,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Info,
   FilterX,
   Star,
