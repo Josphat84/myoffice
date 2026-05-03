@@ -46,8 +46,7 @@ import {
   Eye,
   EyeOff,
   Users,
-  Building,
-  ChevronRight
+  Building
 } from 'lucide-react';
 import { PageShell } from '@/components/PageShell';
 import { format, addDays, startOfDay, endOfDay, isWithinInterval, eachDayOfInterval } from 'date-fns';

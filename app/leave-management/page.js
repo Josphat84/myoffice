@@ -1434,9 +1434,9 @@ const LeaveManagementSystem = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
           </TabsContent>
         </Tabs>
-        </div>
       </main>
     </PageShell>
   );
