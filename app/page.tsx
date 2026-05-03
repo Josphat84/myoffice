@@ -20,12 +20,13 @@ import { Footer } from '@/components/Footer';
 
 // ─── Nature wallpapers — same 5 as PageShell ─────────────────────────────────
 
+// 5K resolution, WebP, maximum quality — crisp at any screen size
 const WALLPAPERS = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=3840&q=95&auto=format&fit=crop', // Swiss Alps
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=3840&q=95&auto=format&fit=crop', // Sunlit forest
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=3840&q=95&auto=format&fit=crop', // Tropical ocean
-  'https://images.unsplash.com/photo-1439853949212-36089919ea25?w=3840&q=95&auto=format&fit=crop', // Mountain lake
-  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=3840&q=95&auto=format&fit=crop', // Misty meadow
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=5120&q=100&fm=webp&fit=crop', // Swiss Alps panorama
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?w=5120&q=100&fm=webp&fit=crop', // Ancient forest mist
+  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=5120&q=100&fm=webp&fit=crop', // Northern lights
+  'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=5120&q=100&fm=webp&fit=crop', // Patagonia peaks
+  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=5120&q=100&fm=webp&fit=crop', // Misty meadow
 ];
 
 // ─── Delay classes for stagger animation (no inline styles) ───────────────────
@@ -168,13 +169,13 @@ function ModuleCard({ module, index = 0 }: { module: Module; index?: number }) {
       href={module.href}
       className={`group block oz-card-fly-in${delayClass ? ` ${delayClass}` : ''}`}
     >
-      <div className={`h-full bg-white/50 backdrop-blur-sm rounded-xl border ${c.border} p-4 hover:bg-white/70 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
+      <div className={`h-full bg-white rounded-xl border border-[#2A4D69]/10 p-4 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all duration-200`}>
         <div className="flex items-start gap-3">
           <div className={`p-2.5 rounded-lg ${c.bg} shrink-0`}>
             <Icon className={`h-4 w-4 ${c.icon}`} />
           </div>
           <div className="min-w-0">
-            <h4 className="font-semibold text-[#2A4D69] text-sm leading-tight group-hover:text-[#1e3a52] transition-colors">
+            <h4 className="font-semibold text-[#1e3a52] text-sm leading-tight group-hover:text-[#2A4D69] transition-colors">
               {module.title}
             </h4>
             <p className="text-xs text-[#6B7B8E] mt-0.5 leading-relaxed line-clamp-2">
@@ -197,35 +198,36 @@ function CategorySection({ category, expanded, onToggle }: {
   const Icon = category.icon;
 
   return (
-    <div className="bg-white/42 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm overflow-hidden mb-3">
+    <div className="oz-glass-dark rounded-2xl overflow-hidden mb-3">
+      {/* Dark glass header — white text */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/40 transition-colors duration-150 text-left"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.07] transition-colors duration-150 text-left"
       >
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl ${category.iconBg}`}>
-            <Icon className={`h-5 w-5 ${category.iconColor}`} />
+          <div className="p-2 rounded-xl bg-white/[0.14]">
+            <Icon className="h-5 w-5 text-white/90" />
           </div>
           <div>
-            <h3 className="font-bold text-[#2A4D69] text-sm font-heading">{category.title}</h3>
-            <p className="text-xs text-[#6B7B8E] mt-0.5 hidden sm:block">{category.description}</p>
+            <h3 className="font-bold text-white text-sm font-heading tracking-tight">{category.title}</h3>
+            <p className="text-xs text-white/50 mt-0.5 hidden sm:block">{category.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-4">
-          <Badge variant="outline" className="text-xs border-[#2A4D69]/20 text-[#6B7B8E] hidden sm:flex">
+          <Badge variant="outline" className="text-xs border-white/20 text-white/45 bg-white/[0.07] hidden sm:flex">
             {category.modules.length}
           </Badge>
           <ChevronDown
-            className={`h-4 w-4 text-[#6B7B8E] transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 text-white/45 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
 
-      {/* Smooth expand/collapse via CSS grid — no inline styles */}
+      {/* Bright frosted glass content area — module cards sit on near-white surface */}
       <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="overflow-hidden">
-          <div className="px-5 pb-5 pt-1 border-t border-[#2A4D69]/08">
+          <div className="oz-glass-bright px-5 pb-5 pt-1">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 mt-3">
               {category.modules.map((module, idx) => (
                 <ModuleCard key={module.href} module={module} index={idx} />
@@ -256,22 +258,22 @@ function SearchResults({ query }: { query: string }) {
   if (results.length === 0) {
     return (
       <div className="text-center py-10">
-        <Search className="h-9 w-9 text-[#6B7B8E]/30 mx-auto mb-3" />
-        <p className="text-[#2A4D69] font-semibold">No modules match &ldquo;{query}&rdquo;</p>
-        <p className="text-sm text-[#6B7B8E] mt-1">Try a different keyword or browse below.</p>
+        <Search className="h-9 w-9 text-white/25 mx-auto mb-3" />
+        <p className="text-white font-semibold drop-shadow">No modules match &ldquo;{query}&rdquo;</p>
+        <p className="text-sm text-white/55 mt-1">Try a different keyword or browse below.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <p className="text-sm text-[#6B7B8E] mb-4">
-        <span className="font-semibold text-[#2A4D69]">{results.length}</span> module{results.length !== 1 ? 's' : ''} match &ldquo;{query}&rdquo;
+      <p className="text-sm text-white/65 mb-4">
+        <span className="font-semibold text-white">{results.length}</span> module{results.length !== 1 ? 's' : ''} match &ldquo;{query}&rdquo;
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
         {results.map((module, idx) => (
           <div key={module.href}>
-            <p className="text-[10px] font-semibold text-[#6B7B8E] uppercase tracking-wider mb-1.5">{module.category}</p>
+            <p className="text-[10px] font-semibold text-white/45 uppercase tracking-wider mb-1.5">{module.category}</p>
             <ModuleCard module={module} index={idx} />
           </div>
         ))}
@@ -337,8 +339,8 @@ export default function HomePage() {
           <Image src={WALLPAPERS[incoming]} alt="" fill className="object-cover object-center" />
         </div>
       )}
-      {/* Frosted white wash — light tint so nature photos stay visible */}
-      <div className="absolute inset-0 -z-10 bg-white/15" />
+      {/* Cinematic vignette — darker at edges, luminous centre */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/52 via-black/20 to-black/55" />
 
       <Header />
 
@@ -419,10 +421,10 @@ export default function HomePage() {
 
         {/* Top bar */}
         {!searchQuery && (
-          <div className="flex items-center justify-between mb-3">
+          <div className="oz-glass-dark flex items-center justify-between mb-3 rounded-2xl px-4 py-3">
             <div>
-              <h2 className="text-base font-bold text-[#2A4D69] font-heading">All Modules</h2>
-              <p className="text-xs text-[#6B7B8E] mt-0.5">Click any module to open it.</p>
+              <h2 className="text-base font-bold text-white font-heading tracking-tight">All Modules</h2>
+              <p className="text-xs text-white/50 mt-0.5">Click any module to open it.</p>
             </div>
             <div className="flex items-center gap-1.5">
               {showCategories ? (
@@ -431,7 +433,7 @@ export default function HomePage() {
                     type="button"
                     onClick={anyExpanded ? collapseAll : expandAll}
                     title={anyExpanded ? 'Collapse all categories' : 'Expand all categories'}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/50 hover:bg-white/70 text-[#2A4D69] border border-white/60 transition-all duration-150"
+                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.10] hover:bg-white/[0.18] text-white border border-white/15 transition-all duration-150 backdrop-blur-sm"
                   >
                     {anyExpanded
                       ? <><ChevronsUp className="h-3 w-3" /> Collapse</>
@@ -441,7 +443,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => setShowCategories(false)}
                     title="Hide all categories"
-                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-white/50 hover:bg-white/70 text-[#6B7B8E] border border-white/60 transition-all duration-150"
+                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-white/[0.10] hover:bg-white/[0.18] text-white/65 border border-white/15 transition-all duration-150 backdrop-blur-sm"
                   >
                     <Minimize2 className="h-3 w-3" />
                   </button>
@@ -451,13 +453,13 @@ export default function HomePage() {
                   type="button"
                   onClick={() => { setShowCategories(true); expandAll(); }}
                   title="Show all categories"
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#2A4D69]/80 hover:bg-[#2A4D69] text-white border border-[#2A4D69]/40 transition-all duration-150"
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#86BBD8]/20 hover:bg-[#86BBD8]/35 text-white border border-[#86BBD8]/25 transition-all duration-150"
                 >
                   <Maximize2 className="h-3 w-3" /> Show Modules
                 </button>
               )}
               <Link href="/reports">
-                <Button size="sm" className="text-xs bg-[#2A4D69]/90 hover:bg-[#2A4D69] text-white gap-1.5 backdrop-blur-sm">
+                <Button size="sm" className="text-xs bg-[#86BBD8]/80 hover:bg-[#86BBD8] text-[#071420] font-semibold gap-1.5">
                   Reports <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
@@ -467,15 +469,15 @@ export default function HomePage() {
 
         {/* Collapsed summary pill — shown when categories are hidden */}
         {!searchQuery && !showCategories && (
-          <div className="bg-white/42 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-4 mb-3 flex items-center justify-between">
-            <p className="text-sm text-[#2A4D69] font-medium">
+          <div className="oz-glass-dark rounded-2xl p-4 mb-3 flex items-center justify-between">
+            <p className="text-sm text-white font-medium">
               {CATEGORIES.reduce((s, c) => s + c.modules.length, 0)} modules across {CATEGORIES.length} categories
             </p>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowCategories(true)}
-                className="text-xs px-3 py-1.5 rounded-lg bg-white/60 hover:bg-white/80 text-[#2A4D69] border border-white/60 transition-all"
+                className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.12] hover:bg-white/[0.22] text-white border border-white/18 transition-all backdrop-blur-sm"
               >
                 Browse
               </button>
@@ -485,10 +487,10 @@ export default function HomePage() {
 
         {/* Search results or category list */}
         {searchQuery ? (
-          <div className="bg-white/45 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-5">
+          <div className="oz-glass-dark rounded-2xl p-5">
             <SearchResults query={searchQuery} />
-            <div className="mt-6 pt-5 border-t border-[#2A4D69]/08">
-              <p className="text-xs text-[#6B7B8E] mb-3 font-medium">Or browse by category:</p>
+            <div className="mt-6 pt-5 border-t border-white/[0.09]">
+              <p className="text-xs text-white/45 mb-3 font-medium">Or browse by category:</p>
               {CATEGORIES.map(cat => (
                 <CategorySection
                   key={cat.id}
@@ -511,19 +513,19 @@ export default function HomePage() {
         ) : null}
 
         {/* Info callout */}
-        <div className="mt-5 bg-white/42 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-5">
+        <div className="mt-5 oz-glass-dark rounded-2xl p-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="p-2.5 rounded-xl bg-[#2A4D69]/08 shrink-0">
-              <FileText className="h-5 w-5 text-[#2A4D69]" />
+            <div className="p-2.5 rounded-xl bg-[#86BBD8]/20 shrink-0">
+              <FileText className="h-5 w-5 text-[#86BBD8]" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-[#2A4D69] text-sm font-heading">Everything in one place</h3>
-              <p className="text-xs text-[#6B7B8E] mt-0.5 leading-relaxed">
+              <h3 className="font-bold text-white text-sm font-heading tracking-tight">Everything in one place</h3>
+              <p className="text-xs text-white/60 mt-0.5 leading-relaxed">
                 MyOffice connects your people, equipment, safety records, and operational data into a single source of truth.
               </p>
             </div>
             <Link href="/employees" className="shrink-0">
-              <Button className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white gap-1.5 text-xs whitespace-nowrap">
+              <Button className="bg-[#86BBD8]/80 hover:bg-[#86BBD8] text-[#071420] font-semibold gap-1.5 text-xs whitespace-nowrap">
                 Get Started <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>

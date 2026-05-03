@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
-// 5 curated Unsplash nature wallpapers — rotate every 90 seconds
+// 5K WebP wallpapers — maximum quality, crisp on any display
 const WALLPAPERS = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=3840&q=95&auto=format&fit=crop', // Swiss Alps
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=3840&q=95&auto=format&fit=crop', // Sunlit forest
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=3840&q=95&auto=format&fit=crop', // Tropical ocean
-  'https://images.unsplash.com/photo-1439853949212-36089919ea25?w=3840&q=95&auto=format&fit=crop', // Mountain lake
-  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=3840&q=95&auto=format&fit=crop', // Misty meadow
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=5120&q=100&fm=webp&fit=crop', // Swiss Alps panorama
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?w=5120&q=100&fm=webp&fit=crop', // Ancient forest mist
+  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=5120&q=100&fm=webp&fit=crop', // Northern lights
+  'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=5120&q=100&fm=webp&fit=crop', // Patagonia peaks
+  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=5120&q=100&fm=webp&fit=crop', // Misty meadow
 ];
 
 interface PageShellProps {
@@ -68,8 +68,8 @@ export function PageShell({ children, noFooter = false }: PageShellProps) {
         </div>
       )}
 
-      {/* Frosted white wash — light tint so nature photos stay visible */}
-      <div className="absolute inset-0 -z-10 bg-white/15" />
+      {/* Dark vignette — keeps wallpaper vivid, improves panel contrast */}
+      <div className="absolute inset-0 -z-10 bg-black/22" />
 
       <Header />
       <main className="flex-1 flex flex-col">{children}</main>
