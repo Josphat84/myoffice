@@ -47,7 +47,7 @@ export function PageShell({ children, noFooter = false }: PageShellProps) {
     <div className="relative min-h-screen flex flex-col">
 
       {/* Base wallpaper — Next.js Image: optimised, lazy, no inline styles */}
-      <div className="absolute inset-0 -z-20 overflow-hidden">
+      <div className="fixed inset-0 -z-20 overflow-hidden">
         <Image
           src={WALLPAPERS[current]}
           alt=""
@@ -58,7 +58,7 @@ export function PageShell({ children, noFooter = false }: PageShellProps) {
 
       {/* Incoming wallpaper — fades in via opacity-only CSS transition */}
       {incoming !== null && (
-        <div className={`absolute inset-0 -z-20 overflow-hidden oz-bg-entering${fadeIn ? ' oz-bg-visible' : ''}`}>
+        <div className={`fixed inset-0 -z-20 overflow-hidden oz-bg-entering${fadeIn ? ' oz-bg-visible' : ''}`}>
           <Image
             src={WALLPAPERS[incoming]}
             alt=""
@@ -69,7 +69,7 @@ export function PageShell({ children, noFooter = false }: PageShellProps) {
       )}
 
       {/* Dark vignette — keeps wallpaper vivid, improves panel contrast */}
-      <div className="absolute inset-0 -z-10 bg-black/22" />
+      <div className="fixed inset-0 -z-10 bg-black/22" />
 
       <Header />
       <main className="flex-1 flex flex-col">{children}</main>

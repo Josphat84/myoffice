@@ -11,7 +11,8 @@ import {
   AlertTriangle, ThumbsUp, ThumbsDown, Calendar, MapPin, Tag,
   Mountain, Gem, Landmark, Drill, Pickaxe, Factory, UserCheck,
   Building, Settings, Award, Crown, FilterX, Layers,
-  Database, Eye as EyeIcon, EyeOff, ChevronRight
+  Database, Eye as EyeIcon, EyeOff, ChevronRight,
+  Shirt, Wind, Flashlight, CloudRain, Link2, ChevronsUp, ChevronsDown
 } from "lucide-react";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
@@ -117,7 +118,7 @@ const PPE_TYPES = {
     name: 'High-Vis Vest',
     shortName: 'Vest',
     color: '#f59e0b',
-    icon: User,
+    icon: Shirt,
     bgColor: 'bg-amber-50',
     textColor: 'text-amber-700',
     borderColor: 'border-amber-200',
@@ -128,7 +129,7 @@ const PPE_TYPES = {
     name: 'Safety Gum Boots',
     shortName: 'GumBoots',
     color: '#7c3aed',
-    icon: Zap,
+    icon: Shield,
     bgColor: 'bg-violet-50',
     textColor: 'text-violet-700',
     borderColor: 'border-violet-200',
@@ -139,7 +140,7 @@ const PPE_TYPES = {
     name: 'Safety Shoes',
     shortName: 'Shoes',
     color: '#2563eb',
-    icon: Pickaxe,
+    icon: Package,
     bgColor: 'bg-blue-50',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-200',
@@ -150,7 +151,7 @@ const PPE_TYPES = {
     name: 'Safety Harness',
     shortName: 'Harness',
     color: '#059669',
-    icon: Users,
+    icon: Link2,
     bgColor: 'bg-emerald-50',
     textColor: 'text-emerald-700',
     borderColor: 'border-emerald-200',
@@ -161,7 +162,7 @@ const PPE_TYPES = {
     name: 'Respirator',
     shortName: 'Respirator',
     color: '#0d9488',
-    icon: Shield,
+    icon: Wind,
     bgColor: 'bg-teal-50',
     textColor: 'text-teal-700',
     borderColor: 'border-teal-200',
@@ -172,7 +173,7 @@ const PPE_TYPES = {
     name: 'Cap Lamp Belt',
     shortName: 'Lamp belt',
     color: '#db2777',
-    icon: Zap,
+    icon: Flashlight,
     bgColor: 'bg-pink-50',
     textColor: 'text-pink-700',
     borderColor: 'border-pink-200',
@@ -183,7 +184,7 @@ const PPE_TYPES = {
     name: 'Protective Work Suit',
     shortName: 'Work Suit',
     color: '#f97316',
-    icon: Briefcase,
+    icon: Shirt,
     bgColor: 'bg-orange-50',
     textColor: 'text-orange-700',
     borderColor: 'border-orange-200',
@@ -194,7 +195,7 @@ const PPE_TYPES = {
     name: 'Rain Suit',
     shortName: 'Rain Suit',
     color: '#14b8a6',
-    icon: Briefcase,
+    icon: CloudRain,
     bgColor: 'bg-teal-50',
     textColor: 'text-teal-700',
     borderColor: 'border-teal-200',
@@ -205,7 +206,7 @@ const PPE_TYPES = {
     name: 'Protective Overall',
     shortName: 'Overall',
     color: '#8b5cf6',
-    icon: Briefcase,
+    icon: Layers,
     bgColor: 'bg-violet-50',
     textColor: 'text-violet-700',
     borderColor: 'border-violet-200',
@@ -440,124 +441,127 @@ const PPEItemCard = ({ record, onEdit, onDelete, onViewDetails }) => {
   const isItemExpired = isExpired(record.expiry_date);
 
   return (
-    <Card className="group hover:shadow-lg transition-all cursor-pointer" onClick={() => onViewDetails(record)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${ppeType.bgColor} border ${ppeType.borderColor} group-hover:scale-110 transition-transform`}>
-              <Icon className={`h-4 w-4 ${ppeType.textColor}`} />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">{record.item_name}</CardTitle>
-              <CardDescription className="text-xs">{ppeType.name}</CardDescription>
-            </div>
+    <div
+      className="group rounded-xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/10 cursor-pointer transition-all duration-200 overflow-hidden"
+      onClick={() => onViewDetails(record)}
+    >
+      <div className="flex items-start justify-between px-3.5 pt-3.5 pb-2">
+        <div className="flex items-center gap-2.5">
+          <div className={`p-2 rounded-lg ${ppeType.bgColor} border ${ppeType.borderColor} group-hover:scale-105 transition-transform shrink-0`}>
+            <Icon className={`h-3.5 w-3.5 ${ppeType.textColor}`} />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewDetails(record); }}>
-                <Eye className="h-4 w-4 mr-2" /> View
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(record); }}>
-                <Edit className="h-4 w-4 mr-2" /> Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={(e) => { e.stopPropagation(); onDelete(record.id); }}
-              >
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Issued</span>
-            <span className="font-medium">{formatDate(record.issue_date)}</span>
-          </div>
-          {record.expiry_date && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Expires</span>
-              <span className={`font-medium ${isItemExpired ? 'text-destructive' : isExpiring ? 'text-amber-600' : ''}`}>
-                {formatDate(record.expiry_date)}
-              </span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Size</span>
-            <span className="font-medium">{record.size || '—'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Condition</span>
-            <ConditionBadge condition={record.condition} />
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Status</span>
-            <StatusBadge status={record.status} />
+          <div>
+            <p className="text-sm font-semibold text-white leading-tight">{record.item_name}</p>
+            <p className="text-xs text-white/45">{ppeType.name}</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <button className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.06] hover:bg-white/[0.15] text-white/50 border border-white/10 transition-all">
+              <MoreVertical className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewDetails(record); }}>
+              <Eye className="h-4 w-4 mr-2" /> View
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(record); }}>
+              <Edit className="h-4 w-4 mr-2" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={(e) => { e.stopPropagation(); onDelete(record.id); }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="px-3.5 pb-3.5 space-y-1.5 text-xs">
+        <div className="flex justify-between">
+          <span className="text-white/40">Issued</span>
+          <span className="text-white/75 font-medium">{formatDate(record.issue_date)}</span>
+        </div>
+        {record.expiry_date && (
+          <div className="flex justify-between">
+            <span className="text-white/40">Expires</span>
+            <span className={`font-medium ${isItemExpired ? 'text-rose-300' : isExpiring ? 'text-amber-300' : 'text-white/75'}`}>
+              {formatDate(record.expiry_date)}
+            </span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span className="text-white/40">Size</span>
+          <span className="text-white/75 font-medium">{record.size || '—'}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-white/40">Status</span>
+          <StatusBadge status={record.status} />
+        </div>
+      </div>
+    </div>
   );
 };
 
 // Employee PPE Card
-const EmployeePPECard = ({ employee, records, onIssueNew, onEditItem, onDeleteItem, onViewDetails }) => {
-  const [expanded, setExpanded] = useState(false);
+const EmployeePPECard = ({ employee, records, onIssueNew, onEditItem, onDeleteItem, onViewDetails, forceExpanded, onToggle }) => {
+  const [localExpanded, setLocalExpanded] = useState(false);
+  const expanded = forceExpanded !== undefined ? forceExpanded : localExpanded;
+  const handleToggle = () => {
+    if (onToggle) onToggle(employee.employee_id);
+    else setLocalExpanded(v => !v);
+  };
   const activeRecords = records.filter(r => r.status === 'active');
   const expiredRecords = records.filter(r => r.status === 'expired');
+  const expiringSoonCount = records.filter(r => isExpiringSoon(r.expiry_date)).length;
 
   return (
-    <Card className="hover:shadow-lg transition-all">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700">
-              <AvatarFallback>{employee.employee_name?.[0] || 'U'}</AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-lg font-semibold">{employee.employee_name}</CardTitle>
-              <CardDescription>
-                {employee.position} • {employee.employee_id}
-              </CardDescription>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <Badge variant="success" className="gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> {activeRecords.length} Active
-                </Badge>
-                {expiredRecords.length > 0 && (
-                  <Badge variant="destructive" className="gap-1">
-                    <XCircle className="h-3 w-3" /> {expiredRecords.length} Due
-                  </Badge>
-                )}
-                {records.filter(r => isExpiringSoon(r.expiry_date)).length > 0 && (
-                  <Badge variant="warning" className="gap-1">
-                    <AlertTriangle className="h-3 w-3" /> {records.filter(r => isExpiringSoon(r.expiry_date)).length} Soon to Due
-                  </Badge>
-                )}
-              </div>
+    <div className="oz-glass-dark rounded-2xl overflow-hidden transition-all duration-200">
+      <div className="flex items-start justify-between px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#2A4D69] to-[#86BBD8] flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0">
+            {employee.employee_name?.[0] || 'U'}
+          </div>
+          <div>
+            <p className="text-base font-semibold text-white leading-tight">{employee.employee_name}</p>
+            <p className="text-xs text-white/50 mt-0.5">{employee.position} · {employee.employee_id}</p>
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/25">
+                <CheckCircle2 className="h-3 w-3" /> {activeRecords.length} Active
+              </span>
+              {expiredRecords.length > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/25">
+                  <XCircle className="h-3 w-3" /> {expiredRecords.length} Due
+                </span>
+              )}
+              {expiringSoonCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/25">
+                  <AlertTriangle className="h-3 w-3" /> {expiringSoonCount} Soon
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => onIssueNew(employee)}>
-              <Plus className="h-4 w-4 mr-2" /> Issue PPE
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setExpanded(!expanded)}>
-              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          </div>
         </div>
-      </CardHeader>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => onIssueNew(employee)}
+            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#86BBD8]/20 hover:bg-[#86BBD8]/35 text-white border border-[#86BBD8]/30 transition-all duration-150"
+          >
+            <Plus className="h-3 w-3" /> Issue PPE
+          </button>
+          <button
+            onClick={handleToggle}
+            className="flex items-center justify-center h-7 w-7 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/70 border border-white/15 transition-all duration-150"
+          >
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+      </div>
       {expanded && (
-        <CardContent>
+        <div className="px-5 pb-5 pt-1 border-t border-white/10">
           {records.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {records.map((record) => (
                 <PPEItemCard
                   key={record.id}
@@ -569,15 +573,15 @@ const EmployeePPECard = ({ employee, records, onIssueNew, onEditItem, onDeleteIt
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 bg-muted/50 rounded-lg border">
-              <Shield className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="font-semibold">No PPE items issued yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Click "Issue PPE" to add equipment</p>
+            <div className="text-center py-8 rounded-xl bg-white/[0.04] border border-white/10">
+              <Shield className="h-10 w-10 mx-auto mb-3 text-white/30" />
+              <p className="text-sm font-medium text-white/60">No PPE items issued yet</p>
+              <p className="text-xs text-white/35 mt-1">Click "Issue PPE" to add equipment</p>
             </div>
           )}
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
 
@@ -1170,6 +1174,7 @@ export default function PPEManagement() {
   const [stats, setStats] = useState(null);
   const [detailItem, setDetailItem] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [expandedEmployees, setExpandedEmployees] = useState({});
 
   // Fetch all data
   const fetchAllData = async () => {
@@ -1310,6 +1315,15 @@ export default function PPEManagement() {
     fetchAllData();
   }, []);
 
+  // Employee expand/collapse
+  const toggleEmployee = (id) => setExpandedEmployees(prev => ({ ...prev, [id]: !prev[id] }));
+  const expandAllEmployees = () => {
+    const all = filteredEmployees.reduce((acc, e) => ({ ...acc, [e.employee_id]: true }), {});
+    setExpandedEmployees(all);
+  };
+  const collapseAllEmployees = () => setExpandedEmployees({});
+  const anyEmployeeExpanded = Object.values(expandedEmployees).some(Boolean);
+
   // Filter button component
   const FilterButton = ({ value, label, count }) => (
     <Button
@@ -1330,134 +1344,168 @@ export default function PPEManagement() {
   return (
     <PageShell>
       <Toaster position="top-right" richColors />
-      <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
-              <span>Home</span>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-[#2A4D69] font-medium">PPE</span>
-            </nav>
-            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">PPE Management</h1>
-            <p className="text-[#6B7B8E] mt-1">Track personal protective equipment issued, usage, and compliance across all personnel.</p>
-          </div>
-          <div className="flex items-center gap-2 self-start">
-            <Button variant="outline" size="sm" onClick={fetchAllData} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button size="sm" onClick={() => { setSelectedEmployee(null); setEditData(null); setShowForm(true); }} className="bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md">
-              <Plus className="h-4 w-4 mr-2" /> New Record
-            </Button>
+
+      {/* ── Glassmorphism Hero ── */}
+      <section className="relative text-white">
+        <div className="container mx-auto px-4 pt-6 pb-3">
+          <div className="oz-glass-dark rounded-2xl px-6 py-5">
+            {/* Header row */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <nav className="flex items-center gap-1.5 text-xs text-white/45 mb-1.5">
+                  <span>Home</span>
+                  <ChevronRight className="h-3 w-3" />
+                  <span className="text-white/75 font-medium">PPE</span>
+                </nav>
+                <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-white tracking-tight">PPE Management</h1>
+                <p className="text-white/55 mt-1 text-sm max-w-lg">Track personal protective equipment issued, usage, and compliance across all personnel.</p>
+              </div>
+              <div className="flex items-center gap-2 self-start shrink-0">
+                <button
+                  onClick={fetchAllData}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/80 border border-white/15 transition-all duration-150 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+                </button>
+                <button
+                  onClick={() => { setSelectedEmployee(null); setEditData(null); setShowForm(true); }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white font-medium border border-[#86BBD8]/30 transition-all duration-150"
+                >
+                  <Plus className="h-3.5 w-3.5" /> New Record
+                </button>
+              </div>
+            </div>
+
+            {/* Stats row */}
+            {enhancedStats && (
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-white/10">
+                <button onClick={() => setFilterType('all')} className="flex items-center gap-1.5 group">
+                  <Users className="w-3.5 h-3.5 text-[#86BBD8]" />
+                  <span className="text-base font-bold text-white">{enhancedStats.unique_employees}</span>
+                  <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Employees</span>
+                </button>
+                <span className="text-white/20 hidden sm:block">·</span>
+                <button onClick={() => setFilterType('active')} className="flex items-center gap-1.5 group">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-base font-bold text-emerald-300">{enhancedStats.activeRecords}</span>
+                  <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Active</span>
+                </button>
+                {enhancedStats.expiringSoon > 0 && (<>
+                  <span className="text-white/20 hidden sm:block">·</span>
+                  <button onClick={() => setFilterType('soon-to-due')} className="flex items-center gap-1.5 group">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-base font-bold text-amber-300">{enhancedStats.expiringSoon}</span>
+                    <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Soon to Due ({enhancedStats.employeesWithExpiring} emp.)</span>
+                  </button>
+                </>)}
+                {enhancedStats.expired > 0 && (<>
+                  <span className="text-white/20 hidden sm:block">·</span>
+                  <button onClick={() => setFilterType('due')} className="flex items-center gap-1.5 group">
+                    <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="text-base font-bold text-rose-300">{enhancedStats.expired}</span>
+                    <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Due ({enhancedStats.employeesWithExpired} emp.)</span>
+                  </button>
+                </>)}
+              </div>
+            )}
           </div>
         </div>
+      </section>
+
+      {/* ── Main Content ── */}
+      <main className="container mx-auto px-4 pb-6 space-y-3 mt-3">
         {/* Alerts */}
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-destructive" />
+          <div className="oz-glass-dark rounded-2xl p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
             <div className="flex-1">
-              <p className="font-semibold">Error</p>
-              <p className="text-sm">{error}</p>
+              <p className="font-semibold text-white">Error</p>
+              <p className="text-sm text-white/65">{error}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchAllData}>Retry</Button>
-            <Button variant="ghost" size="icon" onClick={() => setError(null)}><X className="h-4 w-4" /></Button>
+            <button onClick={fetchAllData} className="text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.10] hover:bg-white/[0.18] text-white border border-white/15 transition-all">Retry</button>
+            <button onClick={() => setError(null)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/10 transition-all"><X className="h-3.5 w-3.5" /></button>
           </div>
         )}
-
         {success && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          <div className="oz-glass-dark rounded-2xl p-4 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
             <div className="flex-1">
-              <p className="font-semibold">Success</p>
-              <p className="text-sm">{success}</p>
+              <p className="font-semibold text-white">Success</p>
+              <p className="text-sm text-white/65">{success}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setSuccess(null)}><X className="h-4 w-4" /></Button>
+            <button onClick={() => setSuccess(null)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/10 transition-all"><X className="h-3.5 w-3.5" /></button>
           </div>
         )}
 
-        {/* Stats */}
-        {enhancedStats && (
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 bg-white border rounded-lg text-sm">
-            <button onClick={() => setFilterType('all')} className="flex items-center gap-1.5 hover:text-[#2A4D69] transition-colors">
-              <Users className="w-4 h-4 text-slate-500" />
-              <span className="text-lg font-bold text-[#2A4D69]">{enhancedStats.unique_employees}</span>
-              <span className="text-[#6B7B8E]">Employees</span>
-            </button>
-            <span className="text-[#6B7B8E] hidden sm:block">·</span>
-            <button onClick={() => setFilterType('active')} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span className="text-lg font-bold text-emerald-600">{enhancedStats.activeRecords}</span>
-              <span className="text-[#6B7B8E]">Active</span>
-            </button>
-            {enhancedStats.expiringSoon > 0 && (<>
-              <span className="text-[#6B7B8E] hidden sm:block">·</span>
-              <button onClick={() => setFilterType('soon-to-due')} className="flex items-center gap-1.5 hover:text-amber-600 transition-colors">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span className="text-lg font-bold text-amber-600">{enhancedStats.expiringSoon}</span>
-                <span className="text-[#6B7B8E]">Soon to due ({enhancedStats.employeesWithExpiring} emp.)</span>
-              </button>
-            </>)}
-            {enhancedStats.expired > 0 && (<>
-              <span className="text-[#6B7B8E] hidden sm:block">·</span>
-              <button onClick={() => setFilterType('due')} className="flex items-center gap-1.5 hover:text-rose-600 transition-colors">
-                <XCircle className="w-4 h-4 text-rose-500" />
-                <span className="text-lg font-bold text-rose-600">{enhancedStats.expired}</span>
-                <span className="text-[#6B7B8E]">Due ({enhancedStats.employeesWithExpired} emp.)</span>
-              </button>
-            </>)}
-          </div>
-        )}
-
-        {/* Main Content */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col lg:flex-row justify-between gap-4">
-              <div>
-                <CardTitle className="text-xl">PPE Records</CardTitle>
-                <CardDescription>
-                  {filteredEmployees.length} employees {filterType !== 'all' && `with ${filterType.replace('-', ' ')}`}
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                {/* Filter buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <FilterButton value="all" label="All" count={employeesWithPPE.length} />
-                  <FilterButton value="active" label="Active" count={employeesWithPPE.filter(e => e.records.some(r => r.status === 'active')).length} />
-                  <FilterButton value="soon-to-due" label="Soon to Due" count={enhancedStats?.employeesWithExpiring || 0} />
-                  <FilterButton value="due" label="Due" count={enhancedStats?.employeesWithExpired || 0} />
+        {/* Content Panel */}
+        <div className="oz-glass-dark rounded-2xl overflow-hidden">
+          {/* Panel header */}
+          <div className="flex flex-col lg:flex-row justify-between gap-3 px-5 py-4 border-b border-white/10">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'All', count: employeesWithPPE.length },
+                { value: 'active', label: 'Active', count: employeesWithPPE.filter(e => e.records.some(r => r.status === 'active')).length },
+                { value: 'soon-to-due', label: 'Soon to Due', count: enhancedStats?.employeesWithExpiring || 0 },
+                { value: 'due', label: 'Due', count: enhancedStats?.employeesWithExpired || 0 },
+              ].map(({ value, label, count }) => (
+                <button
+                  key={value}
+                  onClick={() => setFilterType(value)}
+                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all duration-150 ${
+                    filterType === value
+                      ? 'bg-[#86BBD8]/30 border-[#86BBD8]/40 text-white font-semibold'
+                      : 'bg-white/[0.06] border-white/15 text-white/60 hover:bg-white/[0.12] hover:text-white'
+                  }`}
+                >
+                  {label}
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filterType === value ? 'bg-white/20 text-white' : 'bg-white/10 text-white/50'}`}>{count}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              {(filterType === 'all' || filterType === 'active') && (
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
+                  <input
+                    placeholder="Search employees…"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.08] border border-white/15 text-white placeholder:text-white/35 focus:outline-none focus:border-white/30 focus:bg-white/[0.12] transition-all w-44"
+                  />
                 </div>
-                {/* Search (for employee view) */}
-                {filterType === 'all' || filterType === 'active' ? (
-                  <div className="relative w-full lg:w-64">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search employees..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                ) : null}
-              </div>
+              )}
+              {(filterType === 'all' || filterType === 'active') && filteredEmployees.length > 0 && (
+                <button
+                  onClick={anyEmployeeExpanded ? collapseAllEmployees : expandAllEmployees}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/70 border border-white/15 transition-all duration-150"
+                >
+                  {anyEmployeeExpanded ? <><ChevronsUp className="h-3 w-3" /> Collapse</> : <><ChevronsDown className="h-3 w-3" /> Expand</>}
+                </button>
+              )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+
+          {/* Content */}
+          <div className="p-5">
             {loading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <Loader2 className="h-8 w-8 animate-spin text-white/40" />
               </div>
             ) : filteredEmployees.length === 0 && (filterType === 'all' || filterType === 'active') ? (
-              <div className="text-center py-12">
-                <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No employees found</h3>
-                <p className="text-sm text-muted-foreground mb-6">
+              <div className="text-center py-12 rounded-xl bg-white/[0.04] border border-white/10">
+                <Shield className="h-12 w-12 mx-auto text-white/25 mb-4" />
+                <h3 className="text-base font-medium text-white/70 mb-2">No employees found</h3>
+                <p className="text-sm text-white/40 mb-6">
                   {records.length === 0 ? 'Get started by issuing PPE.' : 'Try adjusting your search.'}
                 </p>
                 {records.length === 0 && (
-                  <Button onClick={() => setShowForm(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> Issue First PPE
-                  </Button>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="flex items-center gap-1.5 mx-auto text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/30 transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Issue First PPE
+                  </button>
                 )}
               </div>
             ) : filterType === 'soon-to-due' || filterType === 'due' ? (
@@ -1469,7 +1517,7 @@ export default function PPEManagement() {
                 onViewDetails={handleViewDetails}
               />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {filteredEmployees.map((employee) => (
                   <EmployeePPECard
                     key={employee.employee_id}
@@ -1479,12 +1527,15 @@ export default function PPEManagement() {
                     onEditItem={(record) => { setEditData(record); setShowForm(true); }}
                     onDeleteItem={handleDeleteRecord}
                     onViewDetails={handleViewDetails}
+                    forceExpanded={expandedEmployees[employee.employee_id]}
+                    onToggle={toggleEmployee}
                   />
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </main>
 
       {/* Modals */}
       {showForm && (
@@ -1497,7 +1548,6 @@ export default function PPEManagement() {
           existingEmployees={existingEmployees}
         />
       )}
-
       {showDetail && detailItem && (
         <PPEItemDetailModal
           item={detailItem}
@@ -1506,7 +1556,6 @@ export default function PPEManagement() {
           onEdit={(item) => { setEditData(item); setShowForm(true); }}
         />
       )}
-      </main>
     </PageShell>
   );
 }

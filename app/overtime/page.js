@@ -201,6 +201,8 @@ import {
   Youtube,
   ZoomIn,
   ZoomOut,
+  ChevronsUp,
+  ChevronsDown,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -2441,52 +2443,61 @@ export default function OvertimeManagementPage() {
 
   return (
     <PageShell>
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Ozech Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
-              <span>Home</span>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-[#2A4D69] font-medium">Overtime</span>
-            </nav>
-            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Overtime Management</h1>
-            <p className="text-[#6B7B8E] mt-1">
-              Track, review, and manage all overtime requests. Use the filters to analyse specific periods or employees.
-            </p>
-          </div>
-          <Button onClick={() => setShowForm(true)} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start">
-            <Plus className="h-5 w-5" /> New OT Request
-          </Button>
-        </div>
 
-            {/* Stats */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 bg-white border rounded-lg text-sm">
-              <div className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-blue-500" />
-                <span className="text-lg font-bold text-[#2A4D69]">{stats.total}</span>
-                <span className="text-[#6B7B8E]">Requests</span>
+      {/* ── Glassmorphism Hero ── */}
+      <section className="relative text-white">
+        <div className="container mx-auto px-4 pt-6 pb-3">
+          <div className="oz-glass-dark rounded-2xl px-6 py-5">
+            {/* Header row */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <nav className="flex items-center gap-1.5 text-xs text-white/45 mb-1.5">
+                  <span>Home</span>
+                  <ChevronRight className="h-3 w-3" />
+                  <span className="text-white/75 font-medium">Overtime</span>
+                </nav>
+                <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-white tracking-tight">Overtime Management</h1>
+                <p className="text-white/55 mt-1 text-sm max-w-lg">Track, review, and manage all overtime requests. Use the filters to analyse specific periods or employees.</p>
               </div>
-              <span className="text-[#6B7B8E] hidden sm:block">·</span>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-green-500" />
-                <span className="text-lg font-bold text-[#2A4D69]">{stats.totalHours}h</span>
-                <span className="text-[#6B7B8E]">Total hrs</span>
-              </div>
-              <span className="text-[#6B7B8E] hidden sm:block">·</span>
-              <button onClick={() => { setStatusFilter('pending'); handleStatusToggle('pending'); }} className="flex items-center gap-1.5 hover:text-amber-600 transition-colors">
-                <Clock className="w-4 h-4 text-amber-500" />
-                <span className="text-lg font-bold text-amber-600">{stats.pending}</span>
-                <span className="text-[#6B7B8E]">Pending</span>
-              </button>
-              <span className="text-[#6B7B8E] hidden sm:block">·</span>
-              <button onClick={() => { setStatusFilter('approved'); handleStatusToggle('approved'); }} className="flex items-center gap-1.5 hover:text-green-600 transition-colors">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span className="text-lg font-bold text-green-600">{stats.approved}</span>
-                <span className="text-[#6B7B8E]">Approved</span>
+              <button
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white font-medium border border-[#86BBD8]/30 transition-all duration-150 self-start shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5" /> New OT Request
               </button>
             </div>
 
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#86BBD8]" />
+                <span className="text-base font-bold text-white">{stats.total}</span>
+                <span className="text-xs text-white/45">Requests</span>
+              </div>
+              <span className="text-white/20 hidden sm:block">·</span>
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-base font-bold text-white">{stats.totalHours}h</span>
+                <span className="text-xs text-white/45">Total hrs</span>
+              </div>
+              <span className="text-white/20 hidden sm:block">·</span>
+              <button onClick={() => { setStatusFilter('pending'); handleStatusToggle('pending'); }} className="flex items-center gap-1.5 group">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-base font-bold text-amber-300">{stats.pending}</span>
+                <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Pending</span>
+              </button>
+              <span className="text-white/20 hidden sm:block">·</span>
+              <button onClick={() => { setStatusFilter('approved'); handleStatusToggle('approved'); }} className="flex items-center gap-1.5 group">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-base font-bold text-emerald-300">{stats.approved}</span>
+                <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Approved</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="container mx-auto px-4 pb-8 space-y-3 mt-3">
             {/* Type Summary - Clickable */}
             {showTypeSummary && processedOvertime.length > 0 && (
               <div className="animate-slide-up delay-300">
@@ -2494,110 +2505,103 @@ export default function OvertimeManagementPage() {
               </div>
             )}
 
-            {/* Filter Section */}
-            <Card className="border-0 shadow-lg overflow-hidden bg-white animate-slide-up delay-400">
-              <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
-                <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-5 w-5 text-primary" />
-                      <h2 className="text-lg font-semibold">Filters</h2>
-                      {activeFilterCount > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {activeFilterCount} active
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="ml-2 bg-background">
-                        {processedOvertime.length} of {overtime.length} records
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-                        <FilterX className="h-4 w-4" />
-                        Clear
-                      </Button>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </Button>
-                      </CollapsibleTrigger>
-                    </div>
+            {/* Filter Section — glass panel with existing Collapsible */}
+            <div className="oz-glass-dark rounded-2xl overflow-hidden">
+              <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-[#86BBD8]" />
+                    <span className="text-sm font-semibold text-white">Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#86BBD8]/25 text-[#86BBD8] border border-[#86BBD8]/30">{activeFilterCount} active</span>
+                    )}
+                    <span className="text-xs text-white/35">{processedOvertime.length} of {overtime.length} records</span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={clearFilters} className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] text-white/60 border border-white/12 transition-all">
+                      <FilterX className="h-3 w-3" /> Clear
+                    </button>
+                    <CollapsibleTrigger asChild>
+                      <button className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/15 transition-all">
+                        {showAdvancedFilters ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                    </CollapsibleTrigger>
+                  </div>
+                </div>
 
-                  <CollapsibleContent>
-                    <div className="mt-4">
-                      <AdvancedFilters
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        dateFrom={dateFrom}
-                        onDateFromChange={setDateFrom}
-                        dateTo={dateTo}
-                        onDateToChange={setDateTo}
-                        minHours={minHours}
-                        onMinHoursChange={setMinHours}
-                        maxHours={maxHours}
-                        onMaxHoursChange={setMaxHours}
-                        selectedTypes={selectedTypes}
-                        onTypeToggle={handleTypeToggle}
-                        selectedStatuses={selectedStatuses}
-                        onStatusToggle={handleStatusToggle}
-                        onClearFilters={clearFilters}
-                        activeFilterCount={activeFilterCount}
-                        selectedMonth={monthFilter}
-                        onMonthChange={handleMonthChange}
-                        selectedYear={yearFilter}
-                        onYearChange={handleYearChange}
-                        selectedEmployee={selectedEmployeeName}
-                        onEmployeeChange={handleEmployeeQuickFilter}
-                        availableEmployees={availableEmployees}
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardHeader>
-            </Card>
+                <CollapsibleContent>
+                  <div className="px-5 pb-5 border-t border-white/10 pt-4">
+                    <AdvancedFilters
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                      dateFrom={dateFrom}
+                      onDateFromChange={setDateFrom}
+                      dateTo={dateTo}
+                      onDateToChange={setDateTo}
+                      minHours={minHours}
+                      onMinHoursChange={setMinHours}
+                      maxHours={maxHours}
+                      onMaxHoursChange={setMaxHours}
+                      selectedTypes={selectedTypes}
+                      onTypeToggle={handleTypeToggle}
+                      selectedStatuses={selectedStatuses}
+                      onStatusToggle={handleStatusToggle}
+                      onClearFilters={clearFilters}
+                      activeFilterCount={activeFilterCount}
+                      selectedMonth={monthFilter}
+                      onMonthChange={handleMonthChange}
+                      selectedYear={yearFilter}
+                      onYearChange={handleYearChange}
+                      selectedEmployee={selectedEmployeeName}
+                      onEmployeeChange={handleEmployeeQuickFilter}
+                      availableEmployees={availableEmployees}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {/* View Toggle and Sort Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex rounded-lg border bg-background p-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={viewMode === 'table' ? 'default' : 'ghost'}
-                        size="sm"
-                        className="rounded-md px-3"
-                        onClick={() => setViewMode('table')}
-                      >
-                        <TableIcon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Table view</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                        size="sm"
-                        className="rounded-md px-3"
-                        onClick={() => setViewMode('grid')}
-                      >
-                        <Grid className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Card view</TooltipContent>
-                  </Tooltip>
+            <div className="oz-glass-dark rounded-2xl px-5 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex rounded-lg bg-white/[0.08] border border-white/15 p-0.5">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setViewMode('table')}
+                          className={`px-3 py-1.5 rounded-md transition-all duration-150 ${viewMode === 'table' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/75'}`}
+                        >
+                          <TableIcon className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Table view</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setViewMode('grid')}
+                          className={`px-3 py-1.5 rounded-md transition-all duration-150 ${viewMode === 'grid' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/75'}`}
+                        >
+                          <Grid className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Card view</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search employee or type..."
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                  <input
+                    placeholder="Search employee or type…"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 w-56 h-9 bg-white"
+                    className="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.08] border border-white/15 text-white placeholder:text-white/35 focus:outline-none focus:border-white/30 focus:bg-white/[0.12] transition-all w-48"
                   />
                 </div>
-                <span className="text-sm text-[#6B7B8E]">
+                <span className="text-xs text-white/40">
                   {paginatedData.length} of {processedOvertime.length} requests
                 </span>
               </div>
@@ -2608,7 +2612,7 @@ export default function OvertimeManagementPage() {
                   setSortBy(by);
                   setSortOrder(order);
                 }}>
-                  <SelectTrigger className="w-[200px] bg-white">
+                  <SelectTrigger className="w-[180px] h-8 text-xs bg-white/[0.08] border-white/15 text-white">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2639,42 +2643,31 @@ export default function OvertimeManagementPage() {
               </div>
             )}
 
-            {/* Loading State */}
+            {/* Records */}
             {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-full" />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <Skeleton className="h-64 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
+              <div className="oz-glass-dark rounded-2xl p-8 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-white/40" />
               </div>
             ) : paginatedData.length === 0 ? (
-              <Card className="border-0 shadow-lg bg-white">
-                <CardContent className="py-12">
-                  <div className="text-center">
-                    <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No overtime requests found</h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      {overtime.length === 0
-                        ? 'Get started by creating your first request.'
-                        : 'No records match your current filters. Try adjusting them.'}
-                    </p>
-                    {overtime.length === 0 ? (
-                      <Button onClick={() => setShowForm(true)} className="gap-2">
-                        <Plus className="h-4 w-4" /> New Request
-                      </Button>
-                    ) : (
-                      <Button variant="outline" onClick={clearFilters} className="gap-2">
-                        <FilterX className="h-4 w-4" /> Clear Filters
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="oz-glass-dark rounded-2xl py-12 text-center">
+                <Clock className="h-12 w-12 mx-auto text-white/25 mb-4" />
+                <h3 className="text-base font-medium text-white/70 mb-2">No overtime requests found</h3>
+                <p className="text-sm text-white/40 mb-6">
+                  {overtime.length === 0 ? 'Get started by creating your first request.' : 'No records match your current filters.'}
+                </p>
+                {overtime.length === 0 ? (
+                  <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 mx-auto text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/30 transition-all">
+                    <Plus className="h-3.5 w-3.5" /> New Request
+                  </button>
+                ) : (
+                  <button onClick={clearFilters} className="flex items-center gap-1.5 mx-auto text-xs px-4 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/70 border border-white/15 transition-all">
+                    <FilterX className="h-3.5 w-3.5" /> Clear Filters
+                  </button>
+                )}
+              </div>
             ) : viewMode === 'grid' ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {paginatedData.map((ot) => (
                     <OvertimeCard
                       key={ot.id}
@@ -2693,19 +2686,19 @@ export default function OvertimeManagementPage() {
               </>
             ) : (
               <>
-                <Card className="border-0 shadow-lg overflow-hidden bg-white">
+                <div className="oz-glass-dark rounded-2xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <ShadcnTable>
-                      <TableHeader className="bg-muted/50">
-                        <TableRow>
-                          <TableHead className="w-10"></TableHead>
-                          <TableHead>Employee</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead className="text-right">Hours</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                      <TableHeader className="bg-white/5">
+                        <TableRow className="border-white/10">
+                          <TableHead className="w-10 text-white/50"></TableHead>
+                          <TableHead className="text-white/50">Employee</TableHead>
+                          <TableHead className="text-white/50">Type</TableHead>
+                          <TableHead className="text-white/50">Date</TableHead>
+                          <TableHead className="text-white/50">Time</TableHead>
+                          <TableHead className="text-right text-white/50">Hours</TableHead>
+                          <TableHead className="text-white/50">Status</TableHead>
+                          <TableHead className="text-right text-white/50">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2715,7 +2708,7 @@ export default function OvertimeManagementPage() {
                           return (
                             <React.Fragment key={ot.id}>
                               <TableRow
-                                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                className="cursor-pointer hover:bg-white/5 transition-colors border-white/10"
                                 onClick={() => setSelectedOvertime(ot)}
                               >
                                 <TableCell onClick={(e) => e.stopPropagation()}>
@@ -2740,24 +2733,24 @@ export default function OvertimeManagementPage() {
                                 <TableCell>
                                   <div className="flex items-center gap-3">
                                     <Avatar className="h-8 w-8">
-                                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                      <AvatarFallback className="bg-[#2A4D69]/60 text-white text-xs">
                                         {getInitials(ot.employee_name)}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                      <div className="font-medium">{ot.employee_name}</div>
-                                      <div className="text-xs text-muted-foreground">{ot.employee_id}</div>
+                                      <div className="font-medium text-white">{ot.employee_name}</div>
+                                      <div className="text-xs text-white/45">{ot.employee_id}</div>
                                     </div>
                                   </div>
                                 </TableCell>
                                 <TableCell>
                                   <TypeBadge type={ot.overtime_type} />
                                 </TableCell>
-                                <TableCell className="whitespace-nowrap">{formatDate(ot.date)}</TableCell>
-                                <TableCell className="whitespace-nowrap text-xs">
+                                <TableCell className="whitespace-nowrap text-white/75">{formatDate(ot.date)}</TableCell>
+                                <TableCell className="whitespace-nowrap text-xs text-white/75">
                                   {formatTime(ot.start_time)} – {formatTime(ot.end_time)}
                                 </TableCell>
-                                <TableCell className="text-right font-bold">{hours} h</TableCell>
+                                <TableCell className="text-right font-bold text-white">{hours} h</TableCell>
                                 <TableCell>
                                   <StatusBadge status={ot.status} />
                                 </TableCell>
@@ -2795,18 +2788,18 @@ export default function OvertimeManagementPage() {
                                 </TableCell>
                               </TableRow>
                               {isExpanded && (
-                                <TableRow className="bg-muted/20">
+                                <TableRow className="bg-white/[0.04] border-white/10">
                                   <TableCell colSpan={8} className="p-4">
                                     <div className="space-y-3 max-w-3xl">
                                       <div>
-                                        <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                                        <p className="text-xs font-medium text-white/45 mb-1 flex items-center gap-1">
                                           <MessageSquare className="h-3 w-3" /> Reason
                                         </p>
-                                        <p className="text-sm bg-background p-3 rounded-lg border">
+                                        <p className="text-sm bg-white/[0.06] text-white/75 p-3 rounded-lg border border-white/10">
                                           {ot.reason || 'No reason provided'}
                                         </p>
                                       </div>
-                                      <div className="flex gap-4 text-xs text-muted-foreground">
+                                      <div className="flex gap-4 text-xs text-white/40">
                                         <span>Contact: {ot.contact_number || 'Not provided'}</span>
                                         {ot.emergency_contact && (
                                           <span>Emergency: {ot.emergency_contact}</span>
@@ -2822,7 +2815,7 @@ export default function OvertimeManagementPage() {
                       </TableBody>
                     </ShadcnTable>
                   </div>
-                </Card>
+                </div>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

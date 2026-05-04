@@ -330,17 +330,17 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen">
       {/* Base wallpaper */}
-      <div className="absolute inset-0 -z-20 overflow-hidden">
+      <div className="fixed inset-0 -z-20 overflow-hidden">
         <Image src={WALLPAPERS[current]} alt="" fill className="object-cover object-center" />
       </div>
       {/* Incoming wallpaper — crossfade */}
       {incoming !== null && (
-        <div className={`absolute inset-0 -z-20 overflow-hidden oz-bg-entering${fadeIn ? ' oz-bg-visible' : ''}`}>
+        <div className={`fixed inset-0 -z-20 overflow-hidden oz-bg-entering${fadeIn ? ' oz-bg-visible' : ''}`}>
           <Image src={WALLPAPERS[incoming]} alt="" fill className="object-cover object-center" />
         </div>
       )}
       {/* Cinematic vignette — darker at edges, luminous centre */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/52 via-black/20 to-black/55" />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black/52 via-black/20 to-black/55" />
 
       <Header />
 
