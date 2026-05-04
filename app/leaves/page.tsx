@@ -67,6 +67,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -385,41 +386,17 @@ const deleteLeave = async (leaveId: string): Promise<{ success: boolean; message
 // ---------- StatusBadge component ----------
 const StatusBadge = ({ status }: { status: Leave['status'] }) => {
   const config = {
-    pending: { 
-      variant: 'secondary' as const, 
-      icon: Clock, 
-      label: 'Pending Review',
-      className: '' 
-    },
-    approved: { 
-      variant: 'default' as const, 
-      icon: CheckCircle2, 
-      label: 'Approved',
-      className: 'bg-emerald-100 text-emerald-800 border-emerald-200' 
-    },
-    rejected: { 
-      variant: 'destructive' as const, 
-      icon: XCircle, 
-      label: 'Rejected',
-      className: '' 
-    }
-  }[status] || { 
-    variant: 'outline' as const, 
-    icon: Clock, 
-    label: 'Unknown',
-    className: '' 
-  };
+    pending: { icon: Clock, label: 'Pending', className: 'bg-amber-400/20 border-amber-400/30 text-amber-300' },
+    approved: { icon: CheckCircle2, label: 'Approved', className: 'bg-emerald-400/20 border-emerald-400/30 text-emerald-300' },
+    rejected: { icon: XCircle, label: 'Rejected', className: 'bg-rose-400/20 border-rose-400/30 text-rose-300' }
+  }[status] || { icon: Clock, label: 'Unknown', className: 'bg-white/10 border-white/20 text-white/60' };
 
   const Icon = config.icon;
-
   return (
-    <Badge 
-      variant={config.variant} 
-      className={`gap-1 px-2 py-1 whitespace-nowrap ${config.className}`}
-    >
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${config.className}`}>
       <Icon className="h-3 w-3" />
       {config.label}
-    </Badge>
+    </span>
   );
 };
 
@@ -481,54 +458,52 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
   const leaveType = LEAVE_TYPES[leave.leave_type] || LEAVE_TYPES.annual;
   const Icon = leaveType.icon;
   const [deleting, setDeleting] = useState(false);
-  
+
   const handleDelete = async () => {
     if (!confirm('Delete this leave request?')) return;
     setDeleting(true);
-    try {
-      await onDelete(leave.id);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setDeleting(false);
-    }
+    try { await onDelete(leave.id); } catch (error) { console.error(error); } finally { setDeleting(false); }
   };
 
   return (
-    <Card className="group relative hover:shadow-lg transition-all cursor-pointer bg-white" onClick={() => onView(leave)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
+    <div
+      className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden rounded-xl cursor-pointer"
+      style={{
+        background: 'rgba(5,15,28,0.75)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderTop: `4px solid ${leaveType.color}`
+      }}
+      onClick={() => onView(leave)}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className={`p-2 rounded-xl ${leaveType.bgColor} border ${leaveType.borderColor} group-hover:scale-110 transition-transform`}>
-              <Icon className={`h-4 w-4 ${leaveType.textColor}`} />
+            <div className="p-2 rounded-xl bg-white/[0.08] border border-white/10 group-hover:scale-110 transition-transform flex-shrink-0">
+              <Icon className="h-4 w-4" style={{ color: leaveType.color }} />
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-semibold truncate">{leave.employee_name}</CardTitle>
-              <CardDescription className="text-xs truncate">
-                {leave.position} • {leave.employee_id}
-              </CardDescription>
+              <div className="text-base font-semibold truncate text-white">{leave.employee_name}</div>
+              <div className="text-xs truncate text-white/55">{leave.position} • {leave.employee_id}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+              <DropdownMenuTrigger asChild>
+                <button className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.06] hover:bg-white/[0.15] border border-white/10 text-white/50 transition-all">
+                  <MoreVertical className="h-3.5 w-3.5" />
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(leave); }}>
+              <DropdownMenuContent align="end" style={{ background: 'rgba(5,15,28,0.95)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                <DropdownMenuItem className="text-white/75 hover:bg-white/[0.10] focus:bg-white/[0.10] focus:text-white" onClick={() => onView(leave)}>
                   <Eye className="h-4 w-4 mr-2" /> View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(leave); }}>
+                <DropdownMenuItem className="text-white/75 hover:bg-white/[0.10] focus:bg-white/[0.10] focus:text-white" onClick={() => onEdit(leave)}>
                   <Edit className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                  disabled={deleting}
-                >
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem className="text-rose-400 hover:bg-rose-500/20 focus:bg-rose-500/20 focus:text-rose-300" onClick={handleDelete} disabled={deleting}>
                   {deleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
                   Delete
                 </DropdownMenuItem>
@@ -536,42 +511,42 @@ const LeaveCard = ({ leave, onView, onEdit, onDelete }: {
             </DropdownMenu>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Leave Type</span>
-            <span className="font-medium">{leaveType.shortName}</span>
+
+        <div className="space-y-1.5 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Leave Type</span>
+            <span className="font-medium text-white text-xs">{leaveType.shortName}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Duration</span>
-            <span className="font-medium">{formatDays(leave.total_days)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Duration</span>
+            <span className="font-medium text-white">{formatDays(leave.total_days)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Dates</span>
-            <span className="font-medium text-xs">{formatDate(leave.start_date)} – {formatDate(leave.end_date)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Dates</span>
+            <span className="font-medium text-white text-xs">{formatDate(leave.start_date)} – {formatDate(leave.end_date)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Status</span>
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Status</span>
             <StatusBadge status={leave.status} />
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Applied</span>
-            <span className="font-medium text-xs">{formatDateTime(leave.applied_date)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Applied</span>
+            <span className="font-medium text-white/80 text-xs">{formatDateTime(leave.applied_date)}</span>
           </div>
         </div>
+
         {leave.reason && (
-          <div className="mt-3 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground line-clamp-2">
+          <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/10 p-2 text-xs text-white/70 line-clamp-2">
             {leave.reason}
           </div>
         )}
-      </CardContent>
-      <CardFooter className="pt-2">
-        <Button variant="outline" size="sm" className="w-full" onClick={(e) => { e.stopPropagation(); onView(leave); }}>
-          <Eye className="h-3.5 w-3.5 mr-2" /> View Details
-        </Button>
-      </CardFooter>
-    </Card>
+      </div>
+      <div className="px-4 py-2.5 bg-white/[0.04] border-t border-white/10">
+        <button className="w-full inline-flex items-center justify-center gap-2 text-xs text-white/60 hover:text-white/90 transition-colors" onClick={(e) => { e.stopPropagation(); onView(leave); }}>
+          <Eye className="h-3.5 w-3.5" /> View Details
+        </button>
+      </div>
+    </div>
   );
 };
 
@@ -1305,6 +1280,11 @@ export default function LeaveManagementPage() {
     total_days_requested: 0,
     average_days: 0
   });
+  const [showHeroStats, setShowHeroStats] = useState(true);
+  const [showTypeSummary, setShowTypeSummary] = useState(true);
+  const [showEmployeeSummary, setShowEmployeeSummary] = useState(true);
+  const [filterPanelMinimized, setFilterPanelMinimized] = useState(false);
+  const [recordsPanelMinimized, setRecordsPanelMinimized] = useState(false);
 
 
   const fetchAllData = async () => {
@@ -1418,237 +1398,406 @@ export default function LeaveManagementPage() {
     setSortBy('date-desc');
   };
 
+  const typeSummary = useMemo(() => {
+    return Object.entries(LEAVE_TYPES).map(([key, type]) => {
+      const typeLeaves = leaves.filter(l => l.leave_type === key);
+      const totalDays = typeLeaves.reduce((sum, l) => sum + (l.total_days || 0), 0);
+      return {
+        key, type, count: typeLeaves.length, totalDays,
+        percentage: leaves.length > 0 ? Math.round((typeLeaves.length / leaves.length) * 100) : 0
+      };
+    }).filter(t => t.count > 0);
+  }, [leaves]);
+
+  const employeeSummary = useMemo(() => {
+    const empMap: Record<string, { name: string; total_days: number; pending: number; approved: number; rejected: number }> = {};
+    leaves.forEach(l => {
+      if (!empMap[l.employee_id]) empMap[l.employee_id] = { name: l.employee_name, total_days: 0, pending: 0, approved: 0, rejected: 0 };
+      empMap[l.employee_id].total_days += l.total_days || 0;
+      empMap[l.employee_id][l.status]++;
+    });
+    return Object.entries(empMap)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.total_days - a.total_days);
+  }, [leaves]);
+
+  const activeFilterCount = [filter !== 'all', typeFilter !== 'all', !!dateFrom, !!dateTo, !!searchTerm].filter(Boolean).length;
+
   return (
     <PageShell>
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Ozech Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <nav className="flex items-center gap-1.5 text-xs text-[#6B7B8E] mb-2">
-              <span>Home</span>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-[#2A4D69] font-medium">Leaves</span>
-            </nav>
-            <h1 className="text-3xl font-bold text-[#2A4D69] font-heading tracking-tight">Leave Management</h1>
-            <p className="text-[#6B7B8E] mt-1">
-              Manage employee leave requests, track balances, and approve time off.
-            </p>
+      <main className="container mx-auto px-4 py-8 space-y-4">
+
+        {/* PANEL 1: Hero */}
+        <div className="oz-glass-dark rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-[#2A4D69]/50 border border-[#86BBD8]/20">
+                <CalendarDays className="h-5 w-5 text-[#86BBD8]" />
+              </div>
+              <div>
+                <nav className="flex items-center gap-1.5 text-xs text-white/40 mb-0.5">
+                  <span>Home</span>
+                  <ChevronRight className="h-3 w-3" />
+                  <span className="text-white/70 font-medium">Leaves</span>
+                </nav>
+                <h1 className="text-xl font-bold text-white font-heading tracking-tight">Leave Management</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={fetchAllData} title="Refresh" className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/[0.07] hover:bg-white/[0.15] border border-white/12 text-white/50 transition-all">
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #2A4D69, #1e3a52)', border: '1px solid rgba(134,187,216,0.25)' }}
+              >
+                <Plus className="h-4 w-4" /> New Leave Request
+              </button>
+              <button onClick={() => setShowHeroStats(v => !v)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/[0.07] hover:bg-white/[0.15] border border-white/12 text-white/50 transition-all">
+                {showHeroStats ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </button>
+            </div>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gap-2 bg-[#2A4D69] hover:bg-[#1e3a52] text-white shadow-md self-start" size="lg">
-            <Plus className="h-5 w-5" /> New Leave Request
-          </Button>
+          {showHeroStats && (
+            <div className="px-6 pb-4 pt-3 border-t border-white/[0.07] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {[
+                { label: 'Total', value: stats.total, color: '#86BBD8', onClick: () => setFilter('all') },
+                { label: 'Total Days', value: stats.total_days_requested, color: '#a78bfa', onClick: undefined },
+                { label: 'Pending', value: stats.pending, color: '#fbbf24', onClick: () => setFilter('pending') },
+                { label: 'Approved', value: stats.approved, color: '#34d399', onClick: () => setFilter('approved') },
+                { label: 'On Leave Now', value: stats.on_leave_now, color: '#60a5fa', onClick: undefined },
+                { label: 'Approval Rate', value: `${stats.approvalRate}%`, color: '#86BBD8', onClick: undefined },
+              ].map(stat => (
+                <button
+                  key={stat.label}
+                  onClick={stat.onClick}
+                  className={`rounded-xl p-3 text-left border border-white/[0.08] bg-white/[0.05] transition-all ${stat.onClick ? 'hover:bg-white/[0.10] cursor-pointer' : 'cursor-default'}`}
+                >
+                  <div className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
+                  <div className="text-xs text-white/50 mt-0.5">{stat.label}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Requests" value={stats.total} icon={FileText} color="slate" />
-          <StatCard title="Pending" value={stats.pending} icon={Clock} color="amber" onClick={() => setFilter('pending')} />
-          <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} color="emerald" onClick={() => setFilter('approved')} />
-          <StatCard title="On Leave Now" value={stats.on_leave_now} icon={User} color="purple" subtitle={`${stats.approvalRate}% approval`} />
+        {/* PANEL 2: Leave Type Breakdown */}
+        {typeSummary.length > 0 && (
+          <div className="oz-glass-panel rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-3.5 w-3.5 text-[#86BBD8]" />
+                <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Leave Type Breakdown</span>
+                <span className="text-[11px] text-white/35">click to filter</span>
+              </div>
+              <button onClick={() => setShowTypeSummary(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                {showTypeSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
+            </div>
+            {showTypeSummary && (
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {typeSummary.map(({ key, type, count, totalDays, percentage }) => {
+                  const Icon = type.icon;
+                  const isActive = typeFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setTypeFilter(isActive ? 'all' : key)}
+                      className={`group relative rounded-xl overflow-hidden text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg border p-4 cursor-pointer ${isActive ? 'border-white/30 bg-white/[0.12]' : 'border-white/10 hover:border-white/20 bg-white/[0.06] hover:bg-white/[0.10]'}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Icon className="h-4 w-4" style={{ color: type.color }} />
+                        <span className="text-xs font-bold text-white">{count}</span>
+                      </div>
+                      <div className="text-xs font-semibold text-white/80 mb-0.5">{type.shortName}</div>
+                      <div className="text-[11px] text-white/45">{totalDays}d total</div>
+                      <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: type.color, opacity: 0.7 }} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PANEL 3: Employee Summary */}
+        {employeeSummary.length > 0 && (
+          <div className="oz-glass-panel rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+              <div className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-[#86BBD8]" />
+                <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Employee Summary</span>
+                <span className="text-[11px] text-white/35">{employeeSummary.length} employees</span>
+              </div>
+              <button onClick={() => setShowEmployeeSummary(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                {showEmployeeSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
+            </div>
+            {showEmployeeSummary && (
+              <ScrollArea className="h-[260px]">
+                <div className="space-y-1 p-4">
+                  {employeeSummary.map(emp => {
+                    const maxDays = employeeSummary[0]?.total_days || 1;
+                    const percentage = Math.round((emp.total_days / maxDays) * 100);
+                    return (
+                      <div
+                        key={emp.id}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.07] cursor-pointer transition-all group"
+                        onClick={() => { setSearchTerm(emp.name); setFilter('all'); }}
+                      >
+                        <div className="h-8 w-8 rounded-full bg-[#2A4D69]/60 border border-[#86BBD8]/20 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
+                          {getInitials(emp.name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{emp.name}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden flex-1">
+                              <div className="h-full bg-[#86BBD8]/60 rounded-full" style={{ width: `${percentage}%` }} />
+                            </div>
+                            <span className="text-[11px] text-white/40 flex-shrink-0">{emp.total_days}d</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {emp.pending > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/25">{emp.pending}p</span>}
+                          {emp.approved > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-300 border border-emerald-400/25">{emp.approved}a</span>}
+                          {emp.rejected > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-400/20 text-rose-300 border border-rose-400/25">{emp.rejected}r</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
+
+        {/* PANEL 4: Filter Panel */}
+        <div className="oz-glass-panel rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+            <div className="flex items-center gap-2">
+              <Filter className="h-3.5 w-3.5 text-[#86BBD8]" />
+              <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#86BBD8]/20 text-[#86BBD8] border border-[#86BBD8]/30">{activeFilterCount} active</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {activeFilterCount > 0 && (
+                <button onClick={clearFilters} className="h-6 px-2 flex items-center gap-1 rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 text-[11px] border border-white/12 transition-all">
+                  <X className="h-2.5 w-2.5" /> Clear
+                </button>
+              )}
+              <button onClick={() => setFilterPanelMinimized(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                {filterPanelMinimized ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+              </button>
+            </div>
+          </div>
+          {!filterPanelMinimized && (
+            <div className="px-5 pb-4 pt-3 space-y-3">
+              <div>
+                <div className="text-[11px] text-white/45 mb-1.5">Status</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { key: 'all', label: 'All' },
+                    { key: 'pending', label: 'Pending' },
+                    { key: 'approved', label: 'Approved' },
+                    { key: 'rejected', label: 'Rejected' },
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setFilter(opt.key)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filter === opt.key ? 'bg-[#86BBD8]/30 border-[#86BBD8]/45 text-white font-semibold' : 'bg-white/[0.05] border-white/12 text-white/60 hover:bg-white/[0.12] hover:text-white/90'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] text-white/45 mb-1.5">Leave Type</div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={() => setTypeFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${typeFilter === 'all' ? 'bg-[#86BBD8]/30 border-[#86BBD8]/45 text-white font-semibold' : 'bg-white/[0.05] border-white/12 text-white/60 hover:bg-white/[0.12] hover:text-white/90'}`}>
+                    All Types
+                  </button>
+                  {Object.entries(LEAVE_TYPES).map(([key, type]) => {
+                    const Icon = type.icon;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setTypeFilter(typeFilter === key ? 'all' : key)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${typeFilter === key ? 'bg-[#86BBD8]/30 border-[#86BBD8]/45 text-white font-semibold' : 'bg-white/[0.05] border-white/12 text-white/60 hover:bg-white/[0.12] hover:text-white/90'}`}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {type.shortName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+                  <input
+                    type="text"
+                    placeholder="Search employee..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 pr-3 py-2 w-full text-sm rounded-lg bg-white/[0.07] border border-white/12 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.11] transition-all"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="px-3 py-2 w-full text-sm rounded-lg bg-white/[0.07] border border-white/12 text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.11] transition-all"
+                    style={{ colorScheme: 'dark' }}
+                  />
+                  <div className="text-[10px] text-white/35 mt-0.5">From date</div>
+                </div>
+                <div>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="px-3 py-2 w-full text-sm rounded-lg bg-white/[0.07] border border-white/12 text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.11] transition-all"
+                    style={{ colorScheme: 'dark' }}
+                  />
+                  <div className="text-[10px] text-white/35 mt-0.5">To date</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-            {/* Filters Card */}
-            <Card className="bg-white border-white/30 shadow-xl animate-slide-up delay-200">
-              <CardHeader className="pb-3">
-                <div className="flex flex-col lg:flex-row justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-lg">Leave Requests</CardTitle>
-                    <CardDescription>
-                      {filteredLeaves.length} of {leaves.length} requests
-                    </CardDescription>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="relative w-full lg:w-64">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 bg-white"
-                      />
-                    </div>
-
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-[180px] bg-white">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date-desc">Date (Newest)</SelectItem>
-                        <SelectItem value="date-asc">Date (Oldest)</SelectItem>
-                        <SelectItem value="days-desc">Days (High-Low)</SelectItem>
-                        <SelectItem value="days-asc">Days (Low-High)</SelectItem>
-                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <div className="flex rounded-md border">
-                      <Button
-                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                        size="sm"
-                        className="rounded-r-none"
-                        onClick={() => setViewMode('grid')}
-                      >
-                        <LayoutGrid className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={viewMode === 'table' ? 'default' : 'ghost'}
-                        size="sm"
-                        className="rounded-l-none"
-                        onClick={() => setViewMode('table')}
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+        {/* PANEL 5: Records */}
+        <div className="oz-glass-panel rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+            <div className="flex items-center gap-2">
+              <FileText className="h-3.5 w-3.5 text-[#86BBD8]" />
+              <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Records</span>
+              <span className="text-[11px] text-white/35">{filteredLeaves.length} of {leaves.length}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-7 pl-2 pr-6 text-[11px] rounded-lg bg-white/[0.07] border border-white/12 text-white/70 focus:outline-none focus:border-white/30 appearance-none cursor-pointer"
+                style={{ colorScheme: 'dark' }}
+              >
+                <option value="date-desc">Newest</option>
+                <option value="date-asc">Oldest</option>
+                <option value="days-desc">Days ↓</option>
+                <option value="days-asc">Days ↑</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+              </select>
+              <div className="flex rounded-lg border border-white/12 overflow-hidden">
+                <button onClick={() => setViewMode('grid')} className={`h-7 w-7 flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-[#86BBD8]/30 text-white' : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.12]'}`}>
+                  <LayoutGrid className="h-3 w-3" />
+                </button>
+                <button onClick={() => setViewMode('table')} className={`h-7 w-7 flex items-center justify-center border-l border-white/12 transition-all ${viewMode === 'table' ? 'bg-[#86BBD8]/30 text-white' : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.12]'}`}>
+                  <List className="h-3 w-3" />
+                </button>
+              </div>
+              <button onClick={() => setRecordsPanelMinimized(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                {recordsPanelMinimized ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+              </button>
+            </div>
+          </div>
+          {!recordsPanelMinimized && (
+            <div className="p-4">
+              {loading.leaves ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-white/30" />
                 </div>
-
-                <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                      <Label className="text-xs">Status</Label>
-                      <Select value={filter} onValueChange={setFilter}>
-                        <SelectTrigger className="mt-1 bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="approved">Approved</SelectItem>
-                          <SelectItem value="rejected">Rejected</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">Leave Type</Label>
-                      <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="mt-1 bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          {Object.entries(LEAVE_TYPES).map(([key, type]) => (
-                            <SelectItem key={key} value={key}>{type.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">From Date</Label>
-                      <Input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="mt-1 bg-white"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs">To Date</Label>
-                      <Input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="mt-1 bg-white"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-3">
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-                      <FilterX className="h-3 w-3" /> Clear Filters
-                    </Button>
-                  </div>
+              ) : filteredLeaves.length === 0 ? (
+                <div className="text-center py-12">
+                  <Calendar className="h-12 w-12 mx-auto text-white/20 mb-4" />
+                  <h3 className="text-base font-medium text-white/60 mb-2">No leave requests found</h3>
+                  <p className="text-sm text-white/35 mb-6">
+                    {leaves.length === 0 ? 'Create your first request.' : 'Try adjusting your filters.'}
+                  </p>
+                  {leaves.length === 0 && (
+                    <button
+                      onClick={() => setShowForm(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
+                      style={{ background: 'rgba(42,77,105,0.6)', border: '1px solid rgba(134,187,216,0.25)' }}
+                    >
+                      <Plus className="h-4 w-4" /> New Leave
+                    </button>
+                  )}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loading.leaves ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : filteredLeaves.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No leave requests found</h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      {leaves.length === 0 ? 'Create your first request.' : 'Try adjusting your filters.'}
-                    </p>
-                    {leaves.length === 0 && (
-                      <Button onClick={() => setShowForm(true)} className="gap-2">
-                        <Plus className="h-4 w-4 mr-2" /> New Leave
-                      </Button>
-                    )}
-                  </div>
-                ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredLeaves.map((leave) => (
-                      <LeaveCard
-                        key={leave.id}
-                        leave={leave}
-                        onView={setSelectedLeave}
-                        onEdit={(l) => { setEditData(l); setShowForm(true); }}
-                        onDelete={handleDelete}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Employee</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Dates</TableHead>
-                          <TableHead>Days</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Applied</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+              ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredLeaves.map((leave) => (
+                    <LeaveCard
+                      key={leave.id}
+                      leave={leave}
+                      onView={setSelectedLeave}
+                      onEdit={(l) => { setEditData(l); setShowForm(true); }}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl overflow-hidden border border-white/[0.07]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/[0.07] hover:bg-transparent">
+                        <TableHead className="text-white/55 bg-white/[0.05]">Employee</TableHead>
+                        <TableHead className="text-white/55 bg-white/[0.05]">Type</TableHead>
+                        <TableHead className="text-white/55 bg-white/[0.05]">Dates</TableHead>
+                        <TableHead className="text-white/55 bg-white/[0.05]">Days</TableHead>
+                        <TableHead className="text-white/55 bg-white/[0.05]">Status</TableHead>
+                        <TableHead className="text-white/55 bg-white/[0.05]">Applied</TableHead>
+                        <TableHead className="text-white/55 bg-white/[0.05] text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLeaves.map((leave) => (
+                        <TableRow
+                          key={leave.id}
+                          className="cursor-pointer border-white/[0.06] hover:bg-white/[0.06]"
+                          onClick={() => setSelectedLeave(leave)}
+                        >
+                          <TableCell>
+                            <div className="font-medium text-white">{leave.employee_name}</div>
+                            <div className="text-xs text-white/45">{leave.employee_id}</div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border border-white/10 bg-white/[0.06] text-white/75">
+                              {React.createElement(LEAVE_TYPES[leave.leave_type]?.icon || FileText, { className: "h-3 w-3" })}
+                              {LEAVE_TYPES[leave.leave_type]?.shortName || leave.leave_type}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-sm text-white/75">
+                            {formatDate(leave.start_date)} – {formatDate(leave.end_date)}
+                          </TableCell>
+                          <TableCell className="text-white/75">{formatDays(leave.total_days)}</TableCell>
+                          <TableCell><StatusBadge status={leave.status} /></TableCell>
+                          <TableCell className="text-xs text-white/45">{formatDateTime(leave.applied_date)}</TableCell>
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <button className="h-7 w-7 inline-flex items-center justify-center rounded-lg bg-white/[0.06] hover:bg-white/[0.15] text-white/50 transition-all mr-1" onClick={() => setSelectedLeave(leave)}>
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button className="h-7 w-7 inline-flex items-center justify-center rounded-lg bg-white/[0.06] hover:bg-white/[0.15] text-white/50 transition-all" onClick={() => { setEditData(leave); setShowForm(true); }}>
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredLeaves.map((leave) => (
-                          <TableRow
-                            key={leave.id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => setSelectedLeave(leave)}
-                          >
-                            <TableCell>
-                              <div className="font-medium">{leave.employee_name}</div>
-                              <div className="text-xs text-muted-foreground">{leave.employee_id}</div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="gap-1">
-                                {React.createElement(LEAVE_TYPES[leave.leave_type]?.icon || FileText, { className: "h-3 w-3" })}
-                                {LEAVE_TYPES[leave.leave_type]?.shortName || leave.leave_type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-sm">
-                              {formatDate(leave.start_date)} – {formatDate(leave.end_date)}
-                            </TableCell>
-                            <TableCell>{formatDays(leave.total_days)}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={leave.status} />
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {formatDateTime(leave.applied_date)}
-                            </TableCell>
-                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="sm" onClick={() => setSelectedLeave(leave)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => { setEditData(leave); setShowForm(true); }}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
       </main>
 
       {showForm && (

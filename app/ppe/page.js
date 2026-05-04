@@ -12,7 +12,8 @@ import {
   Mountain, Gem, Landmark, Drill, Pickaxe, Factory, UserCheck,
   Building, Settings, Award, Crown, FilterX, Layers,
   Database, Eye as EyeIcon, EyeOff, ChevronRight,
-  Shirt, Wind, Flashlight, CloudRain, Link2, ChevronsUp, ChevronsDown
+  Shirt, Wind, Flashlight, CloudRain, Link2, ChevronsUp, ChevronsDown,
+  Minimize2, Maximize2
 } from "lucide-react";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
@@ -68,6 +69,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -991,78 +993,75 @@ const DueItemsList = ({ employees, filterType, onEditItem, onDeleteItem, onViewD
 
   if (dueItems.length === 0 && !searchTerm && typeFilter === 'all' && sizeFilter === 'all') {
     return (
-      <div className="text-center py-12 bg-muted/30 rounded-lg border">
-        <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-        <p className="font-semibold">No {filterType === 'due' ? 'due' : 'soon to due'} items</p>
-        <p className="text-sm text-muted-foreground mt-1">All PPE is up to date</p>
+      <div className="text-center py-12 bg-white/[0.04] rounded-xl border border-white/[0.07]">
+        <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-emerald-400/60" />
+        <p className="font-semibold text-white/75">No {filterType === 'due' ? 'overdue' : 'soon-to-expire'} items</p>
+        <p className="text-sm text-white/40 mt-1">All PPE is up to date</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
+      {/* Summary pills */}
       {Object.entries(summary).length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-wrap gap-2">
           {Object.entries(summary).map(([key, count]) => {
             const [type, size] = key.split('-');
             const ppeType = PPE_TYPES[type] || PPE_TYPES.helmet;
+            const Icon = ppeType.icon;
             return (
-              <Card key={key} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${ppeType.bgColor} border ${ppeType.borderColor}`}>
-                    {React.createElement(ppeType.icon, { className: `h-5 w-5 ${ppeType.textColor}` })}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{count} item{count > 1 ? 's' : ''}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {ppeType.name} {size && size !== 'none' && `(Size ${size})`}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 hover:bg-white/[0.10] transition-all">
+                <div className={`p-1.5 rounded-lg ${ppeType.bgColor} border ${ppeType.borderColor}`}>
+                  <Icon className={`h-3.5 w-3.5 ${ppeType.textColor}`} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white leading-tight">{count} item{count > 1 ? 's' : ''}</p>
+                  <p className="text-[10px] text-white/45 leading-tight">
+                    {ppeType.shortName}{size && size !== 'none' && ` · Sz ${size}`}
+                  </p>
+                </div>
+              </div>
             );
           })}
         </div>
       )}
 
       {/* Filter bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] text-white/65 border border-white/12 transition-all"
           >
-            <Filter className="h-4 w-4" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
+            <Filter className="h-3.5 w-3.5" />
+            {showFilters ? 'Hide Filters' : 'Filters'}
+          </button>
           {activeFilterCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-              <FilterX className="h-4 w-4" />
+            <button onClick={clearFilters} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-white/55 border border-white/10 transition-all">
+              <FilterX className="h-3.5 w-3.5" />
               Clear ({activeFilterCount})
-            </Button>
+            </button>
           )}
         </div>
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
+          <input
             placeholder="Search employee or item..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-8 pr-3 py-1.5 w-full text-sm rounded-lg bg-white/[0.07] border border-white/12 text-white placeholder:text-white/30 focus:outline-none focus:border-white/28 focus:bg-white/[0.11] transition-all"
           />
         </div>
       </div>
 
-      {/* Advanced filters (conditionally visible) */}
+      {/* Advanced filters */}
       {showFilters && (
-        <div className="flex flex-wrap gap-4 items-center p-4 bg-muted/30 rounded-lg border">
+        <div className="flex flex-wrap gap-4 items-center p-4 bg-white/[0.05] rounded-xl border border-white/[0.08]">
           <div className="flex items-center gap-2">
-            <Label className="text-sm">PPE Type</Label>
+            <Label className="text-xs text-white/65 font-medium">PPE Type</Label>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] h-8 text-xs bg-white/[0.07] border-white/12 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1074,9 +1073,9 @@ const DueItemsList = ({ employees, filterType, onEditItem, onDeleteItem, onViewD
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Label className="text-sm">Size</Label>
+            <Label className="text-xs text-white/65 font-medium">Size</Label>
             <Select value={sizeFilter} onValueChange={setSizeFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] h-8 text-xs bg-white/[0.07] border-white/12 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1092,18 +1091,18 @@ const DueItemsList = ({ employees, filterType, onEditItem, onDeleteItem, onViewD
 
       {/* Items Table */}
       {dueItems.length > 0 ? (
-        <div className="rounded-md border">
+        <div className="rounded-xl overflow-hidden border border-white/[0.07]">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Item</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Expiry Date</TableHead>
-                <TableHead>Condition</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+            <TableHeader className="bg-white/[0.05]">
+              <TableRow className="border-white/10">
+                <TableHead className="text-white/55">Employee</TableHead>
+                <TableHead className="text-white/55">Item</TableHead>
+                <TableHead className="text-white/55">Type</TableHead>
+                <TableHead className="text-white/55">Size</TableHead>
+                <TableHead className="text-white/55">Expiry Date</TableHead>
+                <TableHead className="text-white/55">Condition</TableHead>
+                <TableHead className="text-white/55">Status</TableHead>
+                <TableHead className="text-right text-white/55">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1113,37 +1112,43 @@ const DueItemsList = ({ employees, filterType, onEditItem, onDeleteItem, onViewD
                 return (
                   <TableRow
                     key={item.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-white/[0.06] border-white/[0.06] transition-colors"
                     onClick={() => onViewDetails(item)}
                   >
                     <TableCell>
-                      <div className="font-medium">{item.employee_name}</div>
-                      <div className="text-xs text-muted-foreground">{item.employee_id}</div>
+                      <div className="font-medium text-white">{item.employee_name}</div>
+                      <div className="text-xs text-white/45">{item.employee_id}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className={`p-1 rounded-lg ${ppeType.bgColor}`}>
                           <Icon className={`h-3.5 w-3.5 ${ppeType.textColor}`} />
                         </div>
-                        <span className="font-medium">{item.item_name}</span>
+                        <span className="font-medium text-white">{item.item_name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{ppeType.name}</TableCell>
-                    <TableCell>{item.size || '—'}</TableCell>
+                    <TableCell className="text-white/75">{ppeType.name}</TableCell>
+                    <TableCell className="text-white/75">{item.size || '—'}</TableCell>
                     <TableCell>
-                      <span className={`font-medium ${filterType === 'due' ? 'text-destructive' : 'text-amber-600'}`}>
+                      <span className={`font-medium ${filterType === 'due' ? 'text-rose-300' : 'text-amber-300'}`}>
                         {formatDate(item.expiry_date)}
                       </span>
                     </TableCell>
                     <TableCell><ConditionBadge condition={item.condition} /></TableCell>
                     <TableCell><StatusBadge status={item.status} /></TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" onClick={() => onEditItem(item)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => onDeleteItem(item.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <button
+                        onClick={() => onEditItem(item)}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.15] text-white/55 hover:text-white border border-white/10 transition-all mr-1"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteItem(item.id)}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-white/[0.06] hover:bg-rose-500/20 text-white/55 hover:text-rose-300 border border-white/10 hover:border-rose-500/25 transition-all"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </TableCell>
                   </TableRow>
                 );
@@ -1152,8 +1157,8 @@ const DueItemsList = ({ employees, filterType, onEditItem, onDeleteItem, onViewD
           </Table>
         </div>
       ) : (
-        <div className="text-center py-8 bg-muted/30 rounded-lg border">
-          <p className="text-muted-foreground">No items match the current filters.</p>
+        <div className="text-center py-8 bg-white/[0.04] rounded-xl border border-white/[0.07]">
+          <p className="text-white/50">No items match the current filters.</p>
         </div>
       )}
     </div>
@@ -1175,6 +1180,11 @@ export default function PPEManagement() {
   const [detailItem, setDetailItem] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [expandedEmployees, setExpandedEmployees] = useState({});
+  const [showHeroStats, setShowHeroStats] = useState(true);
+  const [panelMinimized, setPanelMinimized] = useState(false);
+  const [showTypeSummary, setShowTypeSummary] = useState(true);
+  const [showEmployeeStats, setShowEmployeeStats] = useState(true);
+  const [filterPanelMinimized, setFilterPanelMinimized] = useState(false);
 
   // Fetch all data
   const fetchAllData = async () => {
@@ -1270,6 +1280,24 @@ export default function PPEManagement() {
     };
   }, [stats, records, employeesWithPPE]);
 
+  // Compliance rate: active non-expired / total active
+  const complianceRate = useMemo(() => {
+    if (!records.length) return null;
+    const active = records.filter(r => r.status === 'active');
+    if (!active.length) return null;
+    const compliant = active.filter(r => !isExpired(r.expiry_date));
+    return Math.round((compliant.length / active.length) * 100);
+  }, [records]);
+
+  // PPE type counts for the type strip
+  const typeCounts = useMemo(() => {
+    const counts = {};
+    records.filter(r => r.status === 'active').forEach(r => {
+      counts[r.ppe_type] = (counts[r.ppe_type] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  }, [records]);
+
   // Handlers
   const handleFormSuccess = (message) => {
     setSuccess(message);
@@ -1324,89 +1352,140 @@ export default function PPEManagement() {
   const collapseAllEmployees = () => setExpandedEmployees({});
   const anyEmployeeExpanded = Object.values(expandedEmployees).some(Boolean);
 
-  // Filter button component
+  // Filter button component (not used in render — tabs are inline in toolbar)
   const FilterButton = ({ value, label, count }) => (
-    <Button
-      variant={filterType === value ? 'default' : 'outline'}
-      size="sm"
+    <button
       onClick={() => setFilterType(value)}
-      className="gap-2"
+      className={`flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-md border transition-all duration-150 ${
+        filterType === value
+          ? 'bg-[#86BBD8]/30 border-[#86BBD8]/45 text-white font-semibold shadow-sm'
+          : 'bg-white/[0.05] border-white/12 text-white/55 hover:bg-white/[0.10] hover:text-white/85'
+      }`}
     >
       {label}
       {count !== undefined && (
-        <Badge variant={filterType === value ? 'secondary' : 'outline'} className="ml-1">
-          {count}
-        </Badge>
+        <span className={`px-1 py-0.5 rounded text-[9px] font-bold ml-1 ${filterType === value ? 'bg-white/20 text-white' : 'bg-white/8 text-white/45'}`}>{count}</span>
       )}
-    </Button>
+    </button>
   );
 
   return (
     <PageShell>
       <Toaster position="top-right" richColors />
 
-      {/* ── Glassmorphism Hero ── */}
+      {/* ── Hero ── */}
       <section className="relative text-white">
         <div className="container mx-auto px-4 pt-6 pb-3">
-          <div className="oz-glass-dark rounded-2xl px-6 py-5">
-            {/* Header row */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div>
-                <nav className="flex items-center gap-1.5 text-xs text-white/45 mb-1.5">
-                  <span>Home</span>
-                  <ChevronRight className="h-3 w-3" />
-                  <span className="text-white/75 font-medium">PPE</span>
-                </nav>
-                <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-white tracking-tight">PPE Management</h1>
-                <p className="text-white/55 mt-1 text-sm max-w-lg">Track personal protective equipment issued, usage, and compliance across all personnel.</p>
+          <div className="oz-glass-dark rounded-2xl overflow-hidden">
+
+            {/* Top bar: title + actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#2A4D69] to-[#86BBD8] flex items-center justify-center shrink-0 shadow-lg">
+                  <HardHat className="h-4.5 w-4.5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <nav className="flex items-center gap-1 text-[10px] text-white/40 mb-0.5">
+                    <span>Home</span>
+                    <ChevronRight className="h-2.5 w-2.5" />
+                    <span className="text-white/65">PPE</span>
+                  </nav>
+                  <h1 className="text-xl md:text-2xl font-extrabold font-heading text-white tracking-tight leading-tight">PPE Management</h1>
+                </div>
               </div>
-              <div className="flex items-center gap-2 self-start shrink-0">
-                <button
-                  onClick={fetchAllData}
-                  disabled={loading}
-                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/80 border border-white/15 transition-all duration-150 disabled:opacity-50"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
-                </button>
-                <button
-                  onClick={() => { setSelectedEmployee(null); setEditData(null); setShowForm(true); }}
-                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white font-medium border border-[#86BBD8]/30 transition-all duration-150"
-                >
-                  <Plus className="h-3.5 w-3.5" /> New Record
-                </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setShowHeroStats(v => !v)}
+                        className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/55 border border-white/12 transition-all"
+                      >
+                        {showHeroStats ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{showHeroStats ? 'Hide stats' : 'Show stats'}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={fetchAllData}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/80 border border-white/15 transition-all disabled:opacity-40"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                        <span className="hidden sm:inline">Refresh</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Reload data</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => { setSelectedEmployee(null); setEditData(null); setShowForm(true); }}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white font-semibold border border-[#86BBD8]/35 transition-all"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> New Record
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Issue new PPE item</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
-            {/* Stats row */}
-            {enhancedStats && (
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-white/10">
-                <button onClick={() => setFilterType('all')} className="flex items-center gap-1.5 group">
-                  <Users className="w-3.5 h-3.5 text-[#86BBD8]" />
-                  <span className="text-base font-bold text-white">{enhancedStats.unique_employees}</span>
-                  <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Employees</span>
-                </button>
-                <span className="text-white/20 hidden sm:block">·</span>
-                <button onClick={() => setFilterType('active')} className="flex items-center gap-1.5 group">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-base font-bold text-emerald-300">{enhancedStats.activeRecords}</span>
-                  <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Active</span>
-                </button>
-                {enhancedStats.expiringSoon > 0 && (<>
-                  <span className="text-white/20 hidden sm:block">·</span>
-                  <button onClick={() => setFilterType('soon-to-due')} className="flex items-center gap-1.5 group">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-base font-bold text-amber-300">{enhancedStats.expiringSoon}</span>
-                    <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Soon to Due ({enhancedStats.employeesWithExpiring} emp.)</span>
-                  </button>
-                </>)}
-                {enhancedStats.expired > 0 && (<>
-                  <span className="text-white/20 hidden sm:block">·</span>
-                  <button onClick={() => setFilterType('due')} className="flex items-center gap-1.5 group">
-                    <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                    <span className="text-base font-bold text-rose-300">{enhancedStats.expired}</span>
-                    <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Due ({enhancedStats.employeesWithExpired} emp.)</span>
-                  </button>
-                </>)}
+            {/* Expandable stats + type strip */}
+            {showHeroStats && enhancedStats && (
+              <div className="border-t border-white/10">
+                {/* Stat row */}
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-2 px-6 py-3">
+                  {[
+                    { icon: Users, color: 'text-[#86BBD8]', val: enhancedStats.unique_employees, label: 'Employees', onClick: () => setFilterType('all') },
+                    { icon: CheckCircle2, color: 'text-emerald-400', val: enhancedStats.activeRecords, label: 'Active records', valColor: 'text-emerald-300', onClick: () => setFilterType('active') },
+                    enhancedStats.expiringSoon > 0 && { icon: AlertTriangle, color: 'text-amber-400', val: enhancedStats.expiringSoon, label: `Soon to due (${enhancedStats.employeesWithExpiring} emp)`, valColor: 'text-amber-300', onClick: () => setFilterType('soon-to-due') },
+                    enhancedStats.expired > 0 && { icon: XCircle, color: 'text-rose-400', val: enhancedStats.expired, label: `Overdue (${enhancedStats.employeesWithExpired} emp)`, valColor: 'text-rose-300', onClick: () => setFilterType('due') },
+                    complianceRate !== null && { icon: Award, color: 'text-violet-400', val: `${complianceRate}%`, label: 'Compliance', valColor: complianceRate >= 80 ? 'text-emerald-300' : complianceRate >= 60 ? 'text-amber-300' : 'text-rose-300', onClick: null },
+                  ].filter(Boolean).map((item, i, arr) => (
+                    <React.Fragment key={i}>
+                      <button
+                        onClick={item.onClick}
+                        disabled={!item.onClick}
+                        className="flex items-center gap-1.5 group px-3 py-1.5 rounded-lg hover:bg-white/[0.07] transition-all disabled:cursor-default"
+                      >
+                        <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                        <span className={`text-base font-bold ${item.valColor || 'text-white'}`}>{item.val}</span>
+                        <span className="text-xs text-white/50 group-hover:text-white/70 transition-colors">{item.label}</span>
+                      </button>
+                      {i < arr.length - 1 && <span className="text-white/15 hidden sm:block select-none">|</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
+
+                {/* PPE type overview strip */}
+                {typeCounts.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 px-6 pb-4">
+                    {typeCounts.map(([type, count]) => {
+                      const info = PPE_TYPES[type] || PPE_TYPES.helmet;
+                      const Icon = info.icon;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setFilterType('active')}
+                          title={info.name}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all hover:scale-105 ${info.bgColor} ${info.textColor} ${info.borderColor}`}
+                        >
+                          <Icon className="h-3 w-3" />
+                          <span>{info.shortName}</span>
+                          <span className="font-bold">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1414,126 +1493,345 @@ export default function PPEManagement() {
       </section>
 
       {/* ── Main Content ── */}
-      <main className="container mx-auto px-4 pb-6 space-y-3 mt-3">
+      <main className="container mx-auto px-4 pb-8 space-y-3 mt-3">
+
         {/* Alerts */}
         {error && (
-          <div className="oz-glass-dark rounded-2xl p-4 flex items-center gap-3">
+          <div className="oz-glass-dark rounded-xl p-4 flex items-center gap-3 border-rose-500/25 border">
             <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
-            <div className="flex-1">
-              <p className="font-semibold text-white">Error</p>
-              <p className="text-sm text-white/65">{error}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-white text-sm">Error</p>
+              <p className="text-xs text-white/65 truncate">{error}</p>
             </div>
-            <button onClick={fetchAllData} className="text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.10] hover:bg-white/[0.18] text-white border border-white/15 transition-all">Retry</button>
-            <button onClick={() => setError(null)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/10 transition-all"><X className="h-3.5 w-3.5" /></button>
+            <button onClick={fetchAllData} className="text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.10] hover:bg-white/[0.18] text-white border border-white/15 transition-all shrink-0">Retry</button>
+            <button onClick={() => setError(null)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/10 transition-all shrink-0"><X className="h-3.5 w-3.5" /></button>
           </div>
         )}
         {success && (
-          <div className="oz-glass-dark rounded-2xl p-4 flex items-center gap-3">
+          <div className="oz-glass-dark rounded-xl p-4 flex items-center gap-3 border-emerald-500/25 border">
             <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-            <div className="flex-1">
-              <p className="font-semibold text-white">Success</p>
-              <p className="text-sm text-white/65">{success}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-white text-sm">Success</p>
+              <p className="text-xs text-white/65 truncate">{success}</p>
             </div>
-            <button onClick={() => setSuccess(null)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/10 transition-all"><X className="h-3.5 w-3.5" /></button>
+            <button onClick={() => setSuccess(null)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/10 transition-all shrink-0"><X className="h-3.5 w-3.5" /></button>
           </div>
         )}
 
-        {/* Content Panel */}
-        <div className="oz-glass-dark rounded-2xl overflow-hidden">
-          {/* Panel header */}
-          <div className="flex flex-col lg:flex-row justify-between gap-3 px-5 py-4 border-b border-white/10">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: 'all', label: 'All', count: employeesWithPPE.length },
-                { value: 'active', label: 'Active', count: employeesWithPPE.filter(e => e.records.some(r => r.status === 'active')).length },
-                { value: 'soon-to-due', label: 'Soon to Due', count: enhancedStats?.employeesWithExpiring || 0 },
-                { value: 'due', label: 'Due', count: enhancedStats?.employeesWithExpired || 0 },
-              ].map(({ value, label, count }) => (
-                <button
-                  key={value}
-                  onClick={() => setFilterType(value)}
-                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all duration-150 ${
-                    filterType === value
-                      ? 'bg-[#86BBD8]/30 border-[#86BBD8]/40 text-white font-semibold'
-                      : 'bg-white/[0.06] border-white/15 text-white/60 hover:bg-white/[0.12] hover:text-white'
-                  }`}
-                >
-                  {label}
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filterType === value ? 'bg-white/20 text-white' : 'bg-white/10 text-white/50'}`}>{count}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              {(filterType === 'all' || filterType === 'active') && (
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
-                  <input
-                    placeholder="Search employees…"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.08] border border-white/15 text-white placeholder:text-white/35 focus:outline-none focus:border-white/30 focus:bg-white/[0.12] transition-all w-44"
-                  />
-                </div>
-              )}
-              {(filterType === 'all' || filterType === 'active') && filteredEmployees.length > 0 && (
-                <button
-                  onClick={anyEmployeeExpanded ? collapseAllEmployees : expandAllEmployees}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/70 border border-white/15 transition-all duration-150"
-                >
-                  {anyEmployeeExpanded ? <><ChevronsUp className="h-3 w-3" /> Collapse</> : <><ChevronsDown className="h-3 w-3" /> Expand</>}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-5">
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-white/40" />
+        {/* ── PPE Type Breakdown ── */}
+        {records.length > 0 && (
+          <div className="oz-glass-panel rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+              <div className="flex items-center gap-2">
+                <HardHat className="h-3.5 w-3.5 text-[#86BBD8]" />
+                <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">PPE Type Breakdown</span>
+                <span className="text-[11px] text-white/35">click a type to filter active</span>
               </div>
-            ) : filteredEmployees.length === 0 && (filterType === 'all' || filterType === 'active') ? (
-              <div className="text-center py-12 rounded-xl bg-white/[0.04] border border-white/10">
-                <Shield className="h-12 w-12 mx-auto text-white/25 mb-4" />
-                <h3 className="text-base font-medium text-white/70 mb-2">No employees found</h3>
-                <p className="text-sm text-white/40 mb-6">
-                  {records.length === 0 ? 'Get started by issuing PPE.' : 'Try adjusting your search.'}
-                </p>
-                {records.length === 0 && (
-                  <button
-                    onClick={() => setShowForm(true)}
-                    className="flex items-center gap-1.5 mx-auto text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/30 transition-all"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> Issue First PPE
-                  </button>
-                )}
-              </div>
-            ) : filterType === 'soon-to-due' || filterType === 'due' ? (
-              <DueItemsList
-                employees={employeesWithPPE}
-                filterType={filterType}
-                onEditItem={(record) => { setEditData(record); setShowForm(true); }}
-                onDeleteItem={handleDeleteRecord}
-                onViewDetails={handleViewDetails}
-              />
-            ) : (
-              <div className="space-y-3">
-                {filteredEmployees.map((employee) => (
-                  <EmployeePPECard
-                    key={employee.employee_id}
-                    employee={employee}
-                    records={employee.records}
-                    onIssueNew={(emp) => { setSelectedEmployee(emp); setShowForm(true); }}
-                    onEditItem={(record) => { setEditData(record); setShowForm(true); }}
-                    onDeleteItem={handleDeleteRecord}
-                    onViewDetails={handleViewDetails}
-                    forceExpanded={expandedEmployees[employee.employee_id]}
-                    onToggle={toggleEmployee}
-                  />
-                ))}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setShowTypeSummary(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                      {showTypeSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{showTypeSummary ? 'Minimise type breakdown' : 'Show type breakdown'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            {showTypeSummary && (
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                {Object.entries(PPE_TYPES).map(([key, type]) => {
+                  const Icon = type.icon;
+                  const activeCount = records.filter(r => r.ppe_type === key && r.status === 'active').length;
+                  if (activeCount === 0) return null;
+                  const expiredCount = records.filter(r => r.ppe_type === key && r.status === 'active' && isExpired(r.expiry_date)).length;
+                  const soonCount = records.filter(r => r.ppe_type === key && r.status === 'active' && isExpiringSoon(r.expiry_date)).length;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setFilterType('active')}
+                      className="group relative rounded-xl text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg border border-white/10 hover:border-white/20 bg-white/[0.06] hover:bg-white/[0.10] p-4"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={`p-1.5 rounded-lg ${type.bgColor} border ${type.borderColor}`}>
+                          <Icon className={`h-3.5 w-3.5 ${type.textColor}`} />
+                        </div>
+                        <span className="text-sm font-semibold text-white">{type.shortName}</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-white/50">Active</span>
+                          <span className="font-bold text-emerald-300">{activeCount}</span>
+                        </div>
+                        {soonCount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-white/50">Soon</span>
+                            <span className="font-bold text-amber-300">{soonCount}</span>
+                          </div>
+                        )}
+                        {expiredCount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-white/50">Expired</span>
+                            <span className="font-bold text-rose-300">{expiredCount}</span>
+                          </div>
+                        )}
+                        <div className="h-1 rounded-full bg-white/10 overflow-hidden mt-1">
+                          <div className="h-full bg-emerald-400/50 rounded-full" style={{ width: `${activeCount > 0 ? Math.max(10, Math.round(((activeCount - expiredCount) / activeCount) * 100)) : 0}%` }} />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
+        )}
+
+        {/* ── Employee Overview ── */}
+        {employeesWithPPE.length > 0 && (
+          <div className="oz-glass-panel rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+              <div className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-[#86BBD8]" />
+                <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Employee Overview</span>
+                <span className="text-[11px] text-white/35">{employeesWithPPE.length} employees · click row to jump</span>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setShowEmployeeStats(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                      {showEmployeeStats ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{showEmployeeStats ? 'Minimise employee overview' : 'Show employee overview'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            {showEmployeeStats && (
+              <ScrollArea className="h-[260px]">
+                <div className="space-y-0.5 p-3">
+                  {[...employeesWithPPE]
+                    .sort((a, b) => b.records.filter(r => r.status === 'active').length - a.records.filter(r => r.status === 'active').length)
+                    .map(emp => {
+                      const activeItems = emp.records.filter(r => r.status === 'active');
+                      const expiredItems = activeItems.filter(r => isExpired(r.expiry_date));
+                      const soonItems = activeItems.filter(r => isExpiringSoon(r.expiry_date));
+                      const compliance = activeItems.length > 0
+                        ? Math.round(((activeItems.length - expiredItems.length) / activeItems.length) * 100)
+                        : 100;
+                      return (
+                        <div
+                          key={emp.employee_id}
+                          className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/[0.07] cursor-pointer transition-all group"
+                          onClick={() => {
+                            setFilterType('all');
+                            setSearchTerm(emp.employee_name);
+                            setExpandedEmployees(prev => ({ ...prev, [emp.employee_id]: true }));
+                          }}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#2A4D69] to-[#86BBD8] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                              {emp.employee_name?.[0] || 'U'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">{emp.employee_name}</p>
+                              <p className="text-[10px] text-white/45 truncate">{emp.position}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-emerald-300 font-semibold">{activeItems.length}</span>
+                              {expiredItems.length > 0 && <span className="text-rose-300">·{expiredItems.length} exp</span>}
+                              {soonItems.length > 0 && <span className="text-amber-300">·{soonItems.length} soon</span>}
+                            </div>
+                            <div className="w-16 hidden sm:block">
+                              <div className="flex justify-end mb-0.5">
+                                <span className={`text-[10px] font-bold ${compliance >= 80 ? 'text-emerald-400' : compliance >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{compliance}%</span>
+                              </div>
+                              <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${compliance >= 80 ? 'bg-emerald-400/60' : compliance >= 60 ? 'bg-amber-400/60' : 'bg-rose-400/60'}`} style={{ width: `${compliance}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
+
+        {/* ── Filter Panel ── */}
+        <div className="oz-glass-panel rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-3.5 w-3.5 text-[#86BBD8] shrink-0" />
+              <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Filters</span>
+              {filterType !== 'all' && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#86BBD8]/25 text-[#86BBD8] border border-[#86BBD8]/30">{filterType}</span>
+              )}
+              <span className="text-[11px] text-white/35">
+                {filterType === 'all' || filterType === 'active' ? `${filteredEmployees.length} of ${employeesWithPPE.length} employees` : ''}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {(searchTerm || filterType !== 'all') && (
+                <button onClick={() => { setSearchTerm(''); setFilterType('all'); }} className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.13] text-white/55 border border-white/10 transition-all">
+                  <FilterX className="h-3 w-3" /> Clear
+                </button>
+              )}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setFilterPanelMinimized(v => !v)} className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                      {filterPanelMinimized ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{filterPanelMinimized ? 'Show filters' : 'Minimise filters'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+          {!filterPanelMinimized && (
+            <div className="px-5 pb-4 border-t border-white/[0.07] pt-3 space-y-3">
+              {/* View tabs */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { value: 'all', label: 'All Employees', count: employeesWithPPE.length },
+                  { value: 'active', label: 'Active PPE', count: employeesWithPPE.filter(e => e.records.some(r => r.status === 'active')).length },
+                  { value: 'soon-to-due', label: 'Soon Due', count: enhancedStats?.employeesWithExpiring || 0 },
+                  { value: 'due', label: 'Overdue', count: enhancedStats?.employeesWithExpired || 0 },
+                ].map(({ value, label, count }) => (
+                  <button
+                    key={value}
+                    onClick={() => setFilterType(value)}
+                    className={`flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all duration-150 ${
+                      filterType === value
+                        ? 'bg-[#86BBD8]/30 border-[#86BBD8]/45 text-white font-semibold shadow-sm'
+                        : 'bg-white/[0.05] border-white/12 text-white/55 hover:bg-white/[0.10] hover:text-white/85'
+                    }`}
+                  >
+                    {label}
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${filterType === value ? 'bg-white/20 text-white' : 'bg-white/[0.08] text-white/45'}`}>{count}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Search — only relevant for employee card views */}
+              {(filterType === 'all' || filterType === 'active') && (
+                <div className="relative max-w-sm">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/35" />
+                  <input
+                    placeholder="Search by name, ID, or position…"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 pr-3 py-2 w-full text-sm rounded-lg bg-white/[0.07] border border-white/12 text-white placeholder:text-white/30 focus:outline-none focus:border-white/28 focus:bg-white/[0.11] transition-all"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Records Panel ── */}
+        <div className="oz-glass-panel rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.08]">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-white/70 uppercase tracking-wider shrink-0">Records</span>
+              {(filterType === 'all' || filterType === 'active') && (
+                <span className="text-[11px] text-white/35">
+                  {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} · {records.length} items
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {(filterType === 'all' || filterType === 'active') && filteredEmployees.length > 0 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={anyEmployeeExpanded ? collapseAllEmployees : expandAllEmployees}
+                        className="flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] text-white/60 border border-white/12 transition-all"
+                      >
+                        {anyEmployeeExpanded ? <ChevronsUp className="h-3 w-3" /> : <ChevronsDown className="h-3 w-3" />}
+                        <span className="hidden md:inline">{anyEmployeeExpanded ? 'Collapse all' : 'Expand all'}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{anyEmployeeExpanded ? 'Collapse all employee cards' : 'Expand all employee cards'}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <div className="w-px h-4 bg-white/12 hidden sm:block" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setPanelMinimized(v => !v)}
+                      className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all"
+                    >
+                      {panelMinimized ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{panelMinimized ? 'Expand records' : 'Minimise records'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          {!panelMinimized && (
+            <div className="p-4">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-14 gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#86BBD8]/60" />
+                  <span className="text-xs text-white/40">Loading PPE records…</span>
+                </div>
+              ) : filteredEmployees.length === 0 && (filterType === 'all' || filterType === 'active') ? (
+                <div className="text-center py-14 rounded-xl bg-white/[0.03] border border-white/[0.07]">
+                  <div className="h-14 w-14 mx-auto rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center mb-4">
+                    <HardHat className="h-7 w-7 text-white/30" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-white/75 mb-1">No employees found</h3>
+                  <p className="text-xs text-white/40 mb-5">
+                    {records.length === 0 ? 'Get started by issuing PPE to your first employee.' : 'Try adjusting your search or filter.'}
+                  </p>
+                  {records.length === 0 && (
+                    <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/30 transition-all font-medium">
+                      <Plus className="h-3.5 w-3.5" /> Issue First PPE
+                    </button>
+                  )}
+                </div>
+              ) : filterType === 'soon-to-due' || filterType === 'due' ? (
+                <DueItemsList
+                  employees={employeesWithPPE}
+                  filterType={filterType}
+                  onEditItem={(record) => { setEditData(record); setShowForm(true); }}
+                  onDeleteItem={handleDeleteRecord}
+                  onViewDetails={handleViewDetails}
+                />
+              ) : (
+                <div className="space-y-2.5">
+                  {filteredEmployees.map((employee) => (
+                    <EmployeePPECard
+                      key={employee.employee_id}
+                      employee={employee}
+                      records={employee.records}
+                      onIssueNew={(emp) => { setSelectedEmployee(emp); setShowForm(true); }}
+                      onEditItem={(record) => { setEditData(record); setShowForm(true); }}
+                      onDeleteItem={handleDeleteRecord}
+                      onViewDetails={handleViewDetails}
+                      forceExpanded={expandedEmployees[employee.employee_id]}
+                      onToggle={toggleEmployee}
+                    />
+                  ))}
+                  {filteredEmployees.length > 0 && (
+                    <p className="text-center text-[10px] text-white/30 pt-1">
+                      {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} · {records.length} total PPE records
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 

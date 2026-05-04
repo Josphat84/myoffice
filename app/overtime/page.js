@@ -733,23 +733,33 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
     setExpanded(!expanded);
   };
 
+  const colorHex = { blue: '#3b82f6', purple: '#a855f7', red: '#ef4444', green: '#22c55e', amber: '#f59e0b', indigo: '#6366f1' };
+  const topColor = colorHex[typeConfig.color] || '#86BBD8';
+
   return (
-    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden border-t-4 bg-white" style={{ borderTopColor: `var(--${typeConfig.color}-500)` }}>
+    <Card className="group relative hover:shadow-xl transition-all duration-300 overflow-hidden"
+      style={{
+        background: 'rgba(5,15,28,0.75)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderTop: `4px solid ${topColor}`
+      }}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Avatar className="h-10 w-10 border-2 border-primary/20">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+            <Avatar className="h-10 w-10 border-2 border-white/20">
+              <AvatarFallback className="bg-white/10 text-white text-sm font-bold">
                 {getInitials(overtime.employee_name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-semibold truncate flex items-center gap-1">
+              <CardTitle className="text-base font-semibold truncate flex items-center gap-1 text-white">
                 {overtime.employee_name}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                      <Info className="h-3 w-3 text-white/35 cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Employee ID: {overtime.employee_id}</p>
@@ -757,7 +767,7 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
                   </Tooltip>
                 </TooltipProvider>
               </CardTitle>
-              <CardDescription className="text-xs truncate flex items-center gap-1">
+              <CardDescription className="text-xs truncate flex items-center gap-1 text-white/55">
                 <Briefcase className="h-3 w-3 inline" />
                 {overtime.position || 'No position'}
               </CardDescription>
@@ -819,24 +829,24 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="space-y-1 cursor-help">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-white/50 flex items-center gap-1">
                     <Calendar className="h-3 w-3" /> Date
                   </p>
-                  <p className="font-medium">{formatDate(overtime.date)}</p>
+                  <p className="font-medium text-white">{formatDate(overtime.date)}</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>Date of overtime work</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="space-y-1 cursor-help">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-white/50 flex items-center gap-1">
                     <Clock className="h-3 w-3" /> Time
                   </p>
-                  <p className="font-medium text-xs">
+                  <p className="font-medium text-white text-xs">
                     {formatTime(overtime.start_time)} – {formatTime(overtime.end_time)}
                   </p>
                 </div>
@@ -844,30 +854,30 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
               <TooltipContent>Start and end time of overtime</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="space-y-1 cursor-help">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-white/50 flex items-center gap-1">
                     <Activity className="h-3 w-3" /> Hours
                   </p>
-                  <p className="font-bold">{hours} h</p>
+                  <p className="font-bold text-white">{hours} h</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>Total overtime hours calculated</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-xs text-white/50 flex items-center gap-1">
               <Flag className="h-3 w-3" /> Type
             </p>
             <TypeBadge type={overtime.overtime_type} />
           </div>
-          
+
           <div className="space-y-1 col-span-2">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-xs text-white/50 flex items-center gap-1">
               <Target className="h-3 w-3" /> Status
             </p>
             <StatusBadge status={overtime.status} />
@@ -875,30 +885,30 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
         </div>
 
         {expanded && (
-          <div className="mt-4 pt-4 border-t space-y-3 w-full">
+          <div className="mt-4 pt-4 border-t border-white/10 space-y-3 w-full">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                    <p className="text-xs font-medium text-white/50 mb-1 flex items-center gap-1">
                       <MessageSquare className="h-3 w-3" /> Reason
                     </p>
-                    <p className="text-sm bg-muted/30 p-3 rounded-lg break-words whitespace-pre-wrap">{overtime.reason || 'No reason provided'}</p>
+                    <p className="text-sm bg-white/[0.06] border border-white/10 text-white/80 p-3 rounded-lg break-words whitespace-pre-wrap">{overtime.reason || 'No reason provided'}</p>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>Reason for overtime request</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             <div className="grid grid-cols-2 gap-3 text-sm">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <p className="text-xs text-white/50 mb-1 flex items-center gap-1">
                         <Phone className="h-3 w-3" /> Contact
                       </p>
-                      <p className="font-medium break-words">
+                      <p className="font-medium text-white break-words">
                         {overtime.contact_number && overtime.contact_number.trim() ? overtime.contact_number : 'Not provided'}
                       </p>
                     </div>
@@ -906,16 +916,16 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
                   <TooltipContent>Employee contact number</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               {overtime.emergency_contact && overtime.emergency_contact.trim() && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                        <p className="text-xs text-white/50 mb-1 flex items-center gap-1">
                           <Heart className="h-3 w-3" /> Emergency
                         </p>
-                        <p className="font-medium break-words">{overtime.emergency_contact}</p>
+                        <p className="font-medium text-white break-words">{overtime.emergency_contact}</p>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>Emergency contact number</TooltipContent>
@@ -926,13 +936,13 @@ const OvertimeCard = ({ overtime, onView, onEdit, onDelete }) => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="pt-2 border-t bg-muted/10">
+      <CardFooter className="pt-2 border-t border-white/10 bg-white/[0.04]">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-full gap-2 group-hover:bg-primary/10" onClick={() => onView(overtime)}>
-                <Eye className="h-4 w-4 group-hover:animate-pulse" /> 
-                <span className="group-hover:underline">Click to view full details</span>
+              <Button variant="ghost" size="sm" className="w-full gap-2 text-white/70 hover:text-white hover:bg-white/[0.10]" onClick={() => onView(overtime)}>
+                <Eye className="h-4 w-4" />
+                <span>View full details</span>
                 <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
               </Button>
             </TooltipTrigger>
@@ -1613,68 +1623,43 @@ const EmployeeSummary = ({ data, show, onToggle, onEmployeeSelect }) => {
   const totalHours = summary.reduce((sum, emp) => sum + emp.totalHours, 0);
 
   return (
-    <Card className="border-0 shadow-lg overflow-hidden bg-white">
-      <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-transparent">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Employee Summary
-            <Badge variant="outline" className="ml-2 bg-background">
-              {summary.length} employees
-            </Badge>
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="hide-summary" className="text-sm text-muted-foreground">Hide</Label>
-            <Switch
-              id="hide-summary"
-              checked={!show}
-              onCheckedChange={(checked) => onToggle(!checked)}
-            />
-          </div>
-        </div>
-        <CardDescription>
-          Total hours per employee based on current filters
-        </CardDescription>
-      </CardHeader>
-      {show && (
-        <CardContent className="p-0">
-          <ScrollArea className="h-[300px]">
-            <div className="space-y-1 p-4">
-              {summary.map((emp) => {
-                const percentage = totalHours > 0 ? (emp.totalHours / totalHours) * 100 : 0;
-                return (
-                  <div
-                    key={emp.employee_id}
-                    className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-all"
-                    onClick={() => onEmployeeSelect(emp.employee_id)}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {getInitials(emp.employee_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{emp.employee_name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.employee_id}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-sm font-bold">{Math.round(emp.totalHours * 100) / 100} h</p>
-                        <p className="text-xs text-muted-foreground">{emp.count} requests</p>
-                      </div>
-                      <div className="w-16">
-                        <Progress value={percentage} className="h-2" />
-                      </div>
-                    </div>
+    <ScrollArea className="h-[280px]">
+      <div className="space-y-1 p-4">
+        {summary.map((emp) => {
+          const percentage = totalHours > 0 ? (emp.totalHours / totalHours) * 100 : 0;
+          return (
+            <div
+              key={emp.employee_id}
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.07] cursor-pointer transition-all group"
+              onClick={() => onEmployeeSelect(emp.employee_id)}
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-[#2A4D69]/60 text-white text-xs font-semibold">
+                    {getInitials(emp.employee_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{emp.employee_name}</p>
+                  <p className="text-xs text-white/45">{emp.employee_id}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-sm font-bold text-white">{Math.round(emp.totalHours * 100) / 100} h</p>
+                  <p className="text-xs text-white/45">{emp.count} requests</p>
+                </div>
+                <div className="w-16">
+                  <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full bg-[#86BBD8]/60 rounded-full" style={{ width: `${percentage}%` }} />
                   </div>
-                );
-              })}
+                </div>
+              </div>
             </div>
-          </ScrollArea>
-        </CardContent>
-      )}
-    </Card>
+          );
+        })}
+      </div>
+    </ScrollArea>
   );
 };
 
@@ -1702,44 +1687,41 @@ const TypeSummary = ({ data, onTypeSelect }) => {
   const totalHours = Object.values(summary).reduce((sum, t) => sum + t.hours, 0);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 p-4">
       {Object.entries(OVERTIME_TYPES).map(([key, config]) => {
         const stats = summary[key] || { count: 0, hours: 0 };
         const percentage = totalHours > 0 ? (stats.hours / totalHours) * 100 : 0;
         const Icon = config.icon;
-        
+
         return (
           <TooltipProvider key={key}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Card 
-                  className="border-0 shadow-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1 bg-white"
+                <button
+                  className="group relative rounded-xl overflow-hidden text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg border border-white/10 hover:border-white/20 bg-white/[0.06] hover:bg-white/[0.10] p-4 cursor-pointer"
                   onClick={() => onTypeSelect(key)}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-10 transition-opacity`} />
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${config.gradient} text-white`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <span className="text-sm font-semibold">{config.shortName}</span>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className={`p-1.5 rounded-lg bg-gradient-to-br ${config.gradient} text-white shadow-sm`}>
+                      <Icon className="h-3.5 w-3.5" />
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Requests</span>
-                        <span className="font-bold">{stats.count}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Hours</span>
-                        <span className="font-bold">{Math.round(stats.hours * 100) / 100}h</span>
-                      </div>
-                      <Progress value={percentage} className="h-1.5" />
-                      <p className="text-xs text-muted-foreground text-right">
-                        {Math.round(percentage)}% of total
-                      </p>
+                    <span className="text-sm font-semibold text-white">{config.shortName}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/50">Requests</span>
+                      <span className="font-bold text-white">{stats.count}</span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/50">Hours</span>
+                      <span className="font-bold text-white">{Math.round(stats.hours * 100) / 100}h</span>
+                    </div>
+                    <div className="h-1 rounded-full bg-white/10 overflow-hidden mt-1">
+                      <div className={`h-full bg-gradient-to-r ${config.gradient} rounded-full transition-all`} style={{ width: `${percentage}%` }} />
+                    </div>
+                    <p className="text-[10px] text-white/40 text-right">{Math.round(percentage)}% of total</p>
+                  </div>
+                </button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Click to filter by {config.name}</p>
@@ -1778,23 +1760,28 @@ const AdvancedFilters = ({
   onEmployeeChange,
   availableEmployees
 }) => {
+  const glassInput = "h-10 bg-white/[0.07] border-white/12 text-white placeholder:text-white/30 focus-visible:border-white/30 focus-visible:bg-white/[0.11]";
+  const glassLabel = "text-xs font-medium text-white/65 flex items-center gap-1";
+  const activeBadge = "cursor-pointer gap-1 px-3 py-1.5 transition-all hover:scale-105 bg-[#86BBD8]/30 border-[#86BBD8]/45 text-white font-semibold";
+  const inactiveBadge = "cursor-pointer gap-1 px-3 py-1.5 transition-all hover:scale-105 bg-white/[0.05] border-white/12 text-white/60 hover:bg-white/[0.12] hover:text-white/90";
+
   return (
     <div className="space-y-4">
       {/* Quick Filter Buttons */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-medium text-muted-foreground">Quick Filters:</span>
-        <Badge 
-          variant={selectedMonth === '' ? 'default' : 'outline'}
-          className="cursor-pointer"
+        <span className="text-xs font-medium text-white/50">Month:</span>
+        <Badge
+          variant="outline"
+          className={selectedMonth === '' ? activeBadge : inactiveBadge}
           onClick={() => onMonthChange('')}
         >
-          All Months
+          All
         </Badge>
         {MONTHS.map(month => (
           <Badge
             key={month.value}
-            variant={selectedMonth === month.value ? 'default' : 'outline'}
-            className="cursor-pointer"
+            variant="outline"
+            className={selectedMonth === month.value ? activeBadge : inactiveBadge}
             onClick={() => onMonthChange(month.value)}
           >
             {month.label.slice(0, 3)}
@@ -1803,19 +1790,19 @@ const AdvancedFilters = ({
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-medium text-muted-foreground">Employee Quick Filters:</span>
-        <Badge 
-          variant={selectedEmployee === '' ? 'default' : 'outline'}
-          className="cursor-pointer"
+        <span className="text-xs font-medium text-white/50">Employee:</span>
+        <Badge
+          variant="outline"
+          className={selectedEmployee === '' ? activeBadge : inactiveBadge}
           onClick={() => onEmployeeChange('')}
         >
-          All Employees
+          All
         </Badge>
         {availableEmployees.slice(0, 8).map(emp => (
           <Badge
             key={emp.name}
-            variant={selectedEmployee === emp.name ? 'default' : 'outline'}
-            className="cursor-pointer"
+            variant="outline"
+            className={selectedEmployee === emp.name ? activeBadge : inactiveBadge}
             onClick={() => onEmployeeChange(emp.name)}
           >
             {emp.name.split(' ')[0]}
@@ -1824,16 +1811,16 @@ const AdvancedFilters = ({
         {availableEmployees.length > 8 && (
           <Popover>
             <PopoverTrigger asChild>
-              <Badge variant="outline" className="cursor-pointer">
+              <Badge variant="outline" className={inactiveBadge}>
                 +{availableEmployees.length - 8} more
               </Badge>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-2">
+            <PopoverContent className="w-48 p-2 bg-[rgba(5,15,28,0.95)] border-white/15">
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {availableEmployees.slice(8).map(emp => (
                   <div
                     key={emp.name}
-                    className="p-2 text-sm hover:bg-muted cursor-pointer rounded"
+                    className="p-2 text-sm text-white/75 hover:bg-white/[0.10] hover:text-white cursor-pointer rounded transition-colors"
                     onClick={() => onEmployeeChange(emp.name)}
                   >
                     {emp.name}
@@ -1847,109 +1834,85 @@ const AdvancedFilters = ({
 
       {/* Search */}
       <div className="relative w-full">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
         <Input
           placeholder="Search by name, ID, position, or reason..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 h-10 bg-white"
+          className={`pl-9 ${glassInput}`}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Date Range */}
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <Label className={glassLabel}>
             Date From
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                  <Info className="h-3 w-3 text-white/30 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>Filter overtime from this date onwards</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => onDateFromChange(e.target.value)}
-            className="h-10 bg-white"
-          />
+          <Input type="date" value={dateFrom} onChange={(e) => onDateFromChange(e.target.value)} className={glassInput} />
         </div>
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <Label className={glassLabel}>
             Date To
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                  <Info className="h-3 w-3 text-white/30 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>Filter overtime up to this date</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => onDateToChange(e.target.value)}
-            className="h-10 bg-white"
-          />
+          <Input type="date" value={dateTo} onChange={(e) => onDateToChange(e.target.value)} className={glassInput} />
         </div>
 
         {/* Hours Range */}
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <Label className={glassLabel}>
             Min Hours
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                  <Info className="h-3 w-3 text-white/30 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>Minimum overtime hours</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
-          <Input
-            type="number"
-            step="0.5"
-            value={minHours}
-            onChange={(e) => onMinHoursChange(e.target.value)}
-            placeholder="e.g., 2"
-            className="h-10 bg-white"
-          />
+          <Input type="number" step="0.5" value={minHours} onChange={(e) => onMinHoursChange(e.target.value)} placeholder="e.g., 2" className={glassInput} />
         </div>
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <Label className={glassLabel}>
             Max Hours
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                  <Info className="h-3 w-3 text-white/30 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>Maximum overtime hours</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </Label>
-          <Input
-            type="number"
-            step="0.5"
-            value={maxHours}
-            onChange={(e) => onMaxHoursChange(e.target.value)}
-            placeholder="e.g., 8"
-            className="h-10 bg-white"
-          />
+          <Input type="number" step="0.5" value={maxHours} onChange={(e) => onMaxHoursChange(e.target.value)} placeholder="e.g., 8" className={glassInput} />
         </div>
       </div>
 
       {/* Type Filters */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+        <Label className={glassLabel}>
           Overtime Types
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                <Info className="h-3 w-3 text-white/30 cursor-help" />
               </TooltipTrigger>
               <TooltipContent>Select one or more overtime types to filter</TooltipContent>
             </Tooltip>
@@ -1962,10 +1925,8 @@ const AdvancedFilters = ({
             return (
               <Badge
                 key={key}
-                variant={isSelected ? "default" : "outline"}
-                className={`cursor-pointer gap-1 px-3 py-1.5 transition-all hover:scale-105 ${
-                  isSelected ? type.badge : ''
-                }`}
+                variant="outline"
+                className={isSelected ? `${activeBadge} ${type.badge}` : inactiveBadge}
                 onClick={() => onTypeToggle(key)}
               >
                 <Icon className="h-3 w-3" />
@@ -1979,12 +1940,12 @@ const AdvancedFilters = ({
 
       {/* Status Filters */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+        <Label className={glassLabel}>
           Status
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                <Info className="h-3 w-3 text-white/30 cursor-help" />
               </TooltipTrigger>
               <TooltipContent>Select one or more statuses to filter</TooltipContent>
             </Tooltip>
@@ -1997,10 +1958,8 @@ const AdvancedFilters = ({
             return (
               <Badge
                 key={key}
-                variant={isSelected ? "default" : "outline"}
-                className={`cursor-pointer gap-1 px-3 py-1.5 transition-all hover:scale-105 ${
-                  isSelected ? status.badge : ''
-                }`}
+                variant="outline"
+                className={isSelected ? `${activeBadge} ${status.badge}` : inactiveBadge}
                 onClick={() => onStatusToggle(key)}
               >
                 <Icon className="h-3 w-3" />
@@ -2014,14 +1973,14 @@ const AdvancedFilters = ({
 
       {/* Active Filters Summary */}
       {activeFilterCount > 0 && (
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-muted-foreground">
+        <div className="flex items-center justify-between pt-2 border-t border-white/[0.07]">
+          <span className="text-xs text-white/45">
             {activeFilterCount} active filter{activeFilterCount !== 1 ? 's' : ''}
           </span>
-          <Button variant="ghost" size="sm" onClick={onClearFilters} className="h-8 gap-1">
+          <button onClick={onClearFilters} className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] text-white/60 hover:text-white border border-white/10 transition-all">
             <FilterX className="h-3 w-3" />
             Clear all
-          </Button>
+          </button>
         </div>
       )}
     </div>
@@ -2132,8 +2091,8 @@ export default function OvertimeManagementPage() {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showTypeSummary, setShowTypeSummary] = useState(false);
+  const [showSummary, setShowSummary] = useState(true);
+  const [showTypeSummary, setShowTypeSummary] = useState(true);
   
   // Sorting
   const [sortBy, setSortBy] = useState('date');
@@ -2141,6 +2100,10 @@ export default function OvertimeManagementPage() {
   
   // Expanded rows in table view
   const [expandedRows, setExpandedRows] = useState(new Set());
+
+  // Panel visibility
+  const [showHeroStats, setShowHeroStats] = useState(true);
+  const [recordsPanelMinimized, setRecordsPanelMinimized] = useState(false);
 
 
   const fetchAllData = async () => {
@@ -2444,93 +2407,190 @@ export default function OvertimeManagementPage() {
   return (
     <PageShell>
 
-      {/* ── Glassmorphism Hero ── */}
+      {/* ── Hero ── */}
       <section className="relative text-white">
         <div className="container mx-auto px-4 pt-6 pb-3">
-          <div className="oz-glass-dark rounded-2xl px-6 py-5">
-            {/* Header row */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div>
-                <nav className="flex items-center gap-1.5 text-xs text-white/45 mb-1.5">
-                  <span>Home</span>
-                  <ChevronRight className="h-3 w-3" />
-                  <span className="text-white/75 font-medium">Overtime</span>
-                </nav>
-                <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-white tracking-tight">Overtime Management</h1>
-                <p className="text-white/55 mt-1 text-sm max-w-lg">Track, review, and manage all overtime requests. Use the filters to analyse specific periods or employees.</p>
+          <div className="oz-glass-dark rounded-2xl overflow-hidden">
+
+            {/* Top bar: title + actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#2A4D69] to-[#86BBD8] flex items-center justify-center shrink-0 shadow-lg">
+                  <Clock className="h-4 w-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <nav className="flex items-center gap-1 text-[10px] text-white/40 mb-0.5">
+                    <span>Home</span>
+                    <ChevronRight className="h-2.5 w-2.5" />
+                    <span className="text-white/65">Overtime</span>
+                  </nav>
+                  <h1 className="text-xl md:text-2xl font-extrabold font-heading text-white tracking-tight leading-tight">Overtime Management</h1>
+                </div>
               </div>
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white font-medium border border-[#86BBD8]/30 transition-all duration-150 self-start shrink-0"
-              >
-                <Plus className="h-3.5 w-3.5" /> New OT Request
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setShowHeroStats(v => !v)}
+                        className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/55 border border-white/12 transition-all"
+                      >
+                        {showHeroStats ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{showHeroStats ? 'Hide stats' : 'Show stats'}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={fetchAllData}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/80 border border-white/15 transition-all disabled:opacity-40"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                        <span className="hidden sm:inline">Refresh</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Reload overtime data</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setShowForm(true)}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white font-semibold border border-[#86BBD8]/35 transition-all"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> New OT Request
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Create a new overtime request</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
 
-            {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-white/10">
-              <div className="flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-[#86BBD8]" />
-                <span className="text-base font-bold text-white">{stats.total}</span>
-                <span className="text-xs text-white/45">Requests</span>
+            {/* Expandable stats */}
+            {showHeroStats && (
+              <div className="border-t border-white/10 px-6 py-3 flex flex-wrap items-center gap-x-1 gap-y-2">
+                {[
+                  { icon: FileText, color: 'text-[#86BBD8]', val: stats.total, label: 'Total requests', onClick: null },
+                  { icon: Clock, color: 'text-emerald-400', val: `${stats.totalHours}h`, label: 'Total hours', valColor: 'text-white', onClick: null },
+                  { icon: Clock, color: 'text-amber-400', val: stats.pending, label: 'Pending', valColor: 'text-amber-300', onClick: () => { setStatusFilter('pending'); handleStatusToggle('pending'); } },
+                  { icon: CheckCircle2, color: 'text-emerald-400', val: stats.approved, label: 'Approved', valColor: 'text-emerald-300', onClick: () => { setStatusFilter('approved'); handleStatusToggle('approved'); } },
+                  stats.rejected !== undefined && stats.rejected > 0 && { icon: XCircle, color: 'text-rose-400', val: stats.rejected, label: 'Rejected', valColor: 'text-rose-300', onClick: null },
+                ].filter(Boolean).map((item, i, arr) => (
+                  <React.Fragment key={i}>
+                    <button
+                      onClick={item.onClick}
+                      disabled={!item.onClick}
+                      className="flex items-center gap-1.5 group px-3 py-1.5 rounded-lg hover:bg-white/[0.07] transition-all disabled:cursor-default"
+                    >
+                      <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                      <span className={`text-base font-bold ${item.valColor || 'text-white'}`}>{item.val}</span>
+                      <span className="text-xs text-white/50 group-hover:text-white/70 transition-colors">{item.label}</span>
+                    </button>
+                    {i < arr.length - 1 && <span className="text-white/15 hidden sm:block select-none">|</span>}
+                  </React.Fragment>
+                ))}
               </div>
-              <span className="text-white/20 hidden sm:block">·</span>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">{stats.totalHours}h</span>
-                <span className="text-xs text-white/45">Total hrs</span>
-              </div>
-              <span className="text-white/20 hidden sm:block">·</span>
-              <button onClick={() => { setStatusFilter('pending'); handleStatusToggle('pending'); }} className="flex items-center gap-1.5 group">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-base font-bold text-amber-300">{stats.pending}</span>
-                <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Pending</span>
-              </button>
-              <span className="text-white/20 hidden sm:block">·</span>
-              <button onClick={() => { setStatusFilter('approved'); handleStatusToggle('approved'); }} className="flex items-center gap-1.5 group">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-base font-bold text-emerald-300">{stats.approved}</span>
-                <span className="text-xs text-white/45 group-hover:text-white/65 transition-colors">Approved</span>
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
       <main className="container mx-auto px-4 pb-8 space-y-3 mt-3">
-            {/* Type Summary - Clickable */}
-            {showTypeSummary && processedOvertime.length > 0 && (
-              <div className="animate-slide-up delay-300">
-                <TypeSummary data={processedOvertime} onTypeSelect={handleTypeSelect} />
+            {/* Type Summary */}
+            {processedOvertime.length > 0 && (
+              <div className="oz-glass-panel rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-3.5 w-3.5 text-[#86BBD8]" />
+                    <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Type Breakdown</span>
+                    <span className="text-[11px] text-white/35">click a type to filter</span>
+                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setShowTypeSummary(v => !v)}
+                          className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all"
+                        >
+                          {showTypeSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{showTypeSummary ? 'Minimise type breakdown' : 'Show type breakdown'}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                {showTypeSummary && <TypeSummary data={processedOvertime} onTypeSelect={handleTypeSelect} />}
               </div>
             )}
 
-            {/* Filter Section — glass panel with existing Collapsible */}
-            <div className="oz-glass-dark rounded-2xl overflow-hidden">
-              <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
-                <div className="flex items-center justify-between px-5 py-4">
+            {/* Employee Summary */}
+            {processedOvertime.length > 0 && (
+              <div className="oz-glass-panel rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
                   <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-[#86BBD8]" />
-                    <span className="text-sm font-semibold text-white">Filters</span>
+                    <Users className="h-3.5 w-3.5 text-[#86BBD8]" />
+                    <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Employee Summary</span>
+                    <span className="text-[11px] text-white/35">{processedOvertime.length > 0 && `${new Set(processedOvertime.map(o => o.employee_id)).size} employees`}</span>
+                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setShowSummary(v => !v)}
+                          className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all"
+                        >
+                          {showSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{showSummary ? 'Minimise employee summary' : 'Show employee summary'}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                {showSummary && (
+                  <EmployeeSummary
+                    data={processedOvertime}
+                    show={showSummary}
+                    onToggle={setShowSummary}
+                    onEmployeeSelect={handleEmployeeSelect}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Filter Panel */}
+            <div className="oz-glass-panel rounded-2xl overflow-hidden">
+              <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+                <div className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Filter className="h-3.5 w-3.5 text-[#86BBD8] shrink-0" />
+                    <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Filters</span>
                     {activeFilterCount > 0 && (
                       <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#86BBD8]/25 text-[#86BBD8] border border-[#86BBD8]/30">{activeFilterCount} active</span>
                     )}
-                    <span className="text-xs text-white/35">{processedOvertime.length} of {overtime.length} records</span>
+                    <span className="text-[11px] text-white/35">{processedOvertime.length} of {overtime.length} records</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={clearFilters} className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] text-white/60 border border-white/12 transition-all">
-                      <FilterX className="h-3 w-3" /> Clear
-                    </button>
+                  <div className="flex items-center gap-1.5">
+                    {activeFilterCount > 0 && (
+                      <button onClick={clearFilters} className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.13] text-white/55 border border-white/10 transition-all">
+                        <FilterX className="h-3 w-3" /> Clear
+                      </button>
+                    )}
                     <CollapsibleTrigger asChild>
-                      <button className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/60 border border-white/15 transition-all">
-                        {showAdvancedFilters ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      <button className="h-6 w-6 flex items-center justify-center rounded-md bg-white/[0.07] hover:bg-white/[0.15] text-white/50 border border-white/12 transition-all">
+                        {showAdvancedFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                       </button>
                     </CollapsibleTrigger>
                   </div>
                 </div>
 
                 <CollapsibleContent>
-                  <div className="px-5 pb-5 border-t border-white/10 pt-4">
+                  <div className="px-5 pb-5 border-t border-white/[0.07] pt-4">
                     <AdvancedFilters
                       searchTerm={searchTerm}
                       onSearchChange={setSearchTerm}
@@ -2561,16 +2621,22 @@ export default function OvertimeManagementPage() {
               </Collapsible>
             </div>
 
-            {/* View Toggle and Sort Controls */}
-            <div className="oz-glass-dark rounded-2xl px-5 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex rounded-lg bg-white/[0.08] border border-white/15 p-0.5">
+            {/* Records Panel: title bar with minimize + view toggle + sort */}
+            <div className="oz-glass-panel rounded-2xl overflow-hidden">
+
+            {/* Records toolbar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-5 py-3 border-b border-white/[0.07]">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-xs font-semibold text-white/70 uppercase tracking-wider shrink-0">Records</span>
+                <div className="w-px h-4 bg-white/12 shrink-0 hidden sm:block" />
+                {/* View toggle */}
+                <div className="flex rounded-lg bg-white/[0.07] border border-white/12 p-0.5">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => setViewMode('table')}
-                          className={`px-3 py-1.5 rounded-md transition-all duration-150 ${viewMode === 'table' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/75'}`}
+                          className={`px-2.5 py-1 rounded-md transition-all ${viewMode === 'table' ? 'bg-white/20 text-white shadow-sm' : 'text-white/45 hover:text-white/70'}`}
                         >
                           <TableIcon className="h-3.5 w-3.5" />
                         </button>
@@ -2583,7 +2649,7 @@ export default function OvertimeManagementPage() {
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => setViewMode('grid')}
-                          className={`px-3 py-1.5 rounded-md transition-all duration-150 ${viewMode === 'grid' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/75'}`}
+                          className={`px-2.5 py-1 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white/20 text-white shadow-sm' : 'text-white/45 hover:text-white/70'}`}
                         >
                           <Grid className="h-3.5 w-3.5" />
                         </button>
@@ -2593,74 +2659,79 @@ export default function OvertimeManagementPage() {
                   </TooltipProvider>
                 </div>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/35" />
                   <input
-                    placeholder="Search employee or type…"
+                    placeholder="Search…"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.08] border border-white/15 text-white placeholder:text-white/35 focus:outline-none focus:border-white/30 focus:bg-white/[0.12] transition-all w-48"
+                    className="pl-7 pr-3 py-1.5 text-[11px] rounded-lg bg-white/[0.07] border border-white/12 text-white placeholder:text-white/30 focus:outline-none focus:border-white/26 focus:bg-white/[0.11] transition-all w-36"
                   />
                 </div>
-                <span className="text-xs text-white/40">
-                  {paginatedData.length} of {processedOvertime.length} requests
+                <span className="text-[11px] text-white/35 hidden md:block">
+                  {paginatedData.length} of {processedOvertime.length}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Select value={`${sortBy}-${sortOrder}`} onValueChange={(val) => {
                   const [by, order] = val.split('-');
                   setSortBy(by);
                   setSortOrder(order);
                 }}>
-                  <SelectTrigger className="w-[180px] h-8 text-xs bg-white/[0.08] border-white/15 text-white">
-                    <SelectValue placeholder="Sort by" />
+                  <SelectTrigger className="w-[150px] h-7 text-[11px] bg-white/[0.07] border-white/12 text-white">
+                    <SelectValue placeholder="Sort" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="date-desc">Date (Newest first)</SelectItem>
-                    <SelectItem value="date-asc">Date (Oldest first)</SelectItem>
+                    <SelectItem value="date-desc">Date (Newest)</SelectItem>
+                    <SelectItem value="date-asc">Date (Oldest)</SelectItem>
                     <SelectItem value="name-asc">Name (A-Z)</SelectItem>
                     <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="hours-desc">Hours (High to low)</SelectItem>
-                    <SelectItem value="hours-asc">Hours (Low to high)</SelectItem>
-                    <SelectItem value="type-asc">Type (A-Z)</SelectItem>
-                    <SelectItem value="type-desc">Type (Z-A)</SelectItem>
-                    <SelectItem value="status-asc">Status (A-Z)</SelectItem>
-                    <SelectItem value="status-desc">Status (Z-A)</SelectItem>
+                    <SelectItem value="hours-desc">Hours (High→Low)</SelectItem>
+                    <SelectItem value="hours-asc">Hours (Low→High)</SelectItem>
+                    <SelectItem value="status-asc">Status</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="w-px h-4 bg-white/12 hidden sm:block" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setRecordsPanelMinimized(v => !v)}
+                        className="h-7 w-7 flex items-center justify-center rounded-lg bg-white/[0.07] hover:bg-white/[0.15] text-white/45 border border-white/10 transition-all"
+                      >
+                        {recordsPanelMinimized ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{recordsPanelMinimized ? 'Expand records' : 'Minimise records'}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
-            {/* Employee Summary (Collapsible) */}
-            {processedOvertime.length > 0 && showSummary && (
-              <div className="animate-slide-up delay-500">
-                <EmployeeSummary
-                  data={processedOvertime}
-                  show={showSummary}
-                  onToggle={setShowSummary}
-                  onEmployeeSelect={handleEmployeeSelect}
-                />
-              </div>
-            )}
 
-            {/* Records */}
+            {/* Records content — hidden when minimized */}
+            {!recordsPanelMinimized && (
+            <div className="p-4">
             {loading ? (
-              <div className="oz-glass-dark rounded-2xl p-8 flex justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-white/40" />
+              <div className="flex flex-col items-center justify-center py-14 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-[#86BBD8]/60" />
+                <span className="text-xs text-white/40">Loading overtime records…</span>
               </div>
             ) : paginatedData.length === 0 ? (
-              <div className="oz-glass-dark rounded-2xl py-12 text-center">
-                <Clock className="h-12 w-12 mx-auto text-white/25 mb-4" />
-                <h3 className="text-base font-medium text-white/70 mb-2">No overtime requests found</h3>
-                <p className="text-sm text-white/40 mb-6">
+              <div className="text-center py-14 rounded-xl bg-white/[0.03] border border-white/[0.07]">
+                <div className="h-14 w-14 mx-auto rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center mb-4">
+                  <Clock className="h-7 w-7 text-white/30" />
+                </div>
+                <h3 className="text-sm font-semibold text-white/75 mb-1">No overtime requests found</h3>
+                <p className="text-xs text-white/40 mb-5">
                   {overtime.length === 0 ? 'Get started by creating your first request.' : 'No records match your current filters.'}
                 </p>
                 {overtime.length === 0 ? (
-                  <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 mx-auto text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/30 transition-all">
+                  <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/30 transition-all font-medium">
                     <Plus className="h-3.5 w-3.5" /> New Request
                   </button>
                 ) : (
-                  <button onClick={clearFilters} className="flex items-center gap-1.5 mx-auto text-xs px-4 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/70 border border-white/15 transition-all">
+                  <button onClick={clearFilters} className="inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.16] text-white/70 border border-white/15 transition-all">
                     <FilterX className="h-3.5 w-3.5" /> Clear Filters
                   </button>
                 )}
@@ -2686,7 +2757,7 @@ export default function OvertimeManagementPage() {
               </>
             ) : (
               <>
-                <div className="oz-glass-dark rounded-2xl overflow-hidden">
+                <div className="rounded-xl overflow-hidden border border-white/[0.07]">
                   <div className="overflow-x-auto">
                     <ShadcnTable>
                       <TableHeader className="bg-white/5">
@@ -2823,6 +2894,9 @@ export default function OvertimeManagementPage() {
                 />
               </>
             )}
+            </div>
+            )}
+            </div>
       </main>
 
       {/* Modals */}
