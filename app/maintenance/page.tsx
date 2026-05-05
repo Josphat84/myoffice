@@ -353,29 +353,123 @@ function calcTotal(start: string, end: string): string {
 const GIN = "bg-white/[0.06] border-white/[0.10] text-white placeholder:text-white/25 h-8 text-sm focus:border-[#86BBD8]/40";
 const GLB = "text-white/50 text-xs";
 
-function GlassInput({ id, label, value, onChange, placeholder, type = 'text', readOnly }: {
+function GlassInput({ id, label, value, onChange, placeholder, type = 'text', readOnly, autoComplete }: {
   id: string; label: string; value: string; onChange?: (v: string) => void;
-  placeholder?: string; type?: string; readOnly?: boolean;
+  placeholder?: string; type?: string; readOnly?: boolean; autoComplete?: string;
 }) {
   return (
     <div className="space-y-1">
       <label htmlFor={id} className={GLB}>{label}</label>
       <Input id={id} type={type} value={value} readOnly={readOnly}
         onChange={e => onChange?.(e.target.value)} placeholder={placeholder}
+        autoComplete={autoComplete}
         className={`${GIN}${readOnly ? ' opacity-60 cursor-default' : ''}`} />
     </div>
   );
 }
 
-function GlassTextarea({ id, label, value, onChange, placeholder, rows = 3 }: {
+function GlassTextarea({ id, label, value, onChange, placeholder, rows = 3, autoComplete }: {
   id: string; label: string; value: string; onChange: (v: string) => void;
-  placeholder?: string; rows?: number;
+  placeholder?: string; rows?: number; autoComplete?: string;
 }) {
   return (
     <div className="space-y-1">
       <label htmlFor={id} className={GLB}>{label}</label>
       <Textarea id={id} value={value} onChange={e => onChange(e.target.value)}
-        placeholder={placeholder} rows={rows} className={`${GIN} h-auto resize-none`} />
+        placeholder={placeholder} rows={rows} autoComplete={autoComplete}
+        className={`${GIN} h-auto resize-none`} />
+    </div>
+  );
+}
+
+function NAToggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button type="button" onClick={() => onChange(!checked)}
+      className="flex items-center gap-1.5 ml-auto">
+      <span className={`text-xs transition-colors ${checked ? 'text-orange-400' : 'text-white/30'}`}>{label}</span>
+      <div className={`w-8 h-4 rounded-full transition-colors relative ${checked ? 'bg-orange-500/50' : 'bg-white/20'}`}>
+        <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${checked ? 'translate-x-4' : ''}`} />
+      </div>
+    </button>
+  );
+}
+
+// ==================== PREDICTION ====================
+const MAINT_VOCAB: string[] = [
+  // Single words — complete the word being typed
+  'adjusted', 'bearing', 'bearings', 'belt', 'belts', 'broken', 'calibrated',
+  'checked', 'cleaned', 'compressor', 'conveyor', 'corrective', 'coupling',
+  'cracked', 'damaged', 'drained', 'electrical', 'filter', 'flushed',
+  'gasket', 'gaskets', 'gearbox', 'greased', 'hydraulic', 'inspected',
+  'installed', 'lubricated', 'maintenance', 'mechanical', 'motor',
+  'overhauled', 'pneumatic', 'preventive', 'pump', 'realigned', 'rectified',
+  'refitted', 'removed', 'repaired', 'replaced', 'seal', 'seals', 'serviced',
+  'shaft', 'tightened', 'tested', 'valve', 'vibration', 'welded',
+  // Phrases — suggest after a space (next-word completion)
+  'preventive maintenance completed', 'corrective maintenance done',
+  'no further action required', 'machine running normally',
+  'awaiting spare parts', 'spare parts ordered',
+  'bearing worn out', 'belt worn out', 'belt slipping',
+  'oil level low', 'oil leak detected', 'oil changed',
+  'found and rectified', 'found fault in',
+  'maintenance complete', 'works normally after repair',
+  'safety hazard identified', 'lockout tagout applied',
+];
+
+function getPrediction(text: string): string {
+  if (!text) return '';
+  // After a space: suggest next word/phrase
+  if (text.endsWith(' ') || text.endsWith('\n')) {
+    const trimmed = text.trimEnd().toLowerCase();
+    const phrase = MAINT_VOCAB
+      .filter(v => v.includes(' '))
+      .find(v => v.toLowerCase().startsWith(trimmed + ' '));
+    return phrase ? phrase.slice(trimmed.length + 1) : '';
+  }
+  // Mid-word: complete the current word
+  const last = text.split(/[\s\n]+/).pop() || '';
+  if (last.length < 2) return '';
+  const lower = last.toLowerCase();
+  const match = MAINT_VOCAB.find(v => v.toLowerCase().startsWith(lower) && v.toLowerCase() !== lower);
+  return match ? match.slice(last.length) : '';
+}
+
+function PredictiveArea({ id, label, value, onChange, placeholder, rows = 3, autoComplete }: {
+  id: string; label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; rows?: number; autoComplete?: string;
+}) {
+  const [ghost, setGhost] = useState('');
+
+  const accept = () => {
+    if (!ghost) return;
+    onChange(value + ghost + ' ');
+    setGhost('');
+  };
+
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className={GLB}>{label}</label>
+      <Textarea
+        id={id} value={value} rows={rows} autoComplete={autoComplete}
+        placeholder={placeholder}
+        className={`${GIN} h-auto resize-none`}
+        onChange={e => { onChange(e.target.value); setGhost(getPrediction(e.target.value)); }}
+        onKeyDown={e => {
+          if (e.key === 'Tab' && ghost) { e.preventDefault(); accept(); }
+          else if (e.key === 'Escape') setGhost('');
+        }}
+        onBlur={() => setGhost('')}
+      />
+      {ghost && (
+        <div className="flex items-center gap-2 px-0.5">
+          <kbd className="text-[9px] text-white/25 bg-white/[0.05] border border-white/10 rounded px-1 py-px font-mono leading-none">Tab</kbd>
+          <button type="button" onClick={accept}
+            className="text-[11px] text-[#86BBD8]/60 hover:text-[#86BBD8] bg-[#86BBD8]/[0.07] hover:bg-[#86BBD8]/[0.14] px-2 py-0.5 rounded border border-[#86BBD8]/15 transition-colors max-w-[240px] truncate">
+            {ghost.trim()}
+          </button>
+          <span className="text-white/20 text-[10px] hidden sm:inline">or click to accept</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -389,45 +483,57 @@ interface DetailModalProps {
 }
 
 function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: DetailModalProps) {
-  const [s1Open, setS1Open] = useState(true);
+  const [s1Open, setS1Open] = useState(false); // sneak peek by default
   const [s2Open, setS2Open] = useState(true);
   const [s3Open, setS3Open] = useState(true);
   const [savingA, setSavingA] = useState(false);
   const [savingF, setSavingF] = useState(false);
 
-  const [artisan, setArtisan] = useState({
-    work_done_details:   workOrder.work_done_details   || '',
-    cause_of_failure:    workOrder.cause_of_failure    || '',
-    delay_details:       workOrder.delay_details        || '',
-    time_work_started:   workOrder.time_work_started   || '',
-    time_work_finished:  workOrder.time_work_finished  || '',
-    total_time_worked:   workOrder.total_time_worked   || '',
-    overtime_start_time: workOrder.overtime_start_time || '',
-    overtime_end_time:   workOrder.overtime_end_time   || '',
-    overtime_hours:      workOrder.overtime_hours      || '',
-    delay_from_time:     workOrder.delay_from_time     || '',
-    delay_to_time:       workOrder.delay_to_time       || '',
-    total_delay_hours:   workOrder.total_delay_hours   || '',
-    artisan_name: workOrder.artisan_name || workOrder.allocated_to || '',
-    artisan_sign: workOrder.artisan_sign || '',
-    artisan_date: workOrder.artisan_date || '',
-    status:   workOrder.status,
-    progress: workOrder.progress,
+  // OT / delay are shown by default; user clicks "Mark as N/A" to hide
+  const [otNA, setOtNA] = useState(false);
+  const [delayNA, setDelayNA] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const [artisan, setArtisan] = useState(() => {
+    const savedName = typeof window !== 'undefined' ? localStorage.getItem('maint_artisan_name') || '' : '';
+    return {
+      work_done_details:   workOrder.work_done_details   || '',
+      cause_of_failure:    workOrder.cause_of_failure    || '',
+      delay_details:       workOrder.delay_details        || '',
+      time_work_started:   workOrder.time_work_started   || '',
+      time_work_finished:  workOrder.time_work_finished  || '',
+      total_time_worked:   workOrder.total_time_worked   || '',
+      overtime_start_time: workOrder.overtime_start_time || '',
+      overtime_end_time:   workOrder.overtime_end_time   || '',
+      overtime_hours:      workOrder.overtime_hours      || '',
+      delay_from_time:     workOrder.delay_from_time     || '',
+      delay_to_time:       workOrder.delay_to_time       || '',
+      total_delay_hours:   workOrder.total_delay_hours   || '',
+      artisan_name: workOrder.artisan_name || workOrder.allocated_to || savedName,
+      artisan_sign: workOrder.artisan_sign || '',
+      artisan_date: workOrder.artisan_date || today,
+      status:   workOrder.status,
+      progress: workOrder.progress,
+    };
   });
 
-  const [foreman, setForeman] = useState({
-    foreman_name: workOrder.foreman_name || '',
-    foreman_sign: workOrder.foreman_sign || '',
-    foreman_date: workOrder.foreman_date || '',
-    notes:        workOrder.notes        || '',
-    status:   workOrder.status,
-    progress: workOrder.progress,
+  const [foreman, setForeman] = useState(() => {
+    const savedName = typeof window !== 'undefined' ? localStorage.getItem('maint_foreman_name') || '' : '';
+    return {
+      foreman_name: workOrder.foreman_name || savedName,
+      foreman_sign: workOrder.foreman_sign || '',
+      foreman_date: workOrder.foreman_date || today,
+      notes:        workOrder.notes        || '',
+      status:   workOrder.status,
+      progress: workOrder.progress,
+    };
   });
 
   const setA = (k: string, v: string | number) => setArtisan(f => ({ ...f, [k]: v }));
   const setF = (k: string, v: string | number) => setForeman(f => ({ ...f, [k]: v }));
 
-  // Auto-calculate totals when start/end times change
+  // Auto-calculate totals
   useEffect(() => {
     const t = calcTotal(artisan.time_work_started, artisan.time_work_finished);
     setArtisan(f => ({ ...f, total_time_worked: t }));
@@ -443,8 +549,18 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
     setArtisan(f => ({ ...f, total_delay_hours: t }));
   }, [artisan.delay_from_time, artisan.delay_to_time]);
 
+  // Clear fields when toggled N/A
+  useEffect(() => {
+    if (otNA) setArtisan(f => ({ ...f, overtime_start_time: '', overtime_end_time: '', overtime_hours: '' }));
+  }, [otNA]);
+
+  useEffect(() => {
+    if (delayNA) setArtisan(f => ({ ...f, delay_from_time: '', delay_to_time: '', total_delay_hours: '' }));
+  }, [delayNA]);
+
   const saveArtisan = async () => {
     setSavingA(true);
+    if (artisan.artisan_name) localStorage.setItem('maint_artisan_name', artisan.artisan_name);
     const result = await updateWorkOrder(workOrder.id, artisan);
     setSavingA(false);
     if (result.success) { toast.success('Artisan report saved'); await onRefresh(); }
@@ -452,6 +568,7 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
 
   const saveForeman = async () => {
     setSavingF(true);
+    if (foreman.foreman_name) localStorage.setItem('maint_foreman_name', foreman.foreman_name);
     const result = await updateWorkOrder(workOrder.id, foreman);
     setSavingF(false);
     if (result.success) { toast.success('Foreman sign-off saved'); await onRefresh(); }
@@ -473,7 +590,7 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
     <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center overflow-y-auto py-6 px-4">
       <div className="oz-glass-dark rounded-2xl w-full max-w-3xl overflow-hidden">
 
-        {/* Modal Header */}
+        {/* ── Modal Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="bg-[#86BBD8]/20 p-2 rounded-lg border border-[#86BBD8]/20">
@@ -488,8 +605,7 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
           </div>
           <div className="flex items-center gap-2">
             <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${scfg.pill}`}>
-              <scfg.Icon className="h-3 w-3" />
-              {scfg.label}
+              <scfg.Icon className="h-3 w-3" />{scfg.label}
             </span>
             <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${pcfg.badge}`}>
               {pcfg.label}
@@ -503,29 +619,46 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
 
         <div className="px-6 py-5 space-y-4">
 
-          {/* ── SECTION 1: Work Request (collapsible, read-only) ── */}
+          {/* ── SECTION 1: Work Request — sneak peek always visible ── */}
           <div className="bg-white/[0.04] rounded-xl border border-[#86BBD8]/20 overflow-hidden">
-            <button type="button"
-              className="w-full flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] hover:bg-white/[0.03] transition-colors"
-              onClick={() => setS1Open(o => !o)}
-            >
+            {/* Section bar */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
               <FileText className="h-4 w-4 text-[#86BBD8]" />
               <span className="text-white/90 font-semibold text-sm">Work Request</span>
-              <span className="ml-auto text-white/35 text-xs mr-2">Issued by supervisor · read-only</span>
-              {s1Open ? <ChevronUp className="h-4 w-4 text-white/35" /> : <ChevronDown className="h-4 w-4 text-white/35" />}
-            </button>
+              <span className="ml-auto text-white/30 text-xs">supervisor-issued · read-only</span>
+            </div>
+
+            {/* Sneak peek — always visible */}
+            <div className="px-4 pt-3 pb-2 grid grid-cols-3 gap-x-6 gap-y-2">
+              <div>
+                <div className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">Machine</div>
+                <div className="text-white/80 text-sm truncate">{workOrder.equipment_info || '—'}</div>
+              </div>
+              <div>
+                <div className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">Allocated To</div>
+                <div className="text-white/80 text-sm truncate">{workOrder.allocated_to || workOrder.artisan_name || '—'}</div>
+              </div>
+              <div>
+                <div className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">Date Raised</div>
+                <div className="text-white/80 text-sm truncate">{workOrder.date_raised || '—'}</div>
+              </div>
+              {workOrder.job_request_details && (
+                <div className="col-span-3 mt-1">
+                  <div className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">Job</div>
+                  <div className={`text-white/60 text-xs leading-relaxed ${s1Open ? '' : 'line-clamp-2'}`}>
+                    {workOrder.job_request_details}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Full details — collapsible */}
             {s1Open && (
-              <div className="px-4 py-4 grid grid-cols-2 gap-x-8 gap-y-3">
-                <Info label="Machine / Equipment" value={workOrder.equipment_info} />
+              <div className="px-4 pb-3 pt-2 border-t border-white/[0.05] grid grid-cols-2 gap-x-8 gap-y-3 mt-1">
                 <Info label="Department"          value={workOrder.to_department} />
-                <Info label="Allocated To"        value={workOrder.allocated_to || workOrder.artisan_name} />
                 <Info label="Estimated Hours"     value={workOrder.estimated_hours ? `${workOrder.estimated_hours} h` : ''} />
-                <Info label="Date Raised"         value={workOrder.date_raised} />
                 <Info label="Requested By"        value={workOrder.requested_by} />
                 <Info label="Authorising Foreman" value={workOrder.authorising_foreman} />
-                <div className="col-span-2">
-                  <Info label="Job Request" value={workOrder.job_request_details} />
-                </div>
                 {workOrder.job_instructions && (
                   <div className="col-span-2">
                     <Info label="Special Instructions" value={workOrder.job_instructions} />
@@ -533,6 +666,14 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
                 )}
               </div>
             )}
+
+            {/* Toggle button */}
+            <button type="button" onClick={() => setS1Open(o => !o)}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 border-t border-white/[0.05] hover:bg-[#86BBD8]/[0.05] transition-colors text-[#86BBD8]/55 hover:text-[#86BBD8] text-xs">
+              {s1Open
+                ? <><ChevronUp className="h-3.5 w-3.5" /> Show less</>
+                : <><ChevronDown className="h-3.5 w-3.5" /> View full details</>}
+            </button>
           </div>
 
           {/* ── SECTION 2: Artisan Report ── */}
@@ -566,27 +707,27 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="artisan-progress" className={GLB}>Progress: {artisan.progress}%</label>
-                    <input id="artisan-progress" type="range" min="0" max="100" value={artisan.progress}
+                    <label htmlFor="a-progress" className={GLB}>Progress: {artisan.progress}%</label>
+                    <input id="a-progress" type="range" min="0" max="100" value={artisan.progress}
                       title={`Artisan progress: ${artisan.progress}%`}
                       onChange={e => setA('progress', parseInt(e.target.value))}
                       className="w-full mt-2 accent-cyan-400" />
                   </div>
                 </div>
 
-                {/* Work Done */}
-                <GlassTextarea id="a-work-done" label="Work Done — what was carried out *"
+                {/* Work Done — with phrase prediction */}
+                <PredictiveArea id="a-work-done" label="Work Done — what was carried out *"
                   value={artisan.work_done_details} onChange={v => setA('work_done_details', v)}
-                  placeholder="Describe exactly what was done…" rows={4} />
+                  placeholder="Describe exactly what was done…" rows={4} autoComplete="on" />
 
-                {/* Cause + Delay narrative */}
+                {/* Cause + Delay narrative — with phrase prediction */}
                 <div className="grid grid-cols-2 gap-3">
-                  <GlassTextarea id="a-cause" label="Cause of Failure"
+                  <PredictiveArea id="a-cause" label="Cause of Failure"
                     value={artisan.cause_of_failure} onChange={v => setA('cause_of_failure', v)}
-                    placeholder="What caused the issue…" rows={2} />
-                  <GlassTextarea id="a-delay-desc" label="Delay Details"
+                    placeholder="What caused the issue…" rows={3} autoComplete="on" />
+                  <PredictiveArea id="a-delay-desc" label="Delay Details"
                     value={artisan.delay_details} onChange={v => setA('delay_details', v)}
-                    placeholder="Any delays encountered…" rows={2} />
+                    placeholder="Any delays encountered…" rows={3} autoComplete="on" />
                 </div>
 
                 {/* Time Tracking */}
@@ -595,34 +736,72 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
                     <Timer className="h-3.5 w-3.5" /> Time Tracking
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    <GlassInput id="a-t-start"  label="Time Started"       type="time"
+                    <GlassInput id="a-t-start"  label="Time Started"      type="time"
                       value={artisan.time_work_started}  onChange={v => setA('time_work_started', v)} />
-                    <GlassInput id="a-t-finish" label="Time Finished"      type="time"
+                    <GlassInput id="a-t-finish" label="Time Finished"     type="time"
                       value={artisan.time_work_finished} onChange={v => setA('time_work_finished', v)} />
                     <GlassInput id="a-t-total"  label="Total Time (auto)"
                       value={artisan.total_time_worked}  onChange={v => setA('total_time_worked', v)}
                       placeholder="auto"
                       readOnly={!!(artisan.time_work_started && artisan.time_work_finished)} />
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <GlassInput id="a-ot-start" label="OT Start"           type="time"
-                      value={artisan.overtime_start_time} onChange={v => setA('overtime_start_time', v)} />
-                    <GlassInput id="a-ot-end"   label="OT End"             type="time"
-                      value={artisan.overtime_end_time}   onChange={v => setA('overtime_end_time', v)} />
-                    <GlassInput id="a-ot-hrs"   label="OT Hours (auto)"
-                      value={artisan.overtime_hours}      onChange={v => setA('overtime_hours', v)}
-                      placeholder="auto"
-                      readOnly={!!(artisan.overtime_start_time && artisan.overtime_end_time)} />
+
+                  {/* Overtime — shown by default, button to mark N/A */}
+                  <div className="border-t border-white/[0.05] pt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/40 text-xs font-medium">Overtime</span>
+                      <button type="button" onClick={() => setOtNA(v => !v)}
+                        className={`ml-auto text-[10px] px-2 py-0.5 rounded border transition-colors ${
+                          otNA
+                            ? 'text-orange-400 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20'
+                            : 'text-white/35 bg-white/[0.05] border-white/10 hover:bg-white/[0.10] hover:text-white/60'
+                        }`}>
+                        {otNA ? '↩ Undo N/A' : 'Mark as N/A'}
+                      </button>
+                    </div>
+                    {otNA ? (
+                      <p className="text-orange-400/50 text-xs italic px-0.5">No overtime for this job.</p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-3">
+                        <GlassInput id="a-ot-start" label="OT Start"        type="time"
+                          value={artisan.overtime_start_time} onChange={v => setA('overtime_start_time', v)} />
+                        <GlassInput id="a-ot-end"   label="OT End"          type="time"
+                          value={artisan.overtime_end_time}   onChange={v => setA('overtime_end_time', v)} />
+                        <GlassInput id="a-ot-hrs"   label="OT Hours (auto)"
+                          value={artisan.overtime_hours}      onChange={v => setA('overtime_hours', v)}
+                          placeholder="auto"
+                          readOnly={!!(artisan.overtime_start_time && artisan.overtime_end_time)} />
+                      </div>
+                    )}
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <GlassInput id="a-d-from"   label="Delay From"         type="time"
-                      value={artisan.delay_from_time} onChange={v => setA('delay_from_time', v)} />
-                    <GlassInput id="a-d-to"     label="Delay To"           type="time"
-                      value={artisan.delay_to_time}   onChange={v => setA('delay_to_time', v)} />
-                    <GlassInput id="a-d-total"  label="Delay Hours (auto)"
-                      value={artisan.total_delay_hours} onChange={v => setA('total_delay_hours', v)}
-                      placeholder="auto"
-                      readOnly={!!(artisan.delay_from_time && artisan.delay_to_time)} />
+
+                  {/* Delays — shown by default, button to mark N/A */}
+                  <div className="border-t border-white/[0.05] pt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/40 text-xs font-medium">Delays</span>
+                      <button type="button" onClick={() => setDelayNA(v => !v)}
+                        className={`ml-auto text-[10px] px-2 py-0.5 rounded border transition-colors ${
+                          delayNA
+                            ? 'text-orange-400 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20'
+                            : 'text-white/35 bg-white/[0.05] border-white/10 hover:bg-white/[0.10] hover:text-white/60'
+                        }`}>
+                        {delayNA ? '↩ Undo N/A' : 'Mark as N/A'}
+                      </button>
+                    </div>
+                    {delayNA ? (
+                      <p className="text-orange-400/50 text-xs italic px-0.5">No delays for this job.</p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-3">
+                        <GlassInput id="a-d-from"  label="Delay From"         type="time"
+                          value={artisan.delay_from_time}   onChange={v => setA('delay_from_time', v)} />
+                        <GlassInput id="a-d-to"    label="Delay To"           type="time"
+                          value={artisan.delay_to_time}     onChange={v => setA('delay_to_time', v)} />
+                        <GlassInput id="a-d-total" label="Delay Hours (auto)"
+                          value={artisan.total_delay_hours} onChange={v => setA('total_delay_hours', v)}
+                          placeholder="auto"
+                          readOnly={!!(artisan.delay_from_time && artisan.delay_to_time)} />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -633,9 +812,11 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <GlassInput id="a-name" label="Artisan Name"
-                      value={artisan.artisan_name} onChange={v => setA('artisan_name', v)} placeholder="Full name" />
+                      value={artisan.artisan_name} onChange={v => setA('artisan_name', v)}
+                      placeholder="Full name" autoComplete="name" />
                     <GlassInput id="a-sign" label="Signature (type name)"
-                      value={artisan.artisan_sign} onChange={v => setA('artisan_sign', v)} placeholder="Type name" />
+                      value={artisan.artisan_sign} onChange={v => setA('artisan_sign', v)}
+                      placeholder="Type name" autoComplete="name" />
                     <GlassInput id="a-date" label="Date" type="date"
                       value={artisan.artisan_date} onChange={v => setA('artisan_date', v)} />
                   </div>
@@ -664,8 +845,6 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
 
             {s3Open && (
               <div className="px-4 py-4 space-y-4">
-
-                {/* Final Status + Progress */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className={GLB}>Final Status</label>
@@ -682,29 +861,30 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="foreman-progress" className={GLB}>Confirmed Progress: {foreman.progress}%</label>
-                    <input id="foreman-progress" type="range" min="0" max="100" value={foreman.progress}
+                    <label htmlFor="f-progress" className={GLB}>Confirmed Progress: {foreman.progress}%</label>
+                    <input id="f-progress" type="range" min="0" max="100" value={foreman.progress}
                       title={`Foreman confirmed progress: ${foreman.progress}%`}
                       onChange={e => setF('progress', parseInt(e.target.value))}
                       className="w-full mt-2 accent-violet-400" />
                   </div>
                 </div>
 
-                {/* Comments */}
-                <GlassTextarea id="f-notes" label="Foreman Comments"
+                <PredictiveArea id="f-notes" label="Foreman Comments"
                   value={foreman.notes} onChange={v => setF('notes', v)}
-                  placeholder="Comments on the work done, observations, follow-up required…" rows={3} />
+                  placeholder="Comments on work done, observations, follow-up required…"
+                  rows={3} autoComplete="on" />
 
-                {/* Foreman Sign-off row */}
                 <div className="border border-white/[0.07] rounded-lg p-3 space-y-3">
                   <div className="flex items-center gap-1.5 text-white/45 text-xs">
                     <Signature className="h-3.5 w-3.5" /> Foreman Sign-off
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <GlassInput id="f-name" label="Foreman Name"
-                      value={foreman.foreman_name} onChange={v => setF('foreman_name', v)} placeholder="Full name" />
+                      value={foreman.foreman_name} onChange={v => setF('foreman_name', v)}
+                      placeholder="Full name" autoComplete="name" />
                     <GlassInput id="f-sign" label="Signature (type name)"
-                      value={foreman.foreman_sign} onChange={v => setF('foreman_sign', v)} placeholder="Type name" />
+                      value={foreman.foreman_sign} onChange={v => setF('foreman_sign', v)}
+                      placeholder="Type name" autoComplete="name" />
                     <GlassInput id="f-date" label="Date" type="date"
                       value={foreman.foreman_date} onChange={v => setF('foreman_date', v)} />
                   </div>
@@ -728,8 +908,7 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
                   onClose();
                 }
               }}
-              className="flex items-center gap-1.5 text-red-400/60 hover:text-red-400 text-xs transition-colors"
-            >
+              className="flex items-center gap-1.5 text-red-400/60 hover:text-red-400 text-xs transition-colors">
               <Trash2 className="h-3 w-3" /> Delete work order
             </button>
           </div>
@@ -775,8 +954,8 @@ function WorkOrderRow({ workOrder, onClick }: { workOrder: WorkOrder; onClick: (
       <div className="w-16 flex-shrink-0 hidden sm:block">
         <div className="flex items-center gap-1.5">
           <div className="flex-1 bg-white/10 rounded-full h-1">
-            <div className="bg-[#86BBD8] h-1 rounded-full transition-all [width:var(--pw,0%)]"
-              style={{ '--pw': `${workOrder.progress}%` } as React.CSSProperties} />
+            <div className="bg-[#86BBD8] h-1 rounded-full transition-all"
+              style={{ width: `${workOrder.progress}%` }} />
           </div>
           <span className="text-white/35 text-[10px] w-5 text-right">{workOrder.progress}%</span>
         </div>
@@ -821,7 +1000,12 @@ export default function MaintenancePage() {
   const [statusTab, setStatusTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  // Derive selectedOrder reactively so reopening always shows the latest saved data
+  const selectedOrder = useMemo(
+    () => selectedOrderId ? workOrders.find(w => String(w.id) === String(selectedOrderId)) ?? null : null,
+    [workOrders, selectedOrderId]
+  );
 
   const load = async () => {
     setLoading(true);
@@ -864,7 +1048,7 @@ export default function MaintenancePage() {
 
   const handleDelete = async (id: string) => {
     await deleteWorkOrder(id);
-    setSelectedOrder(null);
+    setSelectedOrderId(null);
     await load();
     toast.success('Work order deleted');
   };
@@ -1011,7 +1195,7 @@ export default function MaintenancePage() {
                 ) : (
                   <div>
                     {filtered.map(wo => (
-                      <WorkOrderRow key={wo.id} workOrder={wo} onClick={() => setSelectedOrder(wo)} />
+                      <WorkOrderRow key={wo.id} workOrder={wo} onClick={() => setSelectedOrderId(wo.id)} />
                     ))}
                     <div className="px-5 py-2.5 border-t border-white/[0.04]">
                       <span className="text-white/25 text-xs">
@@ -1036,7 +1220,7 @@ export default function MaintenancePage() {
       {selectedOrder && (
         <WorkOrderDetailModal
           workOrder={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
+          onClose={() => setSelectedOrderId(null)}
           onRefresh={load}
           onDelete={handleDelete}
         />
