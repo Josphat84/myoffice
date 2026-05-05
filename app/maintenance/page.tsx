@@ -14,12 +14,57 @@ import {
   Wrench, Plus, RefreshCw, CheckCircle2, Clock, PlayCircle, PauseCircle,
   Search, ChevronDown, ChevronUp, ChevronRight, X, XCircle, AlertCircle,
   CalendarOff, ClipboardCheck, FileText, Trash2, Save, Signature,
-  HardHat, ShieldCheck, Timer
+  HardHat, ShieldCheck, Timer, CalendarClock, Pencil, Repeat2,
+  SlidersHorizontal, ArrowUpDown
 } from "lucide-react";
 
 // ==================== TYPES ====================
 type WorkOrderStatus = 'pending' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled' | 'postponed' | 'not-done';
 type WorkOrderPriority = 'low' | 'medium' | 'high' | 'urgent';
+type RecurrenceType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
+
+interface MaintenanceSchedule {
+  id: string;
+  name: string;
+  equipment_info: string;
+  to_department: string;
+  allocated_to: string;
+  authorising_foreman: string;
+  estimated_hours: string;
+  job_request_details: string;
+  job_instructions: string;
+  priority: WorkOrderPriority;
+  recurrence_type: RecurrenceType;
+  recurrence_dow: number;      // 0-6: day of week (weekly/biweekly)
+  recurrence_dom: number;      // 1-28: day of month
+  recurrence_months: number[]; // 0-11: months (quarterly/yearly)
+  specific_dates: string[];    // ISO date strings (custom)
+  advance_days: number;        // generate WO this many days before due date
+  active: boolean;
+  next_due_date: string;
+  last_generated: string;
+  created_at: string;
+}
+
+interface EquipmentItem {
+  id: string;
+  equipment_id: string;
+  name: string;
+  category?: string;
+  department?: string;
+  location?: string;
+  status?: string;
+}
+
+interface EmployeeItem {
+  id: string;
+  employee_id?: string;
+  first_name: string;
+  last_name: string;
+  designation?: string;
+  department?: string;
+  section?: string;
+}
 
 interface WorkOrder {
   id: string;
@@ -137,6 +182,77 @@ async function deleteWorkOrder(id: string): Promise<{ success: boolean }> {
   }
 }
 
+// ==================== SCHEDULE STORAGE ====================
+const SCHED_KEY = 'maint_schedules';
+const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function loadSchedules(): MaintenanceSchedule[] {
+  if (typeof window === 'undefined') return [];
+  return JSON.parse(localStorage.getItem(SCHED_KEY) || '[]');
+}
+
+function persistSchedules(list: MaintenanceSchedule[]) {
+  localStorage.setItem(SCHED_KEY, JSON.stringify(list));
+}
+
+function recurrenceLabel(s: MaintenanceSchedule): string {
+  switch (s.recurrence_type) {
+    case 'daily':     return 'Every day';
+    case 'weekly':    return `Every ${DOW[s.recurrence_dow]}`;
+    case 'biweekly':  return `Every 2 weeks on ${DOW[s.recurrence_dow]}`;
+    case 'monthly':   return `Monthly on the ${ordinal(s.recurrence_dom)}`;
+    case 'quarterly': return `Quarterly — ${(s.recurrence_months ?? []).map(m => MON[m]).join(', ')}`;
+    case 'yearly':    return `Yearly — ${MON[s.recurrence_months?.[0] ?? 0]} ${ordinal(s.recurrence_dom)}`;
+    case 'custom':    return `Custom (${(s.specific_dates ?? []).length} date${(s.specific_dates ?? []).length !== 1 ? 's' : ''})`;
+    default:          return '';
+  }
+}
+
+function getNextOccurrence(s: MaintenanceSchedule, from: Date): Date {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
+  switch (s.recurrence_type) {
+    case 'daily':    { d.setDate(d.getDate() + 1);  return d; }
+    case 'weekly':   { d.setDate(d.getDate() + 7);  return d; }
+    case 'biweekly': { d.setDate(d.getDate() + 14); return d; }
+    case 'monthly':  { return new Date(d.getFullYear(), d.getMonth() + 1, s.recurrence_dom); }
+    case 'quarterly': {
+      const months = [...(s.recurrence_months ?? [0, 3, 6, 9])].sort((a, b) => a - b);
+      const cur = d.getMonth();
+      const next = months.find(m => m > cur);
+      return next !== undefined
+        ? new Date(d.getFullYear(), next, s.recurrence_dom)
+        : new Date(d.getFullYear() + 1, months[0] ?? 0, s.recurrence_dom);
+    }
+    case 'yearly': {
+      const month = s.recurrence_months?.[0] ?? 0;
+      return new Date(d.getFullYear() + 1, month, s.recurrence_dom);
+    }
+    case 'custom': {
+      const todayStr = d.toISOString().split('T')[0];
+      const future = (s.specific_dates ?? []).filter(dt => dt > todayStr).sort();
+      return future.length > 0 ? new Date(future[0] + 'T00:00:00') : new Date(9999, 0, 1);
+    }
+    default: return new Date(9999, 0, 1);
+  }
+}
+
+function isScheduleDue(s: MaintenanceSchedule): boolean {
+  if (!s.active || !s.next_due_date) return false;
+  const today = new Date().toISOString().split('T')[0];
+  if (s.last_generated === today) return false;
+  const dueDate = new Date(s.next_due_date + 'T00:00:00');
+  dueDate.setDate(dueDate.getDate() - (s.advance_days || 0));
+  return dueDate.toISOString().split('T')[0] <= today;
+}
+
 // ==================== HELPERS ====================
 function statusCfg(s: WorkOrderStatus) {
   const m = {
@@ -195,36 +311,44 @@ function CreateWorkOrderModal({ isOpen, onClose, onCreated }: CreateModalProps) 
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
+  // Derive machine list — each comma-separated item becomes its own work order
+  const machines = form.equipment_info.split(',').map(s => s.trim()).filter(Boolean);
+
   const handleSubmit = async () => {
     if (!form.equipment_info.trim() || !form.job_request_details.trim() || !form.allocated_to.trim()) {
       toast.error('Machine, artisan name and job request are required');
       return;
     }
     setSaving(true);
-    const result = await createWorkOrder({
-      work_order_number: `WO-${Date.now().toString().slice(-6)}`,
-      ...form,
-      to_section: '', from_department: '', from_section: '',
-      account_number: '', user_lab_today: '',
-      time_raised: new Date().toTimeString().slice(0, 5),
-      job_type: { operational: false, maintenance: true, mining: false },
-      authorising_engineer: '',
-      responsible_foreman: form.authorising_foreman,
-      manpower: [],
-      work_done_details: '', cause_of_failure: '', delay_details: '',
-      artisan_name: form.allocated_to,
-      artisan_sign: '', artisan_date: '',
-      foreman_name: '', foreman_sign: '', foreman_date: '',
-      time_work_started: '', time_work_finished: '', total_time_worked: '',
-      overtime_start_time: '', overtime_end_time: '', overtime_hours: '',
-      delay_from_time: '', delay_to_time: '', total_delay_hours: '',
-      status: 'pending', priority: form.priority, progress: 0,
-    });
+    const created: WorkOrder[] = [];
+    for (const machine of machines) {
+      const result = await createWorkOrder({
+        work_order_number: `WO-${Date.now().toString().slice(-6)}`,
+        ...form,
+        equipment_info: machine,
+        to_section: '', from_department: '', from_section: '',
+        account_number: '', user_lab_today: '',
+        time_raised: new Date().toTimeString().slice(0, 5),
+        job_type: { operational: false, maintenance: true, mining: false },
+        authorising_engineer: '',
+        responsible_foreman: form.authorising_foreman,
+        manpower: [],
+        work_done_details: '', cause_of_failure: '', delay_details: '',
+        artisan_name: form.allocated_to,
+        artisan_sign: '', artisan_date: '',
+        foreman_name: '', foreman_sign: '', foreman_date: '',
+        time_work_started: '', time_work_finished: '', total_time_worked: '',
+        overtime_start_time: '', overtime_end_time: '', overtime_hours: '',
+        delay_from_time: '', delay_to_time: '', total_delay_hours: '',
+        status: 'pending', priority: form.priority, progress: 0,
+      });
+      if (result.success && result.data) created.push(result.data);
+    }
     setSaving(false);
-    if (result.success && result.data) {
-      toast.success('Work order created');
+    if (created.length > 0) {
+      toast.success(created.length > 1 ? `${created.length} work orders created` : 'Work order created');
       setForm(blank);
-      onCreated(result.data);
+      created.forEach(wo => onCreated(wo));
       onClose();
     } else {
       toast.error('Failed to create work order');
@@ -247,27 +371,28 @@ function CreateWorkOrderModal({ isOpen, onClose, onCreated }: CreateModalProps) 
         </DialogHeader>
 
         <div className="space-y-4 py-1">
-          {/* Machine + Department */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Machine / Equipment *</Label>
-              <Input value={form.equipment_info} onChange={e => set('equipment_info', e.target.value)}
-                placeholder="e.g. Compressor #3, Crusher Belt…" className={inputCls} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Department</Label>
-              <Input value={form.to_department} onChange={e => set('to_department', e.target.value)}
-                placeholder="e.g. Engineering, Mining…" className={inputCls} />
-            </div>
+          {/* Machine / Equipment — picker + free text */}
+          <div className="space-y-1.5">
+            <Label className={labelCls}>
+              Machine / Equipment *
+              <span className="text-white/25 ml-1.5">— select multiple to create one WO per machine</span>
+            </Label>
+            <EquipmentPicker value={form.equipment_info} onChange={v => set('equipment_info', v)} />
           </div>
 
-          {/* Artisan + Priority + Hours */}
+          {/* Department */}
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Department</Label>
+            <Input value={form.to_department} onChange={e => set('to_department', e.target.value)}
+              placeholder="e.g. Engineering, Mining…" className={inputCls} />
+          </div>
+
+          {/* Allocated To */}
+          <EmployeePicker id="cwo-artisan" label="Allocated To (Artisan) *"
+            value={form.allocated_to} onChange={v => set('allocated_to', v)} />
+
+          {/* Priority + Hours + Date */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Allocated To (Artisan) *</Label>
-              <Input value={form.allocated_to} onChange={e => set('allocated_to', e.target.value)}
-                placeholder="Artisan full name" className={inputCls} />
-            </div>
             <div className="space-y-1.5">
               <Label className={labelCls}>Priority</Label>
               <Select value={form.priority} onValueChange={v => set('priority', v)}>
@@ -285,23 +410,22 @@ function CreateWorkOrderModal({ isOpen, onClose, onCreated }: CreateModalProps) 
               <Input type="number" min="0.5" step="0.5" value={form.estimated_hours}
                 onChange={e => set('estimated_hours', e.target.value)} className={inputCls} />
             </div>
-          </div>
-
-          {/* Date + Requested By + Authorising Foreman */}
-          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className={labelCls}>Date Raised</Label>
               <Input type="date" value={form.date_raised} onChange={e => set('date_raised', e.target.value)} className={inputCls} />
             </div>
+          </div>
+
+          {/* Requested By + Authorising Foreman */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className={labelCls}>Requested By</Label>
               <Input value={form.requested_by} onChange={e => set('requested_by', e.target.value)}
                 placeholder="Your name" className={inputCls} />
             </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Authorising Foreman</Label>
-              <Input value={form.authorising_foreman} onChange={e => set('authorising_foreman', e.target.value)}
-                placeholder="Foreman name" className={inputCls} />
+            <div className="space-y-0.5">
+              <EmployeePicker id="cwo-foreman" label="Authorising Foreman"
+                value={form.authorising_foreman} onChange={v => set('authorising_foreman', v)} />
             </div>
           </div>
 
@@ -329,7 +453,7 @@ function CreateWorkOrderModal({ isOpen, onClose, onCreated }: CreateModalProps) 
           </Button>
           <Button onClick={handleSubmit} disabled={saving}
             className="bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/35">
-            {saving ? 'Creating…' : 'Create Work Order'}
+            {saving ? 'Creating…' : machines.length > 1 ? `Create ${machines.length} Work Orders` : 'Create Work Order'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -470,6 +594,244 @@ function PredictiveArea({ id, label, value, onChange, placeholder, rows = 3, aut
           <span className="text-white/20 text-[10px] hidden sm:inline">or click to accept</span>
         </div>
       )}
+    </div>
+  );
+}
+
+// ==================== EQUIPMENT PICKER ====================
+// Allows picking from the equipment register (multi-select) OR typing manually.
+// Returns selected equipment names joined as a comma-separated string.
+function EquipmentPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
+  const [fetched, setFetched] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!expanded || fetched) return;
+    setFetchLoading(true);
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    fetch(`${base}/api/equipment`)
+      .then(r => r.json())
+      .then((data: EquipmentItem[]) => {
+        if (Array.isArray(data)) setEquipment(data);
+        setFetched(true);
+        setFetchLoading(false);
+      })
+      .catch(() => { setFetched(true); setFetchLoading(false); });
+  }, [expanded, fetched]);
+
+  // When opening, pre-select items whose names match current value
+  useEffect(() => {
+    if (!expanded || equipment.length === 0) return;
+    const names = value.split(',').map(s => s.trim().toLowerCase());
+    const preSelected = new Set(
+      equipment.filter(e => names.includes((e.name || '').toLowerCase())).map(e => e.id)
+    );
+    setSelected(preSelected);
+  }, [expanded, equipment, value]);
+
+  const filtered = equipment.filter(e => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (e.name || '').toLowerCase().includes(q) ||
+           (e.equipment_id || '').toLowerCase().includes(q) ||
+           (e.department || '').toLowerCase().includes(q) ||
+           (e.location || '').toLowerCase().includes(q);
+  });
+
+  const toggle = (id: string) =>
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const apply = () => {
+    const fromRegister = equipment.filter(e => selected.has(e.id)).map(e => e.name || e.equipment_id);
+    // Preserve any manually typed items that aren't in the register
+    const registerNames = new Set(equipment.map(e => (e.name || '').toLowerCase()));
+    const manual = value.split(',').map(s => s.trim()).filter(s => s && !registerNames.has(s.toLowerCase()));
+    const parts = [...fromRegister, ...manual].filter(Boolean);
+    onChange(parts.join(', '));
+    setExpanded(false);
+    setSearch('');
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="Type equipment name(s), or browse register →"
+          className={`flex-1 rounded-md border px-3 py-1.5 text-sm outline-none transition-colors ${GIN}`}
+        />
+        <button type="button" onClick={() => setExpanded(o => !o)}
+          className="flex-shrink-0 bg-[#86BBD8]/[0.12] hover:bg-[#86BBD8]/[0.22] border border-[#86BBD8]/20 rounded-md px-3 text-[#86BBD8]/70 hover:text-[#86BBD8] text-xs transition-colors whitespace-nowrap">
+          Browse
+        </button>
+      </div>
+
+      {/* Comma-separated hint when multiple detected */}
+      {value.includes(',') && (
+        <p className="text-[10px] text-[#86BBD8]/50 px-0.5">
+          {value.split(',').filter(s => s.trim()).length} machines selected — will create one work order per machine
+        </p>
+      )}
+
+      {expanded && (
+        <div className="border border-white/10 rounded-xl overflow-hidden bg-[rgba(5,15,28,0.6)]">
+          <div className="px-3 py-2 border-b border-white/[0.06]">
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name, ID, department, location…"
+              className={`w-full rounded border px-2.5 py-1 text-xs outline-none transition-colors ${GIN}`} />
+          </div>
+          <div className="max-h-52 overflow-y-auto">
+            {fetchLoading ? (
+              <div className="flex justify-center py-5">
+                <RefreshCw className="h-4 w-4 text-white/30 animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-white/25 text-xs text-center py-5">
+                {search ? 'No matches — type the name above to add manually' : 'No equipment in register'}
+              </div>
+            ) : (
+              filtered.map(e => (
+                <button key={e.id} type="button" onClick={() => toggle(e.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left border-b border-white/[0.04] transition-colors ${selected.has(e.id) ? 'bg-[#86BBD8]/[0.08]' : 'hover:bg-white/[0.03]'}`}>
+                  <div className={`w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${selected.has(e.id) ? 'bg-[#86BBD8] border-[#86BBD8]' : 'border-white/20'}`}>
+                    {selected.has(e.id) && <CheckCircle2 className="h-2.5 w-2.5 text-[#0d1f35]" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white/85 text-xs font-medium truncate">{e.name}</div>
+                    <div className="text-white/35 text-[10px] truncate">
+                      {e.equipment_id}{e.department ? ` · ${e.department}` : ''}{e.location ? ` · ${e.location}` : ''}
+                    </div>
+                  </div>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full border flex-shrink-0 ${
+                    e.status === 'operational'
+                      ? 'text-green-400 border-green-500/20 bg-green-500/[0.08]'
+                      : 'text-orange-400 border-orange-500/20 bg-orange-500/[0.08]'
+                  }`}>{e.status || 'unknown'}</span>
+                </button>
+              ))
+            )}
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.06]">
+            <span className="text-white/30 text-xs">{selected.size} from register</span>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => { setExpanded(false); setSearch(''); }}
+                className="text-xs text-white/35 hover:text-white/60 transition-colors">Cancel</button>
+              <button type="button" onClick={apply}
+                className="bg-[#86BBD8]/20 hover:bg-[#86BBD8]/35 border border-[#86BBD8]/25 text-white text-xs px-3 py-1 rounded-lg transition-colors">
+                Apply {selected.size > 0 ? `(${selected.size})` : ''}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== EMPLOYEE PICKER ====================
+// Single-select: browse employee register or type a name manually.
+function EmployeePicker({ id, label, value, onChange }: {
+  id: string; label: string; value: string; onChange: (v: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
+  const [fetched, setFetched] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!expanded || fetched) return;
+    setFetchLoading(true);
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    fetch(`${base}/api/employees`)
+      .then(r => r.json())
+      .then((data: EmployeeItem[]) => {
+        if (Array.isArray(data)) setEmployees(data);
+        setFetched(true); setFetchLoading(false);
+      })
+      .catch(() => { setFetched(true); setFetchLoading(false); });
+  }, [expanded, fetched]);
+
+  const filtered = employees.filter(e => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    const full = `${e.first_name} ${e.last_name}`.toLowerCase();
+    return full.includes(q) ||
+           (e.employee_id || '').toLowerCase().includes(q) ||
+           (e.designation || '').toLowerCase().includes(q) ||
+           (e.department || '').toLowerCase().includes(q);
+  });
+
+  const pick = (e: EmployeeItem) => {
+    onChange(`${e.first_name} ${e.last_name}`);
+    setExpanded(false);
+    setSearch('');
+  };
+
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className={GLB}>{label}</label>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <input id={id} value={value} onChange={e => onChange(e.target.value)}
+            placeholder="Type name or browse employees →"
+            className={`flex-1 rounded-md border px-3 py-1.5 text-sm outline-none transition-colors ${GIN}`} />
+          <button type="button" onClick={() => setExpanded(o => !o)}
+            className="flex-shrink-0 bg-[#86BBD8]/[0.12] hover:bg-[#86BBD8]/[0.22] border border-[#86BBD8]/20 rounded-md px-3 text-[#86BBD8]/70 hover:text-[#86BBD8] text-xs transition-colors whitespace-nowrap">
+            Browse
+          </button>
+        </div>
+        {expanded && (
+          <div className="border border-white/10 rounded-xl overflow-hidden bg-[rgba(5,15,28,0.6)]">
+            <div className="px-3 py-2 border-b border-white/[0.06]">
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search name, ID, role, department…"
+                className={`w-full rounded border px-2.5 py-1 text-xs outline-none transition-colors ${GIN}`} />
+            </div>
+            <div className="max-h-44 overflow-y-auto">
+              {fetchLoading ? (
+                <div className="flex justify-center py-4">
+                  <RefreshCw className="h-4 w-4 text-white/30 animate-spin" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-white/25 text-xs text-center py-4">
+                  {search ? 'No match — type the name above to enter manually' : 'No employees found'}
+                </div>
+              ) : (
+                filtered.map(e => {
+                  const full = `${e.first_name} ${e.last_name}`;
+                  return (
+                    <button key={e.id} type="button" onClick={() => pick(e)}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-left border-b border-white/[0.04] hover:bg-white/[0.05] transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-[#86BBD8]/15 border border-[#86BBD8]/20 flex items-center justify-center flex-shrink-0 text-[10px] text-[#86BBD8]/70 font-semibold uppercase">
+                        {e.first_name?.[0]}{e.last_name?.[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white/85 text-xs font-medium truncate">{full}</div>
+                        <div className="text-white/35 text-[10px] truncate">
+                          {e.designation || ''}{e.department ? ` · ${e.department}` : ''}{e.section ? ` · ${e.section}` : ''}
+                        </div>
+                      </div>
+                      {e.employee_id && (
+                        <span className="text-white/25 text-[10px] flex-shrink-0">{e.employee_id}</span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <div className="flex justify-end px-3 py-2 border-t border-white/[0.06]">
+              <button type="button" onClick={() => { setExpanded(false); setSearch(''); }}
+                className="text-xs text-white/35 hover:text-white/60 transition-colors">Close</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -920,65 +1282,511 @@ function WorkOrderDetailModal({ workOrder, onClose, onRefresh, onDelete }: Detai
 
 // ==================== WORK ORDER ROW ====================
 function WorkOrderRow({ workOrder, onClick }: { workOrder: WorkOrder; onClick: () => void }) {
+  const [expanded, setExpanded] = useState(false);
   const scfg = statusCfg(workOrder.status);
   const pcfg = priorityCfg(workOrder.priority);
   const artisanDisplay = workOrder.allocated_to || workOrder.artisan_name || '—';
+  const foremanDisplay = workOrder.authorising_foreman || workOrder.foreman_name || workOrder.responsible_foreman || '—';
 
   return (
-    <button type="button"
-      onClick={onClick}
-      className="w-full flex items-center gap-4 px-5 py-3.5 border-b border-white/[0.05] hover:bg-white/[0.04] transition-colors text-left group"
-    >
-      {/* Status dot */}
-      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scfg.dot}`} />
+    <div className="border-b border-white/[0.05]">
+      {/* ── Main row ── */}
+      <div className="flex items-center gap-4 px-5 py-3 hover:bg-white/[0.03] transition-colors group">
 
-      {/* WO # */}
-      <div className="text-white/45 font-mono text-xs w-[5.5rem] flex-shrink-0 truncate">
-        #{workOrder.work_order_number}
-      </div>
+        {/* Status dot */}
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scfg.dot}`} />
 
-      {/* Machine + Artisan */}
-      <div className="flex-1 min-w-0">
-        <div className="text-white/90 font-medium text-sm truncate">{workOrder.equipment_info}</div>
-        <div className="text-white/40 text-xs truncate mt-0.5">
-          {artisanDisplay}{workOrder.to_department ? ` · ${workOrder.to_department}` : ''}
+        {/* WO # */}
+        <div className="text-white/40 font-mono text-xs w-[5.5rem] flex-shrink-0 truncate">
+          #{workOrder.work_order_number}
         </div>
-      </div>
 
-      {/* Job snippet */}
-      <div className="hidden md:block flex-1 min-w-0">
-        <div className="text-white/35 text-xs truncate">{workOrder.job_request_details}</div>
-      </div>
-
-      {/* Progress */}
-      <div className="w-16 flex-shrink-0 hidden sm:block">
-        <div className="flex items-center gap-1.5">
-          <div className="flex-1 bg-white/10 rounded-full h-1">
-            <div className="bg-[#86BBD8] h-1 rounded-full transition-all"
-              style={{ width: `${workOrder.progress}%` }} />
+        {/* Machine + Artisan — click opens full modal */}
+        <button type="button" onClick={onClick} className="flex-1 min-w-0 text-left">
+          <div className="text-white/90 font-medium text-sm truncate group-hover:text-white transition-colors">
+            {workOrder.equipment_info}
           </div>
-          <span className="text-white/35 text-[10px] w-5 text-right">{workOrder.progress}%</span>
+          <div className="text-white/40 text-xs truncate mt-0.5">
+            {artisanDisplay}{workOrder.to_department ? ` · ${workOrder.to_department}` : ''}
+          </div>
+        </button>
+
+        {/* Job snippet */}
+        <div className="hidden md:block flex-1 min-w-0">
+          <div className="text-white/30 text-xs truncate">{workOrder.job_request_details}</div>
+        </div>
+
+        {/* Progress */}
+        <div className="w-16 flex-shrink-0 hidden sm:block">
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 bg-white/10 rounded-full h-1">
+              <div className="bg-[#86BBD8] h-1 rounded-full transition-all"
+                style={{ width: `${workOrder.progress}%` }} />
+            </div>
+            <span className="text-white/35 text-[10px] w-5 text-right">{workOrder.progress}%</span>
+          </div>
+        </div>
+
+        {/* Status pill */}
+        <div className="flex-shrink-0">
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border whitespace-nowrap ${scfg.pill}`}>
+            {scfg.label}
+          </span>
+        </div>
+
+        {/* Priority dot */}
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${pcfg.dot}`} title={pcfg.label} />
+
+        {/* Date */}
+        <div className="text-white/30 text-xs flex-shrink-0 hidden lg:block w-[5.5rem]">
+          {workOrder.date_raised}
+        </div>
+
+        {/* Expand toggle — quick preview */}
+        <button type="button" onClick={() => setExpanded(o => !o)}
+          title={expanded ? 'Collapse preview' : 'Quick preview'}
+          className="p-1 rounded text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-colors flex-shrink-0">
+          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* ── Inline quick-view ── */}
+      {expanded && (
+        <div className="px-14 pb-4 pt-2 bg-white/[0.02] border-t border-white/[0.04]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2.5">
+            <div>
+              <div className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">Artisan</div>
+              <div className="text-white/70 text-xs">{artisanDisplay}</div>
+            </div>
+            <div>
+              <div className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">Foreman</div>
+              <div className="text-white/70 text-xs">{foremanDisplay}</div>
+            </div>
+            <div>
+              <div className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">Time Worked</div>
+              <div className="text-white/70 text-xs">{workOrder.total_time_worked || '—'}</div>
+            </div>
+            <div>
+              <div className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">Est. Hours</div>
+              <div className="text-white/70 text-xs">{workOrder.estimated_hours ? `${workOrder.estimated_hours}h` : '—'}</div>
+            </div>
+            {(workOrder.work_done_details || workOrder.job_request_details) && (
+              <div className="col-span-2 sm:col-span-4">
+                <div className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">
+                  {workOrder.work_done_details ? 'Work Done' : 'Job Request'}
+                </div>
+                <div className="text-white/55 text-xs leading-relaxed line-clamp-3">
+                  {workOrder.work_done_details || workOrder.job_request_details}
+                </div>
+              </div>
+            )}
+            {workOrder.cause_of_failure && (
+              <div className="col-span-2 sm:col-span-4">
+                <div className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">Cause of Failure</div>
+                <div className="text-white/55 text-xs line-clamp-2">{workOrder.cause_of_failure}</div>
+              </div>
+            )}
+          </div>
+          <div className="mt-3 flex justify-end">
+            <button type="button" onClick={onClick}
+              className="text-[#86BBD8]/70 hover:text-[#86BBD8] text-xs flex items-center gap-1.5 transition-colors">
+              Open full details <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== SCHEDULE ROW ====================
+function ScheduleRow({ schedule, onEdit, onDelete, onToggle, onRunNow }: {
+  schedule: MaintenanceSchedule;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggle: () => void;
+  onRunNow: () => void;
+}) {
+  const pcfg = priorityCfg(schedule.priority);
+  return (
+    <div className="flex items-center gap-4 px-5 py-3 border-b border-white/[0.05] hover:bg-white/[0.03] transition-colors">
+      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${schedule.active ? 'bg-green-400' : 'bg-white/20'}`} />
+      <div className="flex-1 min-w-0">
+        <div className="text-white/90 font-medium text-sm truncate">{schedule.name}</div>
+        <div className="text-white/40 text-xs truncate">
+          {schedule.equipment_info}{schedule.to_department ? ` · ${schedule.to_department}` : ''}
+          {schedule.allocated_to ? ` — ${schedule.allocated_to}` : ''}
         </div>
       </div>
-
-      {/* Status pill */}
-      <div className="flex-shrink-0">
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border whitespace-nowrap ${scfg.pill}`}>
-          {scfg.label}
-        </span>
+      <div className="text-[#86BBD8]/60 text-xs flex-shrink-0 hidden md:block w-52 truncate">
+        <Repeat2 className="h-3 w-3 inline mr-1 opacity-60" />{recurrenceLabel(schedule)}
       </div>
-
-      {/* Priority dot */}
+      <div className="flex-shrink-0 hidden sm:block text-right">
+        <div className="text-white/25 text-[10px] uppercase tracking-wide">Next</div>
+        <div className="text-white/65 text-xs">{schedule.next_due_date || '—'}</div>
+      </div>
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${pcfg.dot}`} title={pcfg.label} />
-
-      {/* Date */}
-      <div className="text-white/30 text-xs flex-shrink-0 hidden lg:block w-[5.5rem]">
-        {workOrder.date_raised}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Generate WO now */}
+        <button type="button" onClick={onRunNow} title="Create work order(s) from this schedule now"
+          className="text-[10px] px-2.5 py-0.5 rounded border transition-colors text-[#86BBD8]/80 bg-[#86BBD8]/[0.10] border-[#86BBD8]/25 hover:bg-[#86BBD8]/[0.22] hover:text-[#86BBD8] whitespace-nowrap font-medium">
+          Create Work Order(s)
+        </button>
+        <button type="button" onClick={onToggle}
+          className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${
+            schedule.active
+              ? 'text-green-400 bg-green-500/10 border-green-500/25 hover:bg-green-500/20'
+              : 'text-white/30 bg-white/[0.05] border-white/10 hover:bg-white/[0.10]'
+          }`}>
+          {schedule.active ? 'Active' : 'Paused'}
+        </button>
+        <button type="button" onClick={onEdit} title="Edit schedule"
+          className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 rounded p-1.5 transition-colors">
+          <Pencil className="h-3 w-3 text-white/50" />
+        </button>
+        <button type="button" onClick={onDelete} title="Delete schedule"
+          className="bg-white/[0.06] hover:bg-red-500/[0.15] border border-white/10 hover:border-red-500/30 rounded p-1.5 transition-colors">
+          <Trash2 className="h-3 w-3 text-white/50" />
+        </button>
       </div>
+    </div>
+  );
+}
 
-      {/* Arrow */}
-      <ChevronRight className="h-4 w-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
-    </button>
+// ==================== CREATE SCHEDULE MODAL ====================
+interface CreateScheduleModalProps {
+  isOpen: boolean;
+  initial: MaintenanceSchedule | null;
+  onClose: () => void;
+  onSave: (s: MaintenanceSchedule) => void;
+}
+
+function CreateScheduleModal({ isOpen, initial, onClose, onSave }: CreateScheduleModalProps) {
+  const today = new Date().toISOString().split('T')[0];
+
+  const blankForm = () => ({
+    name: '',
+    equipment_info: '',
+    to_department: '',
+    allocated_to: typeof window !== 'undefined' ? localStorage.getItem('maint_artisan_name') || '' : '',
+    authorising_foreman: typeof window !== 'undefined' ? localStorage.getItem('maint_foreman_name') || '' : '',
+    estimated_hours: '2',
+    job_request_details: '',
+    job_instructions: '',
+    priority: 'medium' as WorkOrderPriority,
+    recurrence_type: 'weekly' as RecurrenceType,
+    recurrence_dow: 1,
+    recurrence_dom: 1,
+    recurrence_months: [0, 3, 6, 9] as number[],
+    specific_dates: [] as string[],
+    advance_days: 1,
+    start_date: today,
+  });
+
+  const [form, setForm] = useState(blankForm);
+  const [newDate, setNewDate] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (initial) {
+      setForm({
+        name: initial.name,
+        equipment_info: initial.equipment_info,
+        to_department: initial.to_department,
+        allocated_to: initial.allocated_to,
+        authorising_foreman: initial.authorising_foreman,
+        estimated_hours: initial.estimated_hours,
+        job_request_details: initial.job_request_details,
+        job_instructions: initial.job_instructions,
+        priority: initial.priority,
+        recurrence_type: initial.recurrence_type,
+        recurrence_dow: initial.recurrence_dow,
+        recurrence_dom: initial.recurrence_dom,
+        recurrence_months: initial.recurrence_months ?? [],
+        specific_dates: initial.specific_dates ?? [],
+        advance_days: initial.advance_days ?? 1,
+        start_date: initial.next_due_date || today,
+      });
+    } else {
+      setForm(blankForm());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initial]);
+
+  const set = <K extends keyof ReturnType<typeof blankForm>>(k: K, v: ReturnType<typeof blankForm>[K]) =>
+    setForm(f => ({ ...f, [k]: v }));
+
+  const toggleMonth = (m: number) =>
+    setForm(f => ({
+      ...f,
+      recurrence_months: f.recurrence_months.includes(m)
+        ? f.recurrence_months.filter(x => x !== m)
+        : [...f.recurrence_months, m].sort((a, b) => a - b),
+    }));
+
+  const addDate = () => {
+    if (!newDate || form.specific_dates.includes(newDate)) return;
+    setForm(f => ({ ...f, specific_dates: [...f.specific_dates, newDate].sort() }));
+    setNewDate('');
+  };
+
+  const removeDate = (d: string) =>
+    setForm(f => ({ ...f, specific_dates: f.specific_dates.filter(x => x !== d) }));
+
+  const handleSave = () => {
+    if (!form.name.trim() || !form.equipment_info.trim() || !form.job_request_details.trim()) {
+      toast.error('Schedule name, equipment, and job request are required');
+      return;
+    }
+    if (form.recurrence_type === 'custom' && form.specific_dates.length === 0) {
+      toast.error('Add at least one date for a custom schedule');
+      return;
+    }
+    const schedule: MaintenanceSchedule = {
+      id: initial?.id || Date.now().toString(),
+      name: form.name.trim(),
+      equipment_info: form.equipment_info.trim(),
+      to_department: form.to_department,
+      allocated_to: form.allocated_to,
+      authorising_foreman: form.authorising_foreman,
+      estimated_hours: form.estimated_hours,
+      job_request_details: form.job_request_details.trim(),
+      job_instructions: form.job_instructions,
+      priority: form.priority,
+      recurrence_type: form.recurrence_type,
+      recurrence_dow: form.recurrence_dow,
+      recurrence_dom: form.recurrence_dom,
+      recurrence_months: form.recurrence_months,
+      specific_dates: form.specific_dates,
+      advance_days: form.advance_days,
+      active: initial?.active ?? true,
+      next_due_date: form.start_date,
+      last_generated: initial?.last_generated || '',
+      created_at: initial?.created_at || new Date().toISOString(),
+    };
+    onSave(schedule);
+    onClose();
+  };
+
+  const inputCls = "bg-white/[0.07] border-white/[0.12] text-white placeholder:text-white/30 focus:border-[#86BBD8]/50 focus:bg-white/[0.10]";
+  const labelCls = "text-white/55 text-xs";
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[rgba(5,15,28,0.96)] backdrop-blur-2xl border border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2.5 text-white">
+            <div className="bg-[#86BBD8]/20 p-2 rounded-lg border border-[#86BBD8]/25">
+              <CalendarClock className="h-4 w-4 text-[#86BBD8]" />
+            </div>
+            {initial ? 'Edit Recurring Schedule' : 'New Recurring Schedule'}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-1">
+          {/* Schedule Name */}
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Schedule Name *</Label>
+            <Input value={form.name} onChange={e => set('name', e.target.value)}
+              placeholder="e.g. Weekly Compressor Check" className={inputCls} />
+          </div>
+
+          {/* Machine / Equipment */}
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Machine / Equipment *</Label>
+            <EquipmentPicker value={form.equipment_info} onChange={v => set('equipment_info', v)} />
+          </div>
+
+          {/* Department */}
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Department</Label>
+            <Input value={form.to_department} onChange={e => set('to_department', e.target.value)}
+              placeholder="Engineering…" className={inputCls} />
+          </div>
+
+          {/* Allocated To + Foreman — employee pickers */}
+          <div className="grid grid-cols-2 gap-3">
+            <EmployeePicker id="cs-artisan" label="Allocated To"
+              value={form.allocated_to} onChange={v => set('allocated_to', v)} />
+            <EmployeePicker id="cs-foreman" label="Authorising Foreman"
+              value={form.authorising_foreman} onChange={v => set('authorising_foreman', v)} />
+          </div>
+
+          {/* Hours + Priority */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className={labelCls}>Est. Hours</Label>
+              <Input type="number" min="0.5" step="0.5" value={form.estimated_hours}
+                onChange={e => set('estimated_hours', e.target.value)} className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className={labelCls}>Priority</Label>
+              <Select value={form.priority} onValueChange={v => set('priority', v as WorkOrderPriority)}>
+                <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#0d1f35] border-white/10 text-white">
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Recurrence */}
+          <div className="space-y-3 border border-white/[0.08] rounded-xl p-4">
+            <div className="flex items-center gap-2 text-white/70 text-sm font-medium">
+              <Repeat2 className="h-4 w-4 text-[#86BBD8]" /> Recurrence
+            </div>
+
+            {/* Type buttons */}
+            <div className="flex flex-wrap gap-1.5">
+              {(['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly', 'custom'] as RecurrenceType[]).map(rt => (
+                <button key={rt} type="button" onClick={() => set('recurrence_type', rt)}
+                  className={`px-3 py-1 rounded-lg text-xs border transition-colors capitalize ${
+                    form.recurrence_type === rt
+                      ? 'bg-[#86BBD8]/25 border-[#86BBD8]/40 text-white font-medium'
+                      : 'bg-white/[0.05] border-white/10 text-white/50 hover:bg-white/[0.10] hover:text-white/70'
+                  }`}>
+                  {rt}
+                </button>
+              ))}
+            </div>
+
+            {/* Day of week (weekly / biweekly) */}
+            {(form.recurrence_type === 'weekly' || form.recurrence_type === 'biweekly') && (
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Day of Week</Label>
+                <div className="flex gap-1">
+                  {DOW.map((d, i) => (
+                    <button key={d} type="button" onClick={() => set('recurrence_dow', i)}
+                      className={`flex-1 py-1.5 rounded text-[11px] border transition-colors ${
+                        form.recurrence_dow === i
+                          ? 'bg-[#86BBD8]/25 border-[#86BBD8]/40 text-white'
+                          : 'bg-white/[0.05] border-white/10 text-white/40 hover:bg-white/[0.10]'
+                      }`}>
+                      {d.slice(0, 3)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Day of month (monthly / quarterly / yearly) */}
+            {(form.recurrence_type === 'monthly' || form.recurrence_type === 'quarterly' || form.recurrence_type === 'yearly') && (
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Day of Month (1–28)</Label>
+                <Input type="number" min="1" max="28" value={form.recurrence_dom}
+                  onChange={e => set('recurrence_dom', Math.min(28, Math.max(1, parseInt(e.target.value) || 1)))}
+                  className={inputCls} />
+              </div>
+            )}
+
+            {/* Which months (quarterly) */}
+            {form.recurrence_type === 'quarterly' && (
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Which months</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {MON.map((m, i) => (
+                    <button key={m} type="button" onClick={() => toggleMonth(i)}
+                      className={`px-2.5 py-1 rounded text-[11px] border transition-colors ${
+                        form.recurrence_months.includes(i)
+                          ? 'bg-[#86BBD8]/25 border-[#86BBD8]/40 text-white'
+                          : 'bg-white/[0.05] border-white/10 text-white/40 hover:bg-white/[0.10]'
+                      }`}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Month (yearly) */}
+            {form.recurrence_type === 'yearly' && (
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Month of Year</Label>
+                <Select value={String(form.recurrence_months[0] ?? 0)}
+                  onValueChange={v => set('recurrence_months', [parseInt(v)])}>
+                  <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#0d1f35] border-white/10 text-white">
+                    {MON.map((m, i) => <SelectItem key={m} value={String(i)}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Custom dates */}
+            {form.recurrence_type === 'custom' && (
+              <div className="space-y-2">
+                <Label className={labelCls}>Specific Dates</Label>
+                <div className="flex gap-2">
+                  <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
+                    className={`${inputCls} flex-1`} />
+                  <Button type="button" onClick={addDate} size="sm"
+                    className="bg-[#86BBD8]/20 hover:bg-[#86BBD8]/35 border border-[#86BBD8]/30 text-white">
+                    Add
+                  </Button>
+                </div>
+                {form.specific_dates.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {form.specific_dates.map(d => (
+                      <span key={d} className="flex items-center gap-1 bg-white/[0.08] border border-white/10 rounded px-2 py-0.5 text-xs text-white/70">
+                        {d}
+                        <button type="button" onClick={() => removeDate(d)} title={`Remove ${d}`}
+                          className="text-white/30 hover:text-red-400 ml-0.5">
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Timing */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className={labelCls}>{initial ? 'Next Due Date' : 'First Occurrence Date'}</Label>
+              <Input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)}
+                className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className={labelCls}>Generate work order ___ days early</Label>
+              <Input type="number" min="0" max="14" value={form.advance_days}
+                onChange={e => set('advance_days', Math.max(0, parseInt(e.target.value) || 0))}
+                className={inputCls} />
+            </div>
+          </div>
+
+          {/* Job details */}
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Job Request — What to Do *</Label>
+            <Textarea value={form.job_request_details} onChange={e => set('job_request_details', e.target.value)}
+              placeholder="Describe exactly what the artisan needs to do on each occurrence…"
+              rows={3} className={`${inputCls} resize-none`} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Special Instructions (optional)</Label>
+            <Textarea value={form.job_instructions} onChange={e => set('job_instructions', e.target.value)}
+              placeholder="Safety notes, tools, access…"
+              rows={2} className={`${inputCls} resize-none`} />
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose}
+            className="bg-white/[0.08] hover:bg-white/[0.16] text-white/80 border border-white/15">
+            Cancel
+          </Button>
+          <Button onClick={handleSave}
+            className="bg-[#86BBD8]/25 hover:bg-[#86BBD8]/40 text-white border border-[#86BBD8]/35">
+            {initial ? 'Update Schedule' : 'Create Schedule'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1001,6 +1809,18 @@ export default function MaintenancePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  // Schedule state
+  const [schedules, setSchedules] = useState<MaintenanceSchedule[]>([]);
+  const [schedPanelOpen, setSchedPanelOpen] = useState(true);
+  const [showCreateSched, setShowCreateSched] = useState(false);
+  const [editingSched, setEditingSched] = useState<MaintenanceSchedule | null>(null);
+
+  // Sort + filter state
+  type SortBy = 'date-desc' | 'date-asc' | 'priority' | 'machine' | 'status';
+  const [sortBy, setSortBy] = useState<SortBy>('date-desc');
+  const [priorityFilter, setPriorityFilter] = useState<WorkOrderPriority[]>([]);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   // Derive selectedOrder reactively so reopening always shows the latest saved data
   const selectedOrder = useMemo(
     () => selectedOrderId ? workOrders.find(w => String(w.id) === String(selectedOrderId)) ?? null : null,
@@ -1015,6 +1835,66 @@ export default function MaintenancePage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Load schedules and auto-generate due work orders on mount
+  useEffect(() => {
+    const loaded = loadSchedules();
+    setSchedules(loaded);
+
+    const today = new Date().toISOString().split('T')[0];
+    let updated = [...loaded];
+    let anyGenerated = false;
+
+    const autoGenerate = async () => {
+      for (const sched of loaded) {
+        if (!isScheduleDue(sched)) continue;
+        const result = await createWorkOrder({
+          work_order_number: `WO-${Date.now().toString().slice(-6)}`,
+          equipment_info: sched.equipment_info,
+          to_department: sched.to_department,
+          allocated_to: sched.allocated_to,
+          authorising_foreman: sched.authorising_foreman,
+          estimated_hours: sched.estimated_hours,
+          job_request_details: sched.job_request_details,
+          job_instructions: sched.job_instructions,
+          priority: sched.priority,
+          to_section: '', from_department: '', from_section: '',
+          account_number: '', user_lab_today: '',
+          date_raised: sched.next_due_date,
+          time_raised: new Date().toTimeString().slice(0, 5),
+          job_type: { operational: false, maintenance: true, mining: false },
+          requested_by: 'Auto-generated', authorising_engineer: '',
+          responsible_foreman: sched.authorising_foreman,
+          manpower: [],
+          work_done_details: '', cause_of_failure: '', delay_details: '',
+          artisan_name: sched.allocated_to, artisan_sign: '', artisan_date: '',
+          foreman_name: '', foreman_sign: '', foreman_date: '',
+          time_work_started: '', time_work_finished: '', total_time_worked: '',
+          overtime_start_time: '', overtime_end_time: '', overtime_hours: '',
+          delay_from_time: '', delay_to_time: '', total_delay_hours: '',
+          status: 'pending', progress: 0,
+        });
+        if (result.success) {
+          const next = getNextOccurrence(sched, new Date(sched.next_due_date + 'T00:00:00'));
+          updated = updated.map(x => x.id === sched.id ? {
+            ...x,
+            last_generated: today,
+            next_due_date: next.toISOString().split('T')[0],
+          } : x);
+          anyGenerated = true;
+        }
+      }
+      if (anyGenerated) {
+        setSchedules(updated);
+        persistSchedules(updated);
+        toast.success('Recurring maintenance work orders generated');
+        load();
+      }
+    };
+
+    autoGenerate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stats = useMemo(() => calcStats(workOrders), [workOrders]);
 
@@ -1033,8 +1913,25 @@ export default function MaintenancePage() {
         w.requested_by?.toLowerCase().includes(q)
       );
     }
-    return list;
-  }, [workOrders, statusTab, searchQuery]);
+    if (priorityFilter.length > 0) {
+      list = list.filter(w => priorityFilter.includes(w.priority));
+    }
+    const PORD: Record<WorkOrderPriority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const SORD: Record<WorkOrderStatus, number> = {
+      'in-progress': 0, pending: 1, 'on-hold': 2, 'not-done': 3,
+      completed: 4, postponed: 5, cancelled: 6,
+    };
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'date-desc': return (b.date_raised || '').localeCompare(a.date_raised || '');
+        case 'date-asc':  return (a.date_raised || '').localeCompare(b.date_raised || '');
+        case 'priority':  return (PORD[a.priority] ?? 4) - (PORD[b.priority] ?? 4);
+        case 'machine':   return (a.equipment_info || '').localeCompare(b.equipment_info || '');
+        case 'status':    return (SORD[a.status] ?? 7) - (SORD[b.status] ?? 7);
+        default: return 0;
+      }
+    });
+  }, [workOrders, statusTab, searchQuery, priorityFilter, sortBy]);
 
   const tabCount = (key: string) =>
     key === 'all' ? workOrders.length : workOrders.filter(w => w.status === key).length;
@@ -1051,6 +1948,50 @@ export default function MaintenancePage() {
     setSelectedOrderId(null);
     await load();
     toast.success('Work order deleted');
+  };
+
+  const handleRunScheduleNow = async (sched: MaintenanceSchedule) => {
+    const today = new Date().toISOString().split('T')[0];
+    const machines = sched.equipment_info.split(',').map(s => s.trim()).filter(Boolean);
+    const created: WorkOrder[] = [];
+    for (const machine of machines) {
+      const result = await createWorkOrder({
+        work_order_number: `WO-${Date.now().toString().slice(-6)}`,
+        equipment_info: machine,
+        to_department: sched.to_department,
+        allocated_to: sched.allocated_to,
+        authorising_foreman: sched.authorising_foreman,
+        estimated_hours: sched.estimated_hours,
+        job_request_details: sched.job_request_details,
+        job_instructions: sched.job_instructions,
+        priority: sched.priority,
+        to_section: '', from_department: '', from_section: '',
+        account_number: '', user_lab_today: '',
+        date_raised: today,
+        time_raised: new Date().toTimeString().slice(0, 5),
+        job_type: { operational: false, maintenance: true, mining: false },
+        requested_by: 'Manual — from schedule', authorising_engineer: '',
+        responsible_foreman: sched.authorising_foreman,
+        manpower: [],
+        work_done_details: '', cause_of_failure: '', delay_details: '',
+        artisan_name: sched.allocated_to, artisan_sign: '', artisan_date: '',
+        foreman_name: '', foreman_sign: '', foreman_date: '',
+        time_work_started: '', time_work_finished: '', total_time_worked: '',
+        overtime_start_time: '', overtime_end_time: '', overtime_hours: '',
+        delay_from_time: '', delay_to_time: '', total_delay_hours: '',
+        status: 'pending', progress: 0,
+      });
+      if (result.success && result.data) created.push(result.data);
+    }
+    if (created.length > 0) {
+      toast.success(
+        created.length > 1
+          ? `${created.length} work orders created from "${sched.name}"`
+          : `Work order created from "${sched.name}"`
+      );
+      setWorkOrders(prev => [...created, ...prev]);
+      load();
+    }
   };
 
   return (
@@ -1108,6 +2049,75 @@ export default function MaintenancePage() {
         </div>
       </section>
 
+      {/* ── SCHEDULES PANEL ── */}
+      <section className="relative text-white">
+        <div className="container mx-auto px-4 pb-3">
+          <div className="oz-glass-panel rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-[#86BBD8]" />
+                <span className="text-white/90 font-semibold text-sm">Recurring Schedules</span>
+                {schedules.length > 0 && (
+                  <span className="text-white/30 text-xs bg-white/[0.06] border border-white/10 rounded-full px-2 py-0.5">
+                    {schedules.filter(s => s.active).length} active
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => { setEditingSched(null); setShowCreateSched(true); }}
+                  className="bg-[#86BBD8]/20 hover:bg-[#86BBD8]/35 text-white border border-[#86BBD8]/30 gap-1.5 h-7 text-xs">
+                  <Plus className="h-3.5 w-3.5" /> New Schedule
+                </Button>
+                <button type="button" onClick={() => setSchedPanelOpen(o => !o)}
+                  title={schedPanelOpen ? 'Collapse schedules' : 'Expand schedules'}
+                  className="bg-white/[0.08] hover:bg-white/[0.16] text-white/50 border border-white/10 rounded-lg p-1.5 transition-colors">
+                  {schedPanelOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {schedPanelOpen && (
+              schedules.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="bg-white/[0.04] p-4 rounded-2xl mb-3 border border-white/[0.06]">
+                    <Repeat2 className="h-7 w-7 text-white/20" />
+                  </div>
+                  <div className="text-white/40 text-sm font-medium">No recurring schedules yet</div>
+                  <div className="text-white/25 text-xs mt-1 mb-4">
+                    Set up schedules to auto-generate work orders — every week, month, quarter, or custom dates.
+                  </div>
+                  <Button size="sm" onClick={() => { setEditingSched(null); setShowCreateSched(true); }}
+                    className="bg-[#86BBD8]/20 hover:bg-[#86BBD8]/35 text-white border border-[#86BBD8]/30 gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> Create First Schedule
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  {schedules.map(s => (
+                    <ScheduleRow key={s.id} schedule={s}
+                      onEdit={() => { setEditingSched(s); setShowCreateSched(true); }}
+                      onRunNow={() => handleRunScheduleNow(s)}
+                      onDelete={() => {
+                        if (confirm(`Delete schedule "${s.name}"? This cannot be undone.`)) {
+                          const updated = schedules.filter(x => x.id !== s.id);
+                          setSchedules(updated);
+                          persistSchedules(updated);
+                        }
+                      }}
+                      onToggle={() => {
+                        const updated = schedules.map(x => x.id === s.id ? { ...x, active: !x.active } : x);
+                        setSchedules(updated);
+                        persistSchedules(updated);
+                      }}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* ── RECORDS PANEL ── */}
       <section className="relative text-white">
         <div className="container mx-auto px-4 pb-6">
@@ -1138,15 +2148,76 @@ export default function MaintenancePage() {
                 })}
               </div>
 
-              <div className="flex items-center gap-2 sm:ml-auto">
+              <div className="flex items-center gap-2 sm:ml-auto flex-wrap">
+
+                {/* Sort */}
+                <div className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.10] rounded-lg px-2.5 py-1.5">
+                  <ArrowUpDown className="h-3 w-3 text-white/35 flex-shrink-0" />
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as SortBy)}
+                    className="bg-transparent text-white/60 text-xs outline-none cursor-pointer"
+                  >
+                    <option value="date-desc">Newest first</option>
+                    <option value="date-asc">Oldest first</option>
+                    <option value="priority">Priority</option>
+                    <option value="status">Status</option>
+                    <option value="machine">Machine A–Z</option>
+                  </select>
+                </div>
+
+                {/* Priority filter */}
+                <div className="relative">
+                  <button type="button"
+                    onClick={() => setShowFilterMenu(o => !o)}
+                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                      priorityFilter.length > 0
+                        ? 'bg-[#86BBD8]/20 border-[#86BBD8]/40 text-[#86BBD8]'
+                        : 'bg-white/[0.06] border-white/[0.10] text-white/50 hover:bg-white/[0.12] hover:text-white/70'
+                    }`}>
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    {priorityFilter.length > 0 ? `Priority (${priorityFilter.length})` : 'Filter'}
+                  </button>
+                  {showFilterMenu && (
+                    <div className="absolute right-0 top-full mt-1.5 z-20 w-44 bg-[#0d1f35] border border-white/10 rounded-xl p-3 shadow-2xl">
+                      <div className="text-white/35 text-[10px] uppercase tracking-wide mb-2">Priority</div>
+                      {(['urgent', 'high', 'medium', 'low'] as WorkOrderPriority[]).map(p => {
+                        const pcfg = priorityCfg(p);
+                        const active = priorityFilter.includes(p);
+                        return (
+                          <button key={p} type="button"
+                            onClick={() => setPriorityFilter(prev =>
+                              active ? prev.filter(x => x !== p) : [...prev, p]
+                            )}
+                            className="w-full flex items-center gap-2.5 py-1.5 text-left transition-colors hover:text-white/90">
+                            <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${
+                              active ? 'bg-[#86BBD8] border-[#86BBD8]' : 'border-white/20'
+                            }`}>
+                              {active && <div className="w-1.5 h-1.5 rounded-sm bg-[#0d1f35]" />}
+                            </div>
+                            <div className={`w-2 h-2 rounded-full ${pcfg.dot}`} />
+                            <span className="text-white/70 text-xs capitalize">{p}</span>
+                          </button>
+                        );
+                      })}
+                      {priorityFilter.length > 0 && (
+                        <button type="button" onClick={() => setPriorityFilter([])}
+                          className="mt-2 pt-2 border-t border-white/[0.06] w-full text-center text-[10px] text-white/30 hover:text-white/60 transition-colors">
+                          Clear filter
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Search */}
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30 pointer-events-none" />
                   <input
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search by machine, artisan, WO#…"
-                    className="bg-white/[0.07] border border-white/[0.12] text-white placeholder:text-white/30 rounded-lg pl-8 pr-8 py-1.5 text-sm w-60 outline-none focus:border-[#86BBD8]/40 focus:bg-white/[0.10] transition-colors"
+                    placeholder="Search machine, artisan, WO#…"
+                    className="bg-white/[0.07] border border-white/[0.12] text-white placeholder:text-white/30 rounded-lg pl-8 pr-8 py-1.5 text-sm w-52 outline-none focus:border-[#86BBD8]/40 focus:bg-white/[0.10] transition-colors"
                   />
                   {searchQuery && (
                     <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search"
@@ -1155,6 +2226,7 @@ export default function MaintenancePage() {
                     </button>
                   )}
                 </div>
+
                 {/* Minimize */}
                 <button type="button"
                   onClick={() => setPanelMinimized(m => !m)}
@@ -1225,6 +2297,20 @@ export default function MaintenancePage() {
           onDelete={handleDelete}
         />
       )}
+
+      <CreateScheduleModal
+        isOpen={showCreateSched}
+        initial={editingSched}
+        onClose={() => { setShowCreateSched(false); setEditingSched(null); }}
+        onSave={schedule => {
+          const updated = editingSched
+            ? schedules.map(x => x.id === schedule.id ? schedule : x)
+            : [schedule, ...schedules];
+          setSchedules(updated);
+          persistSchedules(updated);
+          toast.success(editingSched ? 'Schedule updated' : 'Schedule created');
+        }}
+      />
     </PageShell>
   );
 }
